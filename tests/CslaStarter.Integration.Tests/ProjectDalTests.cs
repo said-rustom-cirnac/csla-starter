@@ -107,7 +107,10 @@ public sealed class ProjectDalTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(3, await context.AuditEvents.CountAsync(e => e.RootKey == saved.Id.ToString() && e.Action == "Delete", Ct));
     }
 
-    private static ProjectTaskDto Task(string title, bool done = false) => new(Guid.CreateVersion7(), title, done, null, 0);
+    private static int _sortOrder;
+
+    // Tasks get increasing sort orders, as the business layer assigns them; ids alone don't order reliably.
+    private static ProjectTaskDto Task(string title, bool done = false) => new(Guid.CreateVersion7(), title, done, null, Interlocked.Increment(ref _sortOrder));
 
     private static ProjectSaveDto SaveDto(ProjectDto project, IReadOnlyList<ProjectTaskDto> tasks, IReadOnlyList<Guid> members) =>
         new(project.Id, project.Version, project.Code, project.Name, project.Description, project.StatusCode, project.Budget, project.StartDate, project.EndDate, tasks, members);
