@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CslaStarter.Data\CslaStarter.Data.csproj" />
+    <ProjectReference Include="..\..\src\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
