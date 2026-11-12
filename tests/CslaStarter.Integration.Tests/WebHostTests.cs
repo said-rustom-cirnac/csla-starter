@@ -50,6 +50,44 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task ErrorPage_KeepsSecurityHeaders()
+    {
+        await using var factory = new WebAppFactory(_db);
+        using var client = SignedInClient(factory);
+
+        var response = await client.GetAsync(new Uri(WebAppFactory.ThrowPath, UriKind.Relative), Ct);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.StartsWith("default-src 'self'", Header(response, "Content-Security-Policy"), StringComparison.Ordinal);
+        Assert.Equal("nosniff", Header(response, "X-Content-Type-Options"));
+    }
+
+    [Theory]
+    [InlineData("/access-denied")]
+    [InlineData("/Error")]
+    public async Task ErrorAndAccessDeniedPages_AreAnonymous(string path)
+    {
+        await using var factory = new WebAppFactory(_db);
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        var response = await client.GetAsync(new Uri(path, UriKind.Relative), Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Hsts_IsAtLeastOneYear()
+    {
+        await using var factory = new WebAppFactory(_db);
+        using var client = factory.CreateClient();
+
+        var hsts = factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.HttpsPolicy.HstsOptions>>().Value;
+
+        Assert.True(hsts.MaxAge >= TimeSpan.FromDays(365), $"HSTS max-age is {hsts.MaxAge}");
+        Assert.True(hsts.IncludeSubDomains);
+    }
+
     private const string CspTemplate =
         "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://login.microsoftonline.com; upgrade-insecure-requests";
 
@@ -109,6 +147,8 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
     [InlineData("https://evil.example")]
     [InlineData("//evil.example")]
     [InlineData("/\\evil.example")]
+    [InlineData("/\t/evil.example")]
+    [InlineData("/\r\n/evil.example")]
     public async Task CultureSet_RejectsOffSiteRedirect(string redirectUri)
     {
         await using var factory = new WebAppFactory(_db);

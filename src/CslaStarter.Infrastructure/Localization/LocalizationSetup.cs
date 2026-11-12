@@ -53,9 +53,14 @@ public static class LocalizationSetup
             return Results.Redirect(IsLocal(redirectUri) ? redirectUri! : "/");
         }).AllowAnonymous();
 
-    /// <summary>Only same-site paths: "/x" but never "//host", "/\host" or absolute URLs.</summary>
+    /// <summary>
+    /// Only same-site paths: "/x" but never "//host", "/\host", absolute URLs, or any control character (browsers
+    /// strip tabs and newlines, so "/\t/host" would become "//host").
+    /// </summary>
     public static bool IsLocal(string? url) =>
         !string.IsNullOrEmpty(url)
         && url[0] == '/'
-        && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'));
+        && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'))
+        && !url.AsSpan().ContainsAnyInRange('\0', '\u001f')
+        && !url.Contains('\u007f', StringComparison.Ordinal);
 }

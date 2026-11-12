@@ -4,6 +4,7 @@ using CslaStarter.Data;
 using CslaStarter.Data.Security;
 using CslaStarter.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -94,13 +95,70 @@ public sealed class IdentityTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(SameSiteMode.Lax, cookie.Cookie.SameSite);
         Assert.Equal(TimeSpan.FromHours(8), cookie.ExpireTimeSpan);
         Assert.False(cookie.SlidingExpiration);
+        Assert.Equal("/", cookie.Cookie.Path);
+        Assert.Equal("/access-denied", cookie.AccessDeniedPath);
+    }
+
+    [Theory]
+    [InlineData("Production")]
+    [InlineData("Staging")]
+    [InlineData("UAT")]
+    public void MockOidc_OutsideDevelopmentAndTesting_RefusesToStart(string environment)
+    {
+        var error = Assert.Throws<InvalidOperationException>(() => AuthServices("MockOidc", environment));
+        Assert.Contains("MockOidc", error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(true, "1", true)]
+    [InlineData(false, "1", false)]
+    [InlineData(true, "", false)]
+    public async Task DefaultPolicy_IsAsStrictAsFallback(bool hasAppIdentity, string inactive, bool expected)
+    {
+        using var provider = AuthServices("MockOidc", "Development");
+        var claims = new List<Claim> { new("name", "Ada") };
+        if (hasAppIdentity)
+        {
+            claims.Add(new Claim(EntraClaims.UserIdClaim, Guid.NewGuid().ToString()));
+        }
+
+        if (inactive.Length == 0)
+        {
+            claims.Add(new Claim(EntraClaims.InactiveClaim, "true"));
+        }
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
+        var policies = provider.GetRequiredService<IAuthorizationPolicyProvider>();
+        var authorization = provider.GetRequiredService<IAuthorizationService>();
+
+        var result = await authorization.AuthorizeAsync(user, null, await policies.GetDefaultPolicyAsync());
+
+        Assert.Equal(expected, result.Succeeded);
+    }
+
+    [Theory]
+    [InlineData(new[] { 1 }, new[] { 1 }, true, true)]
+    [InlineData(new[] { 1 }, new int[0], true, false)]
+    [InlineData(new[] { 1 }, new[] { 1, 3 }, true, false)]
+    [InlineData(new[] { 1 }, new[] { 1 }, false, false)]
+    public void Revalidation_DetectsRoleAndActiveChanges(int[] claimed, int[] current, bool active, bool expected)
+    {
+        var claims = claimed.Select(c => new Claim(ClaimTypes.Role, c.ToString(System.Globalization.CultureInfo.InvariantCulture))).ToList();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test", ClaimTypes.Name, ClaimTypes.Role));
+
+        Assert.Equal(expected, UserRevalidatingAuthenticationStateProvider.StillMatches(principal, new DirectoryUser(Guid.NewGuid(), active, current.ToHashSet(), "en-CA")));
     }
 
     [Fact]
-    public void MockOidc_InProduction_RefusesToStart()
+    public async Task ClaimsTransformation_LongDisplayName_IsTruncatedNotRejected()
     {
-        var error = Assert.Throws<InvalidOperationException>(() => AuthServices("MockOidc", "Production"));
-        Assert.Contains("MockOidc", error.Message, StringComparison.Ordinal);
+        var longName = new string('a', 256);
+
+        var principal = await Transformation().TransformAsync(EntraPrincipal("oid-long", longName));
+
+        Assert.NotNull(principal.FindFirst(EntraClaims.UserIdClaim));
+        await using var context = _db.CreateContext();
+        Assert.Equal(200, (await context.Users.SingleAsync(u => u.ObjectId == "oid-long", Ct)).DisplayName.Length);
     }
 
     private static ClaimsPrincipal EntraPrincipal(string objectId, string name) =>

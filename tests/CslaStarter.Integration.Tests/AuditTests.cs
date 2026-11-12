@@ -65,6 +65,46 @@ public sealed class AuditTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Audit_TouchedRoot_IssuesUpdateAndBumpsVersion()
+    {
+        var id = await InsertUserAsync("Ada");
+        uint before;
+        await using (var context = Context())
+        {
+            var user = await context.Users.SingleAsync(u => u.Id == id, Ct);
+            before = user.Version;
+            context.Entry(user).State = EntityState.Modified;
+            await context.SaveChangesAsync(Ct);
+        }
+
+        await using var check = Context();
+        Assert.NotEqual(before, (await check.Users.SingleAsync(u => u.Id == id, Ct)).Version);
+        Assert.Single(await EventsAsync(id));
+    }
+
+    [Fact]
+    public async Task Audit_FailedSave_LeavesNoPhantomAuditRows()
+    {
+        var id = await InsertUserAsync("Ada");
+        await using var stale = Context();
+        var mine = await stale.Users.SingleAsync(u => u.Id == id, Ct);
+        await using (var other = Context())
+        {
+            (await other.Users.SingleAsync(u => u.Id == id, Ct)).DisplayName = "Other";
+            await other.SaveChangesAsync(Ct);
+        }
+
+        mine.DisplayName = "Mine";
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => stale.SaveChangesAsync(Ct));
+        stale.Entry(mine).State = EntityState.Unchanged;
+        stale.SecurityEvents.Add(new SecurityEventRow { Kind = 1, OccurredAt = Now, Detail = "unrelated" });
+        await stale.SaveChangesAsync(Ct);
+
+        var changes = (await EventsAsync(id)).SelectMany(e => e.Changes).Select(c => c.NewValue);
+        Assert.DoesNotContain("Mine", changes);
+    }
+
+    [Fact]
     public async Task Audit_Delete_RecordsOldValues()
     {
         var id = await InsertUserAsync("Ada");
@@ -174,6 +214,21 @@ public sealed class AuditTests(PostgresFixture postgres) : IAsyncLifetime
 
         var error = await Assert.ThrowsAsync<PostgresException>(() => ExecuteAsync(_db.RuntimeConnectionString, "update audit_event set user_name = 'x'"));
         Assert.Equal("42501", error.SqlState);
+    }
+
+    [Theory]
+    [InlineData("audit_event")]
+    [InlineData("audit_change")]
+    [InlineData("security_event")]
+    public async Task RuntimeRole_HasInsertAndSelectOnly_OnAppendOnlyTables(string table)
+    {
+        foreach (var (privilege, expected) in new[] { ("INSERT", true), ("SELECT", true), ("UPDATE", false), ("DELETE", false), ("TRUNCATE", false) })
+        {
+            await using var connection = new NpgsqlConnection(_db.OwnerConnectionString);
+            await connection.OpenAsync(Ct);
+            await using var command = new NpgsqlCommand($"select has_table_privilege('app_runtime', '{table}', '{privilege}')", connection);
+            Assert.True(expected == (bool)(await command.ExecuteScalarAsync(Ct))!, $"app_runtime {privilege} on {table} should be {expected}");
+        }
     }
 
     [Fact]

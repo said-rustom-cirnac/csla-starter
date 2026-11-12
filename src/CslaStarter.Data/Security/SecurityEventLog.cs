@@ -12,6 +12,7 @@ namespace CslaStarter.Data.Security;
 public sealed partial class SecurityEventLog(AppDatabaseConnection connection, TimeProvider time, ILogger<SecurityEventLog> logger) : ISecurityEventLog
 {
     private const int MaxDetailLength = 2000;
+    private const int MaxUserNameLength = 200;
 
     public async Task WriteAsync(SecurityEvent securityEvent, CancellationToken cancellationToken)
     {
@@ -25,7 +26,7 @@ public sealed partial class SecurityEventLog(AppDatabaseConnection connection, T
             Kind = (int)securityEvent.Kind,
             OccurredAt = time.GetUtcNow(),
             UserId = securityEvent.UserId,
-            UserName = securityEvent.UserName,
+            UserName = securityEvent.UserName is { Length: > MaxUserNameLength } name ? name[..MaxUserNameLength] : securityEvent.UserName,
             Detail = securityEvent.Detail.Length > MaxDetailLength ? securityEvent.Detail[..MaxDetailLength] : securityEvent.Detail,
             CorrelationId = securityEvent.CorrelationId,
         });

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,7 +11,8 @@ public static class SessionSetup
         services.TryAddSingleton(TimeProvider.System);
         services.Configure<SessionOptions>(configuration.GetSection("Session"));
         services.AddScoped<SessionTimeoutMonitor>();
-        services.AddScoped<CircuitHandler, SessionActivityCircuitHandler>();
+        // Activity is reported by the session-timeout component from real user input (keyboard, pointer), not from
+        // circuit traffic: render acknowledgements of server-pushed updates must not keep a session alive.
         return services;
     }
 }

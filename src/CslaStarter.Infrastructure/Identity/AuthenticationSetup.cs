@@ -14,6 +14,7 @@ namespace CslaStarter.Infrastructure.Identity;
 public static class AuthenticationSetup
 {
     public const string CookieName = "__Host-CslaStarter";
+    public const string AccessDeniedPath = "/access-denied";
 
     /// <summary>
     /// Sign-in through Entra ID (Authentication:Mode = Entra, the default) or, for development and tests only, a
@@ -32,8 +33,9 @@ public static class AuthenticationSetup
                 services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                     .AddMicrosoftIdentityWebApp(options => configuration.Bind("AzureAd", options), ConfigureCookie);
                 break;
-            case "MockOidc" when environment.IsProduction():
-                throw new InvalidOperationException("Authentication:Mode=MockOidc is for development and tests only; it is refused in Production.");
+            case "MockOidc" when !environment.IsDevelopment() && !environment.IsEnvironment("Testing"):
+                throw new InvalidOperationException(
+                    $"Authentication:Mode=MockOidc is for development and tests only; it is refused in the '{environment.EnvironmentName}' environment.");
             case "MockOidc":
                 services.AddAuthentication(options =>
                     {
@@ -62,13 +64,16 @@ public static class AuthenticationSetup
         services.AddSingleton<IClaimsTransformation, RoleClaimsTransformation>();
         services.AddCascadingAuthenticationState();
         services.AddScoped<AuthenticationStateProvider, UserRevalidatingAuthenticationStateProvider>();
+        // Signed in, resolved to an app user (tid + oid were present), and still active. Used for endpoints with no
+        // authorization metadata (deny by default) and for every [Authorize] / RequireAuthorization() as the base.
+        var appUser = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .RequireClaim(EntraClaims.UserIdClaim)
+            .RequireAssertion(context => !context.User.HasClaim(EntraClaims.InactiveClaim, "true"))
+            .Build();
         services.AddAuthorizationBuilder()
-            // Deny by default: signed in, resolved to an app user (tid + oid were present), and still active.
-            .SetFallbackPolicy(new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .RequireClaim(EntraClaims.UserIdClaim)
-                .RequireAssertion(context => !context.User.HasClaim(EntraClaims.InactiveClaim, "true"))
-                .Build());
+            .SetDefaultPolicy(appUser)
+            .SetFallbackPolicy(appUser);
         return services;
     }
 
@@ -78,7 +83,9 @@ public static class AuthenticationSetup
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.Path = "/"; // __Host- cookies must have Path=/, even when the app runs in an IIS virtual directory.
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = false;
+        options.AccessDeniedPath = AccessDeniedPath;
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using CslaStarter.Core.Security;
 using CslaStarter.Data.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -24,6 +25,9 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
 
     private static readonly ConcurrentDictionary<(Type, string), PropertyInfo?> Properties = new();
 
+    // Audit rows added by a save that hasn't completed yet, per context. If the save fails, the next save discards them.
+    private readonly ConditionalWeakTable<DbContext, List<AuditEventRow>> _pending = new();
+
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         Capture(eventData.Context);
@@ -37,12 +41,28 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
         return ValueTask.FromResult(result);
     }
 
+    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
+    {
+        Forget(eventData.Context);
+        return result;
+    }
+
+    public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+    {
+        Forget(eventData.Context);
+        return ValueTask.FromResult(result);
+    }
+
     private void Capture(DbContext? context)
     {
         if (context is null)
         {
             return;
         }
+
+        // A previous save on this context failed (concurrency, constraint...) after adding its audit rows: those rows
+        // describe a change that never happened, so they must not ride along with this save.
+        DiscardUnsaved(context);
 
         context.ChangeTracker.DetectChanges();
         var now = time.GetUtcNow();
@@ -56,18 +76,46 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
             }
 
             var changes = Changes(entry);
-            if (entry.State == EntityState.Modified && changes.Count == 0)
-            {
-                // Marked modified, but nothing really changed: write nothing at all.
-                entry.State = EntityState.Unchanged;
-                continue;
-            }
-
             Stamp(entry, now);
-            events.Add(Event(entry, changes, now));
+
+            // A row marked modified with no audited change (a root "touched" for the aggregate's version check, or an
+            // [AuditIgnore]-only change) is still saved and stamped, but adds nothing to the history.
+            if (entry.State != EntityState.Modified || changes.Count > 0)
+            {
+                events.Add(Event(entry, changes, now));
+            }
         }
 
         context.AddRange(events);
+        _pending.AddOrUpdate(context, events);
+    }
+
+    private void Forget(DbContext? context)
+    {
+        if (context is not null)
+        {
+            _pending.Remove(context);
+        }
+    }
+
+    private void DiscardUnsaved(DbContext context)
+    {
+        if (!_pending.TryGetValue(context, out var events))
+        {
+            return;
+        }
+
+        foreach (var auditEvent in events)
+        {
+            foreach (var change in auditEvent.Changes.ToList())
+            {
+                context.Entry(change).State = EntityState.Detached;
+            }
+
+            context.Entry(auditEvent).State = EntityState.Detached;
+        }
+
+        _pending.Remove(context);
     }
 
     private void Stamp(EntityEntry entry, DateTimeOffset now)

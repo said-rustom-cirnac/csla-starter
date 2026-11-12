@@ -12,7 +12,7 @@ services:
       APP_OWNER_PASSWORD: owner-dev-only
       APP_RUNTIME_PASSWORD: runtime-dev-only
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - ./deploy/sql:/deploy/sql:ro
       - ./deploy/docker/initdb:/docker-entrypoint-initdb.d:ro
@@ -29,7 +29,7 @@ services:
       SERVER_PORT: "8080"
       JSON_CONFIG_PATH: /config/mock-oidc.json
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./deploy/mock-oidc:/config:ro
 

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,7 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace CslaStarter.Infrastructure.Identity;
 
-/// <summary>Re-checks every 10 minutes that the circuit's user is still active; a deactivated user is signed out.</summary>
+/// <summary>
+/// Every 10 minutes, re-checks the circuit's user against the database (no cache). A deactivated user, or one whose
+/// roles changed, is signed out of the circuit; the next request signs them in again with their current roles.
+/// </summary>
 public sealed class UserRevalidatingAuthenticationStateProvider(ILoggerFactory loggerFactory, IServiceScopeFactory scopeFactory)
     : RevalidatingServerAuthenticationStateProvider(loggerFactory)
 {
@@ -20,6 +25,17 @@ public sealed class UserRevalidatingAuthenticationStateProvider(ILoggerFactory l
         }
 
         await using var scope = scopeFactory.CreateAsyncScope();
-        return await scope.ServiceProvider.GetRequiredService<IUserDirectory>().IsActiveAsync(userId, cancellationToken);
+        var current = await scope.ServiceProvider.GetRequiredService<IUserDirectory>().GetFreshAsync(userId, cancellationToken);
+        return current is not null && StillMatches(authenticationState.User, current);
+    }
+
+    public static bool StillMatches(ClaimsPrincipal principal, DirectoryUser current)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+        ArgumentNullException.ThrowIfNull(current);
+        var claimed = principal.FindAll(ClaimTypes.Role)
+            .Select(c => int.TryParse(c.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : -1)
+            .ToHashSet();
+        return current.IsActive && claimed.SetEquals(current.RoleCodes);
     }
 }

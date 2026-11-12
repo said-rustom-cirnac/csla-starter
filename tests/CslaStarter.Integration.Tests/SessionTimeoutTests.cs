@@ -59,4 +59,15 @@ public sealed class SessionTimeoutTests
     }
 
     private SessionTimeoutMonitor Monitor() => new(_time, Options.Create(new SessionOptions()));
+
+    [Theory]
+    [InlineData(20, 20)]
+    [InlineData(25, 20)]
+    [InlineData(0, 20)]
+    public void SessionOptions_WarningMustComeBeforeSignOut(int warningMinutes, int signOutMinutes)
+    {
+        var options = Options.Create(new SessionOptions { WarningAfter = TimeSpan.FromMinutes(warningMinutes), SignOutAfter = TimeSpan.FromMinutes(signOutMinutes) });
+
+        Assert.Throws<InvalidOperationException>(() => new SessionTimeoutMonitor(_time, options));
+    }
 }

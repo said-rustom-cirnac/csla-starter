@@ -20,4 +20,16 @@ public class DevEnvironmentTests
             mapping.GetProperty("claims").TryGetProperty(claim, out _),
             $"mock-oidc.json request mapping '{mapping.GetProperty("match")}' does not issue '{claim}'"));
     }
+
+    [Fact]
+    public void DockerCompose_PublishesPortsOnLocalhostOnly()
+    {
+        var ports = File.ReadAllLines(Path.Combine(RepoPaths.Root, "docker-compose.yml"))
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith("- \"", StringComparison.Ordinal) && line.Length > 3 && char.IsDigit(line[3]) && line.Contains(':', StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(ports);
+        Assert.All(ports, port => Assert.StartsWith("- \"127.0.0.1:", port, StringComparison.Ordinal));
+    }
 }

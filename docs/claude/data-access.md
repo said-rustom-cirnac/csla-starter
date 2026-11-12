@@ -2,7 +2,7 @@
 
 ## The database
 
-- PostgreSQL through EF Core 10 + Npgsql. Table and column names are snake_case (`UseSnakeCaseNamingConvention`), and every configuration lives in `src/CslaStarter.Data/Configurations`.
+- PostgreSQL **15 or later** (tests use 18) through EF Core 10 + Npgsql. From version 15, PostgreSQL no longer lets every role create objects in `public`, which the least-privilege model relies on. Table and column names are snake_case (`UseSnakeCaseNamingConvention`), and every configuration lives in `src/CslaStarter.Data/Configurations`.
 - Primary keys are `Guid`s generated in the app with `Guid.CreateVersion7()`. Audit and security tables use `bigint` identity columns.
 - **Aggregate roots** implement `IAggregateRoot` with `[Timestamp] uint Version`, which maps to PostgreSQL `xmin`.
   - Concurrency is checked **per aggregate**: every save of an aggregate updates its root row, so any change anywhere in it bumps the root's version.
@@ -37,7 +37,8 @@ CSLASTARTER_DESIGN_CONNECTION="<owner connection string>" dotnet ef database upd
 
 - **Stamping:** it fills `CreatedOn/By` and `ModifiedOn/By` on `IAuditedEntity`, using the injected `IDataAccessContext` and `TimeProvider`.
 - **Change rows:** it writes one `audit_event` per inserted, updated or deleted row, plus one `audit_change` per changed property with old and new values as invariant-culture strings. The rows go in **the same transaction** as the change.
-- **No-op updates:** a row marked Modified with no real change is reset to Unchanged, so there's no UPDATE and no audit row.
+- **No-op updates:** a row marked Modified with no audited change (a root "touched" for its aggregate's version check, or an `[AuditIgnore]`-only change) is still saved and stamped, which bumps its `xmin`, but it adds nothing to the history.
+- **Failed saves:** if a save fails (concurrency, constraint), the next save on that context discards the audit rows the failed one added, so the history never records a change that didn't happen.
 - **Never audited:** `Version`, `CreatedOn/By`, `ModifiedOn/By`, and the single-column surrogate key.
 
 Attributes on entities (`CslaStarter.Data.Auditing`):
