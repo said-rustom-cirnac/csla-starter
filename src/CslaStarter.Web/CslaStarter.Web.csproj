@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CslaStarter.Core\CslaStarter.Core.csproj" />
+    <ProjectReference Include="..\CslaStarter.Dal\CslaStarter.Dal.csproj" />
+    <ProjectReference Include="..\CslaStarter.Business\CslaStarter.Business.csproj" />
+    <ProjectReference Include="..\CslaStarter.Data\CslaStarter.Data.csproj" />
+    <ProjectReference Include="..\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
+    <ProjectReference Include="..\CslaStarter.Components\CslaStarter.Components.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+name: Guard main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fail if a Claude-only file is on main
+        run: bash scripts/check-no-claude-files.sh HEAD

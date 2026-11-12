@@ -488,3 +488,6 @@ artifacts/
 node_modules/
 *.swp
 .superpowers/
+# Personal Claude files (never committed)
+CLAUDE.local.md
+.claude/settings.local.json
