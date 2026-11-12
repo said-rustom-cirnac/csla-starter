@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 
 namespace CslaStarter.Web.Components.Pages;
 
+[AllowAnonymous]
 public partial class ErrorPage
 {
     [CascadingParameter]

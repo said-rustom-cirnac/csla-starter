@@ -1,3 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Strongly-typed, public resource classes generated at build (CslaStarter.Core.Resources.Labels / Messages). -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Labels.resx" StronglyTypedLanguage="CSharp" StronglyTypedClassName="Labels" StronglyTypedNamespace="CslaStarter.Core.Resources" StronglyTypedFileName="$(IntermediateOutputPath)Labels.Designer.cs" PublicClass="true" />
+    <EmbeddedResource Update="Resources\Messages.resx" StronglyTypedLanguage="CSharp" StronglyTypedClassName="Messages" StronglyTypedNamespace="CslaStarter.Core.Resources" StronglyTypedFileName="$(IntermediateOutputPath)Messages.Designer.cs" PublicClass="true" />
+  </ItemGroup>
+
 </Project>

@@ -10,5 +10,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CslaStarter.Architecture.Tests/CslaStarter.Architecture.Tests.csproj" />
+    <Project Path="tests/CslaStarter.Business.Tests/CslaStarter.Business.Tests.csproj" />
+    <Project Path="tests/CslaStarter.Integration.Tests/CslaStarter.Integration.Tests.csproj" />
   </Folder>
 </Solution>
