@@ -138,3 +138,58 @@ test_guard_passes_on_synced_main() {
   apply_sync > /dev/null
   "$SCRIPTS/check-no-claude-files.sh" main
 }
+
+test_sync_ignores_older_source_commit() {
+  new_repo
+  apply_sync > /dev/null
+  local older
+  older="$(git rev-parse claude)"
+  echo two > src/A/a.cs && git add -A && git commit -qm "DEV-5 newer change"
+  apply_sync > /dev/null
+  local before
+  before="$(git rev-parse main)"
+  [[ "$("$SCRIPTS/sync-main.sh" "$older" main)" == up-to-date ]] || fail "an older claude commit was synced over a newer one"
+  [[ "$(git rev-parse main)" == "$before" ]] || fail "main moved"
+}
+
+test_sync_strips_names_needing_quotes() {
+  new_repo
+  mkdir -p 'x"y'
+  echo q > 'docs/claude/a"b.md' && printf 't\n' > "docs/claude/tab$(printf '\t')name.md"
+  echo c > 'x"y/CLAUDE.md' && echo k > 'src/q"uote.cs'
+  git add -A && git commit -qm "DEV-6 names that git quotes"
+  local sha
+  sha="$(sync_once)"
+  if git ls-tree -r -z --name-only "$sha" | tr '\0' '\n' | grep -qE '^docs/claude/|(^|/)CLAUDE\.md$'; then fail "a quoted Claude path leaked"; fi
+  git ls-tree -r -z --name-only "$sha" | tr '\0' '\n' | grep -qxF 'src/q"uote.cs' || fail "a quoted non-Claude path was dropped"
+}
+
+test_sync_strips_nested_claude_folders_and_local_md() {
+  new_repo
+  mkdir -p src/Web/.claude
+  echo s > src/Web/.claude/settings.json && echo l > CLAUDE.local.md && echo l > src/A/CLAUDE.local.md
+  git add -A && git commit -qm "DEV-7 nested Claude files"
+  local tree p
+  tree="$(tree_of "$(sync_once)")"
+  for p in src/Web/.claude/settings.json CLAUDE.local.md src/A/CLAUDE.local.md; do
+    if grep -qxF "$p" <<< "$tree"; then fail "$p survived the sync"; fi
+  done
+}
+
+test_sync_fails_on_unsupported_pattern() {
+  new_repo
+  echo 'docs/*.tmp' >> .github/claude-only-paths.txt
+  git add -A && git commit -qm "DEV-8 a pattern the filter cannot read"
+  local out
+  if out="$(sync_once 2>&1)"; then fail "sync accepted an unsupported pattern: $out"; fi
+  grep -qF "unsupported pattern" <<< "$out" || fail "no clear error: $out"
+}
+
+test_guard_keeps_builtin_patterns_when_list_is_emptied() {
+  new_repo
+  echo '# emptied' > .github/claude-only-paths.txt
+  git add -A && git commit -qm "DEV-9 empty the list"
+  local out
+  if out="$("$SCRIPTS/check-no-claude-files.sh" claude)"; then fail "guard passed with an emptied list"; fi
+  grep -qxF "Claude-only file on claude: src/A/CLAUDE.md" <<< "$out" || fail "guard output: $out"
+}
