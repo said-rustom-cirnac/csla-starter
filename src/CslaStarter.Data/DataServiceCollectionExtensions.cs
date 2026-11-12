@@ -1,6 +1,8 @@
 using CslaStarter.Core.Auditing;
 using CslaStarter.Core.Security;
+using CslaStarter.Dal.Types;
 using CslaStarter.Data.Auditing;
+using CslaStarter.Data.Dal;
 using CslaStarter.Data.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +27,7 @@ public static class DataServiceCollectionExtensions
         services.AddSingleton<ISecurityEventLog, SecurityEventLog>();
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddScoped<IAuditHistoryReader, AuditHistoryReader>();
+        services.AddScoped<ITypeDal, TypeDal>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseAppDatabase(database.DataSource)
             .AddInterceptors(provider.GetRequiredService<AuditSaveChangesInterceptor>()));

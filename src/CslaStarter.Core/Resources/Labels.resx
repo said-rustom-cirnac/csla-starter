@@ -10,4 +10,14 @@
   <data name="Common_New" xml:space="preserve"><value>New</value></data>
   <data name="UserRole_Admin" xml:space="preserve"><value>Administrator</value></data>
   <data name="Language_Toggle" xml:space="preserve"><value>Français</value></data>
+  <data name="Audit_CreatedOn" xml:space="preserve"><value>Created on</value></data>
+  <data name="Audit_CreatedBy" xml:space="preserve"><value>Created by</value></data>
+  <data name="Audit_ModifiedOn" xml:space="preserve"><value>Last changed on</value></data>
+  <data name="Audit_ModifiedBy" xml:space="preserve"><value>Last changed by</value></data>
+  <data name="Common_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="Type_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Type_DescriptionEn" xml:space="preserve"><value>English description</value></data>
+  <data name="Type_DescriptionFr" xml:space="preserve"><value>French description</value></data>
+  <data name="Type_IsActive" xml:space="preserve"><value>Active</value></data>
+  <data name="Type_SortOrder" xml:space="preserve"><value>Sort order</value></data>
 </root>
