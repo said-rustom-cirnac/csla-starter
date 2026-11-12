@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CSLA Starter Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Solution architecture for the CSLA Starter template, submitted for architecture approval.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a review dossier. A sticky numbered index on the left and one reading column on the right.
+   Each section opens with its claim in one sentence, then the figure or table that backs it. */
+:root {
+  --bg: #ffffff;
+  --surface: #f3f5f7;
+  --surface-2: #e5e9ed;
+  --fg: #25303b;
+  --muted: #59646f;
+  --line: #c7cdd4;
+  --primary: #26374a;
+  --link: #284162;
+  --accent: #af3c43;
+  --accent-soft: #f8eaeb;
+  --ok: #26743a;
+  --ok-soft: #e6f2e9;
+  --warn: #8f5500;
+  --warn-soft: #fbefdc;
+  --info: #1d5c94;
+  --info-soft: #e5eef7;
+  --font-display: "Lato", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Noto Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "Noto Sans Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.625rem;
+  --step-3: 2.5rem;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12181f;
+    --surface: #1a222b;
+    --surface-2: #232d38;
+    --fg: #e4e9ee;
+    --muted: #a2adb9;
+    --line: #394552;
+    --primary: #b9cde3;
+    --link: #93b8df;
+    --accent: #e57e85;
+    --accent-soft: #3a2326;
+    --ok: #74c88b;
+    --ok-soft: #1c3324;
+    --warn: #e3a95a;
+    --warn-soft: #3a2c17;
+    --info: #79b0e4;
+    --info-soft: #1b2c3d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12181f;
+  --surface: #1a222b;
+  --surface-2: #232d38;
+  --fg: #e4e9ee;
+  --muted: #a2adb9;
+  --line: #394552;
+  --primary: #b9cde3;
+  --link: #93b8df;
+  --accent: #e57e85;
+  --accent-soft: #3a2326;
+  --ok: #74c88b;
+  --ok-soft: #1c3324;
+  --warn: #e3a95a;
+  --warn-soft: #3a2c17;
+  --info: #79b0e4;
+  --info-soft: #1b2c3d;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--link); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--font-display); color: var(--primary); text-wrap: balance; line-height: 1.2; margin: 0; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+
+.skip { position: absolute; left: -9999px; top: 0; }
+.skip:focus { left: max(16px, env(safe-area-inset-left, 0px)); top: 8px; background: var(--bg); padding: 8px 12px; z-index: 20; }
+
+/* Page frame */
+.page {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 56px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+
+/* Index */
+.index { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); align-self: start; }
+.index p { font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+.index ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: idx; }
+.index li { counter-increment: idx; }
+.index a {
+  display: grid;
+  grid-template-columns: 1.8em 1fr;
+  padding: 5px 8px;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+.index a::before { content: counter(idx); font-variant-numeric: tabular-nums; color: var(--muted); }
+.index a:hover { color: var(--fg); background: var(--surface); }
+.index a[aria-current="true"] { color: var(--primary); border-left-color: var(--accent); background: var(--surface); font-weight: 600; }
+
+main { min-width: 0; display: grid; gap: 64px; }
+
+/* Document head */
+.doc-head { display: grid; gap: 16px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--accent); }
+.doc-head h1 { font-size: var(--step-3); font-weight: 900; letter-spacing: -0.01em; }
+.lede { font-size: var(--step-1); max-width: 40ch; color: var(--fg); line-height: 1.45; }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 8px 0 0; font-size: var(--step--1); }
+.doc-meta div { display: grid; gap: 2px; }
+.doc-meta dt { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem; }
+.doc-meta dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Sections */
+.sec { display: grid; gap: 20px; scroll-margin-top: 24px; }
+.sec-head { display: flex; align-items: baseline; gap: 14px; }
+.sec-num { font-family: var(--font-display); font-weight: 900; font-size: var(--step-1); color: var(--accent); font-variant-numeric: tabular-nums; min-width: 1.4em; }
+.sec h2 { font-size: var(--step-2); font-weight: 700; }
+.claim { font-size: 1.0625rem; max-width: 68ch; }
+.note { font-size: 0.9375rem; color: var(--muted); max-width: 68ch; }
+h3 { font-size: 1.0625rem; font-weight: 700; }
+
+/* Decision box */
+.decision {
+  display: grid;
+  gap: 18px;
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.decision .ask { font-family: var(--font-display); font-size: var(--step-1); font-weight: 700; color: var(--primary); line-height: 1.35; max-width: 52ch; }
+.scope { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.scope h3 { font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+.scope ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-size: 0.9375rem; }
+
+/* Tiles */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { display: grid; gap: 4px; align-content: start; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); }
+.tile .k { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+.tile .v { font-family: var(--font-display); font-weight: 700; font-size: 1.0625rem; color: var(--primary); line-height: 1.3; }
+.tile .why { font-size: 0.875rem; color: var(--muted); line-height: 1.45; }
+
+/* Figures */
+figure { margin: 0; display: grid; gap: 10px; }
+.fig-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 12px; }
+.fig-scroll svg { display: block; width: 100%; height: auto; min-width: 680px; color: var(--fg); }
+figcaption { font-size: 0.875rem; color: var(--muted); max-width: 72ch; }
+
+/* SVG classes (styled from the page so both themes work) */
+.d-box { fill: var(--bg); stroke: var(--line); stroke-width: 1.2; }
+.d-box-dash { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.d-host { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+.d-key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.d-act { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
+.d-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; fill: var(--primary); }
+.d-text { font-family: var(--font-body); font-size: 12.5px; fill: var(--fg); }
+.d-muted { font-family: var(--font-body); font-size: 12px; fill: var(--muted); }
+.d-label { font-family: var(--font-body); font-size: 12px; fill: var(--fg); }
+.d-label-acc { font-family: var(--font-body); font-size: 12px; font-weight: 600; fill: var(--accent); }
+.d-cap { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.08em; fill: var(--muted); }
+.d-line { stroke: currentColor; stroke-width: 1.4; fill: none; }
+.d-line-acc { stroke: var(--accent); stroke-width: 2; fill: none; }
+.d-dash { stroke-dasharray: 5 4; }
+.d-life { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 3 4; }
+.d-head-fill { fill: currentColor; }
+.d-head-acc { fill: var(--accent); }
+
+/* Layer strip */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.strip li { position: relative; display: grid; gap: 4px; align-content: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); counter-increment: s; }
+.strip li::before { content: "Check " counter(s); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.strip strong { font-family: var(--font-display); color: var(--primary); }
+.strip span { font-size: 0.875rem; color: var(--muted); line-height: 1.45; }
+
+/* Tables */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+thead th { background: var(--surface); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+tbody th { font-weight: 600; color: var(--fg); }
+.ctl { display: block; font-family: var(--font-mono); font-size: 0.8125rem; color: var(--accent); font-weight: 500; white-space: nowrap; }
+.chosen { color: var(--ok); font-weight: 600; }
+td.min, th.min { white-space: nowrap; }
+
+/* Pills */
+.pill { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
+.pill.med { background: var(--warn-soft); color: var(--warn); }
+.pill.low { background: var(--ok-soft); color: var(--ok); }
+
+/* Audit mock */
+.audit { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.hist { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); overflow: hidden; }
+.hist-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.hist-head strong { font-family: var(--font-display); color: var(--primary); }
+.hist-head span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.hist ol { list-style: none; margin: 0; padding: 0; }
+.hist li { display: grid; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.hist li:last-child { border-bottom: 0; }
+.hist .who { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hist .who b { color: var(--fg); font-weight: 600; }
+.chg { display: grid; grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr); gap: 2px 12px; font-size: 0.875rem; }
+.chg dt { color: var(--muted); }
+.chg dd { margin: 0; }
+.old { text-decoration: line-through; text-decoration-color: var(--accent); color: var(--muted); }
+.new { font-weight: 600; }
+.masked { font-style: italic; color: var(--muted); }
+.facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+.facts li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--line); font-size: 0.9375rem; }
+.facts strong { color: var(--primary); font-family: var(--font-display); }
+
+/* Behaviour groups */
+.groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.group { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); display: grid; gap: 8px; align-content: start; }
+.group h3 { font-size: 0.9375rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.chips li { font-size: 0.8125rem; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--fg); }
+
+/* Phases */
+.phases { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; counter-reset: p; }
+.phases li { counter-increment: p; display: grid; gap: 4px; align-content: start; padding: 12px; border-top: 3px solid var(--primary); background: var(--surface); }
+.phases li::before { content: counter(p); font-family: var(--font-display); font-weight: 900; color: var(--primary); font-size: 1.125rem; }
+.phases b { font-size: 0.875rem; line-height: 1.3; }
+.phases span { font-size: 0.8125rem; color: var(--muted); line-height: 1.4; }
+.phases li.later { border-top-style: dashed; border-top-color: var(--muted); background: transparent; border: 1px dashed var(--line); border-top: 3px dashed var(--muted); }
+
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.callout { padding: 14px 16px; border-radius: var(--radius); background: var(--info-soft); color: var(--fg); font-size: 0.9375rem; }
+.callout b { color: var(--info); }
+
+footer.doc-foot { border-top: 1px solid var(--line); padding-top: 20px; font-size: 0.875rem; color: var(--muted); display: grid; gap: 6px; }
+
+/* Narrow screens */
+@media (max-width: 980px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 880px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-top: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .index { top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .index p { display: none; }
+  .index ol { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+  .index a { display: flex; gap: 6px; white-space: nowrap; border-left: 0; border-bottom: 2px solid transparent; border-radius: 4px; }
+  .index a[aria-current="true"] { border-bottom-color: var(--accent); }
+  html { scroll-padding-top: 64px; }
+  .sec { scroll-margin-top: 64px; }
+  main { gap: 48px; }
+  .audit { grid-template-columns: minmax(0, 1fr); }
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scope, .two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  :root { --step-3: 2rem; --step-2: 1.375rem; }
+  .doc-head { padding-top: 24px; }
+  .phases, .groups, .strip { grid-template-columns: minmax(0, 1fr); }
+  .decision { padding: 18px; }
+}
+@media print {
+  .index, .skip { display: none; }
+  .page { display: block; max-width: none; padding: 0; }
+  main { gap: 28px; }
+  .sec, figure, .tbl-wrap, .decision { break-inside: avoid; }
+  .fig-scroll { overflow: visible; }
+  .fig-scroll svg { min-width: 0; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="page">
+  <nav class="index" aria-label="Sections">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#decision">Decision requested</a></li>
+      <li><a href="#glance">At a glance</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#live">Live updates</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#audit">Audit and history</a></li>
+      <li><a href="#components">Components</a></li>
+      <li><a href="#hosting">Hosting</a></li>
+      <li><a href="#quality">Quality</a></li>
+      <li><a href="#delivery">Delivery</a></li>
+      <li><a href="#alternatives">Alternatives</a></li>
+      <li><a href="#risks">Risks</a></li>
+    </ol>
+  </nav>
+
+  <main id="content">
+    <header class="doc-head">
+      <p class="eyebrow">Architecture review · For approval</p>
+      <h1>CSLA Starter</h1>
+      <p class="lede">A secure, bilingual starter template for Government of Canada line-of-business applications, built on .NET 10, Blazor Server and CSLA.</p>
+      <dl class="doc-meta">
+        <div><dt>Version</dt><dd>0.1 draft</dd></div>
+        <div><dt>Date</dt><dd>2026-11-12</dd></div>
+        <div><dt>Prepared by</dt><dd>Said Rustom</dd></div>
+        <div><dt>Reviewer</dt><dd>Architecture Director</dd></div>
+        <div><dt>Repository</dt><dd><a href="https://github.com/said-rustom-cirnac/csla-starter">said-rustom-cirnac/csla-starter</a></dd></div>
+      </dl>
+    </header>
+
+    <!-- 1 -->
+    <section class="sec" id="decision" aria-labelledby="h-decision">
+      <div class="sec-head"><span class="sec-num">1</span><h2 id="h-decision">Decision requested</h2></div>
+      <div class="decision">
+        <p class="ask">Approve this reference architecture and its Protected B security baseline as the starting point for new line-of-business applications.</p>
+        <div class="scope">
+          <div>
+            <h3>Approval covers</h3>
+            <ul>
+              <li>The technology choices in section 2</li>
+              <li>The security baseline in section 5</li>
+              <li>Hosting on IIS or Azure App Service, section 8</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Reviewed separately</h3>
+            <ul>
+              <li>Visual design, in a later phase</li>
+              <li>Each application's own security, privacy and data assessments</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="sec" id="glance" aria-labelledby="h-glance">
+      <div class="sec-head"><span class="sec-num">2</span><h2 id="h-glance">At a glance</h2></div>
+      <p class="claim">Every new application starts out with sign-in, permissions, an audit trail, live updates and both official languages already working.</p>
+      <div class="tiles">
+        <div class="tile"><span class="k">UI host</span><span class="v">Blazor Server on .NET 10 LTS</span><span class="why">Business objects and data stay on the server.</span></div>
+        <div class="tile"><span class="k">Business layer</span><span class="v">CSLA 10.2</span><span class="why">Validation and permissions live in one place.</span></div>
+        <div class="tile"><span class="k">Database</span><span class="v">PostgreSQL</span><span class="why">Data, audit trail and live-update messages in one engine.</span></div>
+        <div class="tile"><span class="k">Sign-in</span><span class="v">Microsoft Entra ID</span><span class="why">Single sign-on with MFA. Roles are kept in the app's database.</span></div>
+        <div class="tile"><span class="k">Design system</span><span class="v">GC Design System 1.7</span><span class="why">The official GC component library, served from our own servers.</span></div>
+        <div class="tile"><span class="k">Hosting</span><span class="v">IIS or App Service</span><span class="why">The same build runs on one instance or many.</span></div>
+        <div class="tile"><span class="k">Security</span><span class="v">Protected B baseline</span><span class="why">ITSG-33 controls are part of the template from day one.</span></div>
+        <div class="tile"><span class="k">Languages</span><span class="v">English and French</span><span class="why">Every label, message and lookup value.</span></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="sec" id="architecture" aria-labelledby="h-arch">
+      <div class="sec-head"><span class="sec-num">3</span><h2 id="h-arch">Architecture</h2></div>
+      <p class="claim">The browser only receives the rendered screen. Every rule and permission check runs in the CSLA business layer on the server before any data reaches the database.</p>
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 940 470" role="img" aria-label="Browser connects over SignalR to an app instance. Inside it, components call the CSLA business layer, which calls DAL interfaces implemented by the EF Core data layer, which writes to PostgreSQL over TLS. A change hub in each instance exchanges LISTEN and NOTIFY messages with PostgreSQL so other instances learn about changes. The instance signs users in with Entra ID over OIDC.">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head-fill" d="M0,0 L10,5 L0,10 z"/></marker>
+              <marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head-acc" d="M0,0 L10,5 L0,10 z"/></marker>
+            </defs>
+
+            <!-- Browser -->
+            <rect class="d-box" x="10" y="150" width="150" height="150" rx="6"/>
+            <text class="d-title" x="85" y="180" text-anchor="middle">Browser</text>
+            <text class="d-text" x="85" y="205" text-anchor="middle">GC Design System</text>
+            <text class="d-text" x="85" y="223" text-anchor="middle">components</text>
+            <text class="d-muted" x="85" y="258" text-anchor="middle">Rendered UI only.</text>
+            <text class="d-muted" x="85" y="276" text-anchor="middle">No business objects.</text>
+
+            <line class="d-line" x1="162" y1="225" x2="248" y2="225" marker-start="url(#ah)" marker-end="url(#ah)"/>
+            <text class="d-label" x="205" y="214" text-anchor="middle">SignalR</text>
+            <text class="d-muted" x="205" y="244" text-anchor="middle">WebSocket</text>
+
+            <!-- App instance -->
+            <rect class="d-host" x="250" y="20" width="450" height="410" rx="8"/>
+            <text class="d-cap" x="270" y="46">APP INSTANCE · IIS OR APP SERVICE</text>
+
+            <rect class="d-box" x="270" y="70" width="270" height="56" rx="5"/>
+            <text class="d-title" x="286" y="94">Csla* components</text>
+            <text class="d-muted" x="286" y="113">forms · tables · fields · history</text>
+
+            <line class="d-line" x1="405" y1="126" x2="405" y2="152" marker-end="url(#ah)"/>
+            <text class="d-muted" x="414" y="144">binds to</text>
+
+            <rect class="d-key" x="270" y="154" width="270" height="56" rx="5"/>
+            <text class="d-title" x="286" y="178">Business layer · CSLA 10.2</text>
+            <text class="d-text" x="286" y="197">validation · permissions · data portal</text>
+
+            <line class="d-line" x1="405" y1="210" x2="405" y2="236" marker-end="url(#ah)"/>
+            <text class="d-muted" x="414" y="228">calls</text>
+
+            <rect class="d-box" x="270" y="238" width="270" height="56" rx="5"/>
+            <text class="d-title" x="286" y="262">DAL interfaces</text>
+            <text class="d-muted" x="286" y="281">one per business object · fakes in tests</text>
+
+            <line class="d-line" x1="405" y1="294" x2="405" y2="320" marker-end="url(#ah)"/>
+            <text class="d-muted" x="414" y="312">implemented by</text>
+
+            <rect class="d-box" x="270" y="322" width="270" height="56" rx="5"/>
+            <text class="d-title" x="286" y="346">Data · EF Core + Npgsql</text>
+            <text class="d-muted" x="286" y="365">audit capture · drafts · change events</text>
+
+            <!-- Change hub -->
+            <rect class="d-box" x="580" y="70" width="100" height="56" rx="5"/>
+            <text class="d-title" x="630" y="94" text-anchor="middle">Change hub</text>
+            <text class="d-muted" x="630" y="113" text-anchor="middle">+ presence</text>
+            <line class="d-line" x1="580" y1="98" x2="542" y2="98" marker-end="url(#ah)"/>
+            <text class="d-muted" x="561" y="88" text-anchor="middle">push</text>
+            <line class="d-line d-dash" x1="540" y1="350" x2="630" y2="350"/>
+            <line class="d-line d-dash" x1="630" y1="350" x2="630" y2="128" marker-end="url(#ah)"/>
+            <text class="d-muted" x="638" y="240">after</text>
+            <text class="d-muted" x="638" y="256">commit</text>
+
+            <!-- Entra -->
+            <rect class="d-box" x="760" y="20" width="160" height="56" rx="5"/>
+            <text class="d-title" x="840" y="44" text-anchor="middle">Entra ID</text>
+            <text class="d-muted" x="840" y="63" text-anchor="middle">sign-in · MFA</text>
+            <line class="d-line" x1="702" y1="48" x2="758" y2="48" marker-end="url(#ah)"/>
+            <text class="d-label" x="730" y="38" text-anchor="middle">OIDC</text>
+
+            <!-- PostgreSQL -->
+            <path class="d-box" d="M760,240 v120 a80,12 0 0 0 160,0 v-120"/>
+            <ellipse class="d-box" cx="840" cy="240" rx="80" ry="12"/>
+            <text class="d-title" x="840" y="280" text-anchor="middle">PostgreSQL</text>
+            <text class="d-text" x="840" y="302" text-anchor="middle">app data · audit</text>
+            <text class="d-text" x="840" y="320" text-anchor="middle">drafts · keys</text>
+
+            <line class="d-line" x1="542" y1="364" x2="758" y2="364" marker-end="url(#ah)"/>
+            <text class="d-label" x="650" y="386" text-anchor="middle">SQL over TLS</text>
+            <text class="d-muted" x="650" y="403" text-anchor="middle">least-privilege role</text>
+
+            <polyline class="d-line-acc" points="682,98 840,98 840,226" marker-start="url(#ah-acc)" marker-end="url(#ah-acc)"/>
+            <text class="d-label-acc" x="760" y="88" text-anchor="middle">LISTEN / NOTIFY</text>
+
+            <!-- Other instances -->
+            <rect class="d-box-dash" x="760" y="404" width="160" height="50" rx="5"/>
+            <text class="d-text" x="840" y="426" text-anchor="middle">More instances</text>
+            <text class="d-muted" x="840" y="443" text-anchor="middle">same build</text>
+            <line class="d-line-acc d-dash" x1="840" y1="402" x2="840" y2="374" marker-start="url(#ah-acc)" marker-end="url(#ah-acc)"/>
+          </svg>
+        </div>
+        <figcaption>Each user's session stays on one app instance. Instances coordinate through PostgreSQL, so no extra messaging service (Redis, Azure SignalR Service) is needed. Arrows show calls. Red marks the cross-instance path.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 4 -->
+    <section class="sec" id="live" aria-labelledby="h-live">
+      <div class="sec-head"><span class="sec-num">4</span><h2 id="h-live">Live updates</h2></div>
+      <p class="claim">A save only reaches the screens that have that record open, so the cost grows with the number of viewers, not with the number of users.</p>
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 900 360" role="img" aria-label="User A saves Project 42 on instance 1. Instance 1 checks rules and permissions, writes the change and its audit rows in one transaction, commits, and sends NOTIFY. PostgreSQL delivers the notice to instance 2, which finds the one open form for Project 42. If User B's form has no unsaved edits it reloads and highlights the changes; if it has edits, a banner appears and the edits are kept.">
+            <defs>
+              <marker id="sh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head-fill" d="M0,0 L10,5 L0,10 z"/></marker>
+              <marker id="sh-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head-acc" d="M0,0 L10,5 L0,10 z"/></marker>
+            </defs>
+            <!-- Heads -->
+            <rect class="d-box" x="15" y="14" width="150" height="48" rx="5"/>
+            <text class="d-title" x="90" y="35" text-anchor="middle">User A</text>
+            <text class="d-muted" x="90" y="53" text-anchor="middle">browser</text>
+            <rect class="d-box" x="195" y="14" width="150" height="48" rx="5"/>
+            <text class="d-title" x="270" y="35" text-anchor="middle">Instance 1</text>
+            <text class="d-muted" x="270" y="53" text-anchor="middle">app server</text>
+            <rect class="d-box" x="375" y="14" width="150" height="48" rx="5"/>
+            <text class="d-title" x="450" y="35" text-anchor="middle">PostgreSQL</text>
+            <text class="d-muted" x="450" y="53" text-anchor="middle">database</text>
+            <rect class="d-box" x="555" y="14" width="150" height="48" rx="5"/>
+            <text class="d-title" x="630" y="35" text-anchor="middle">Instance 2</text>
+            <text class="d-muted" x="630" y="53" text-anchor="middle">app server</text>
+            <rect class="d-box" x="735" y="14" width="150" height="48" rx="5"/>
+            <text class="d-title" x="810" y="35" text-anchor="middle">User B</text>
+            <text class="d-muted" x="810" y="53" text-anchor="middle">has Project 42 open</text>
+            <!-- Lifelines -->
+            <line class="d-life" x1="90" y1="62" x2="90" y2="350"/>
+            <line class="d-life" x1="270" y1="62" x2="270" y2="350"/>
+            <line class="d-life" x1="450" y1="62" x2="450" y2="350"/>
+            <line class="d-life" x1="630" y1="62" x2="630" y2="350"/>
+            <line class="d-life" x1="810" y1="62" x2="810" y2="350"/>
+            <!-- Messages -->
+            <line class="d-line" x1="90" y1="98" x2="268" y2="98" marker-end="url(#sh)"/>
+            <text class="d-label" x="180" y="90" text-anchor="middle">Save Project 42</text>
+            <rect class="d-act" x="200" y="114" width="140" height="26" rx="4"/>
+            <text class="d-text" x="270" y="131" text-anchor="middle">rules + permissions</text>
+            <line class="d-line" x1="270" y1="172" x2="448" y2="172" marker-end="url(#sh)"/>
+            <text class="d-label" x="360" y="164" text-anchor="middle">write + audit · commit</text>
+            <line class="d-line" x1="270" y1="204" x2="448" y2="204" marker-end="url(#sh)"/>
+            <text class="d-label" x="360" y="196" text-anchor="middle">NOTIFY project:42</text>
+            <line class="d-line-acc" x1="450" y1="238" x2="628" y2="238" marker-end="url(#sh-acc)"/>
+            <text class="d-label-acc" x="540" y="230" text-anchor="middle">delivered to listeners</text>
+            <rect class="d-act" x="555" y="254" width="150" height="26" rx="4"/>
+            <text class="d-text" x="630" y="271" text-anchor="middle">1 open form matches</text>
+            <line class="d-line" x1="630" y1="306" x2="808" y2="306" marker-end="url(#sh)"/>
+            <text class="d-label" x="720" y="298" text-anchor="middle">no edits: reload + highlight</text>
+            <line class="d-line d-dash" x1="630" y1="338" x2="808" y2="338" marker-end="url(#sh)"/>
+            <text class="d-label" x="720" y="330" text-anchor="middle">edits: banner, edits kept</text>
+          </svg>
+        </div>
+        <figcaption>Notices carry no field data, so they never reveal a record someone isn't allowed to see. They're hints, not guarantees. What prevents lost updates is the version check on every save: if User B saves over a newer version, they get a conflict dialog that shows both values.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 5 -->
+    <section class="sec" id="security" aria-labelledby="h-sec">
+      <div class="sec-head"><span class="sec-num">5</span><h2 id="h-sec">Security</h2></div>
+      <p class="claim">Access is denied by default and checked at four levels. The template meets the Protected B controls below before an app adds a single feature.</p>
+      <ol class="strip" aria-label="Authorization checks, from page to database">
+        <li><strong>Page</strong><span>Signed-in users only. Pages declare the roles they need.</span></li>
+        <li><strong>Record</strong><span>Users only load records they're entitled to see. Edit and delete are checked per record.</span></li>
+        <li><strong>Field</strong><span>Who may see or change each field. Hidden or read-only automatically.</span></li>
+        <li><strong>Database</strong><span>The app's account can't change schema or edit the audit trail.</span></li>
+      </ol>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">ITSG-33 control</th><th scope="col">How the starter meets it</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><span class="ctl">AC-3 · AC-6</span>Access enforcement, least privilege</th><td>Deny by default. Role checks on pages and individual fields. Each user only ever loads the records they're entitled to. The app connects to the database with a data-only role.</td></tr>
+            <tr><th scope="row"><span class="ctl">AC-11 · AC-12</span>Session lock and termination</th><td>20-minute idle timeout with a 2-minute warning, and an 8-hour absolute limit. Unsaved work is kept as a draft.</td></tr>
+            <tr><th scope="row"><span class="ctl">AU-2 · AU-3 · AU-12</span>Audit events and content</th><td>Every change records user, time, field, old value and new value. Sign-ins, access denials and role changes are logged.</td></tr>
+            <tr><th scope="row"><span class="ctl">AU-9</span>Protection of audit information</th><td>The app can only add audit rows. A database trigger blocks edits and deletes.</td></tr>
+            <tr><th scope="row"><span class="ctl">IA-2</span>Identification and authentication</th><td>Entra ID single sign-on, with MFA enforced through Conditional Access.</td></tr>
+            <tr><th scope="row"><span class="ctl">SC-8</span>Transmission confidentiality</th><td>HTTPS with HSTS. TLS to the database with certificate verification.</td></tr>
+            <tr><th scope="row"><span class="ctl">SC-12 · SC-28</span>Key management, data at rest</th><td>Encryption keys are stored in the database, protected by a certificate (IIS) or Key Vault (Azure). Drafts are encrypted. Azure data stays in Canada Central or Canada East.</td></tr>
+            <tr><th scope="row"><span class="ctl">SC-18 · SC-23</span>Mobile code, session authenticity</th><td>A strict Content Security Policy allows scripts only from our own server. Host-only, secure, HttpOnly cookies. Antiforgery tokens on every form.</td></tr>
+            <tr><th scope="row"><span class="ctl">SI-10 · SI-11</span>Input validation, error handling</th><td>All validation runs on the server, in CSLA. Users see a reference number, never system details.</td></tr>
+            <tr><th scope="row"><span class="ctl">RA-5 · SA-11</span>Vulnerability scanning, developer testing</th><td>The build fails on vulnerable packages. CodeQL scanning, automated security tests, and a software bill of materials with each release.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Also built in: WCAG 2.1 AA accessibility (EN 301 549), English and French under the Official Languages Act, and Federal Identity Program elements in the page shell.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="sec" id="audit" aria-labelledby="h-audit">
+      <div class="sec-head"><span class="sec-num">6</span><h2 id="h-audit">Audit and history</h2></div>
+      <p class="claim">Every change is recorded with its old and new values, and any record can show its full history to the people allowed to see it.</p>
+      <div class="audit">
+        <figure>
+          <div class="hist" role="img" aria-label="Example history panel for a project, showing three entries with dates, users and old and new values.">
+            <div class="hist-head"><strong>Project 42 · History</strong><span>Example</span></div>
+            <ol>
+              <li>
+                <div class="who"><b>J. Tremblay</b><span>2026-11-12 10:42</span><span>Updated</span></div>
+                <dl class="chg">
+                  <dt>Budget</dt><dd><span class="old">$120,000</span> → <span class="new">$135,000</span></dd>
+                  <dt>Status</dt><dd><span class="old">Active</span> → <span class="new">On hold</span></dd>
+                </dl>
+              </li>
+              <li>
+                <div class="who"><b>A. Singh</b><span>2026-11-10 15:05</span><span>Updated</span></div>
+                <dl class="chg">
+                  <dt>Contract number</dt><dd><span class="masked">changed (sensitive, value not shown)</span></dd>
+                  <dt>Client contact</dt><dd><span class="old">M. Okafor</span> → <span class="new">R. Chen</span></dd>
+                </dl>
+              </li>
+              <li>
+                <div class="who"><b>J. Tremblay</b><span>2026-11-03 09:18</span><span>Created</span></div>
+              </li>
+            </ol>
+          </div>
+          <figcaption>Field names and coded values (such as Status) appear in the reader's language.</figcaption>
+        </figure>
+        <ul class="facts">
+          <li><strong>Automatic</strong>Changes are captured in the same database transaction as the save, so no change can be saved without its audit record.</li>
+          <li><strong>Permission-aware</strong>Fields a user can't read aren't shown. Sensitive fields record that they changed, without the values.</li>
+          <li><strong>Tamper-resistant</strong>The app can only add audit rows. Edits and deletes are blocked in the database.</li>
+          <li><strong>Traceable</strong>Each entry carries the same reference number as the logs, for investigations.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="sec" id="components" aria-labelledby="h-comp">
+      <div class="sec-head"><span class="sec-num">7</span><h2 id="h-comp">Reusable components</h2></div>
+      <p class="claim">All screen components inherit one base component, so each behaviour is written and tested once. A field never repeats a rule. Its label, required marker, length limit, errors and permissions all come from the CSLA object.</p>
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 900 312" role="img" aria-label="Inheritance tree. CslaBaseComponent is the parent of CslaBaseComponent of T, CslaFieldBase, CslaButton, CslaHistory and the page helpers. CslaForm and CslaTable inherit CslaBaseComponent of T. Seven field components inherit CslaFieldBase.">
+            <rect class="d-key" x="250" y="14" width="400" height="52" rx="5"/>
+            <text class="d-title" x="450" y="37" text-anchor="middle">CslaBaseComponent</text>
+            <text class="d-text" x="450" y="56" text-anchor="middle">busy · errors · notifications · live updates · permissions · disposal</text>
+            <line class="d-line" x1="450" y1="66" x2="450" y2="88"/>
+            <line class="d-line" x1="100" y1="88" x2="800" y2="88"/>
+            <line class="d-line" x1="100" y1="88" x2="100" y2="108"/>
+            <line class="d-line" x1="275" y1="88" x2="275" y2="108"/>
+            <line class="d-line" x1="450" y1="88" x2="450" y2="108"/>
+            <line class="d-line" x1="625" y1="88" x2="625" y2="108"/>
+            <line class="d-line" x1="800" y1="88" x2="800" y2="108"/>
+
+            <rect class="d-box" x="20" y="108" width="160" height="50" rx="5"/>
+            <text class="d-title" x="100" y="130" text-anchor="middle">CslaBaseComponent&lt;T&gt;</text>
+            <text class="d-muted" x="100" y="148" text-anchor="middle">holds one record or list</text>
+            <rect class="d-box" x="195" y="108" width="160" height="50" rx="5"/>
+            <text class="d-title" x="275" y="130" text-anchor="middle">CslaFieldBase</text>
+            <text class="d-muted" x="275" y="148" text-anchor="middle">binds one property</text>
+            <rect class="d-box" x="370" y="108" width="160" height="50" rx="5"/>
+            <text class="d-title" x="450" y="130" text-anchor="middle">CslaButton</text>
+            <text class="d-muted" x="450" y="148" text-anchor="middle">save · cancel · delete · new</text>
+            <rect class="d-box" x="545" y="108" width="160" height="50" rx="5"/>
+            <text class="d-title" x="625" y="130" text-anchor="middle">CslaHistory</text>
+            <text class="d-muted" x="625" y="148" text-anchor="middle">record or field timeline</text>
+            <rect class="d-box-dash" x="720" y="108" width="160" height="50" rx="5"/>
+            <text class="d-title" x="800" y="130" text-anchor="middle">Page helpers</text>
+            <text class="d-muted" x="800" y="148" text-anchor="middle">inherit the base directly</text>
+
+            <line class="d-line" x1="34" y1="158" x2="34" y2="208"/>
+            <line class="d-line" x1="34" y1="184" x2="44" y2="184"/><text class="d-text" x="50" y="188">CslaForm&lt;T&gt;</text>
+            <line class="d-line" x1="34" y1="208" x2="44" y2="208"/><text class="d-text" x="50" y="212">CslaTable&lt;T&gt;</text>
+
+            <line class="d-line" x1="209" y1="158" x2="209" y2="292"/>
+            <line class="d-line" x1="209" y1="184" x2="219" y2="184"/><text class="d-text" x="225" y="188">CslaTextField</text>
+            <line class="d-line" x1="209" y1="202" x2="219" y2="202"/><text class="d-text" x="225" y="206">CslaTextArea</text>
+            <line class="d-line" x1="209" y1="220" x2="219" y2="220"/><text class="d-text" x="225" y="224">CslaNumberField</text>
+            <line class="d-line" x1="209" y1="238" x2="219" y2="238"/><text class="d-text" x="225" y="242">CslaDateField</text>
+            <line class="d-line" x1="209" y1="256" x2="219" y2="256"/><text class="d-text" x="225" y="260">CslaSelect</text>
+            <line class="d-line" x1="209" y1="274" x2="219" y2="274"/><text class="d-text" x="225" y="278">CslaCheckbox</text>
+            <line class="d-line" x1="209" y1="292" x2="219" y2="292"/><text class="d-text" x="225" y="296">CslaRadioGroup</text>
+
+            <text class="d-text" x="734" y="188">CslaErrorSummary</text>
+            <text class="d-text" x="734" y="206">CslaChangeBanner</text>
+            <text class="d-text" x="734" y="224">CslaPresence</text>
+            <text class="d-text" x="734" y="242">CslaConflictDialog</text>
+            <text class="d-text" x="734" y="260">CslaSessionTimeout</text>
+            <text class="d-text" x="734" y="278">CslaLanguageToggle</text>
+            <text class="d-text" x="734" y="296">CslaToastHost</text>
+          </svg>
+        </div>
+        <figcaption>Each component is a <code>.razor</code> file for markup and a <code>.razor.cs</code> file for code. This phase delivers the code. The visual design comes in a later phase, using GC Design System components.</figcaption>
+      </figure>
+      <div class="groups">
+        <div class="group"><h3>Rules on screen</h3><ul class="chips"><li>Required marker from rules</li><li>Length limit from rules</li><li>Errors, warnings, information</li><li>"Checking…" for slow rules</li><li>Error summary with focus</li></ul></div>
+        <div class="group"><h3>Protecting work</h3><ul class="chips"><li>Unsaved-changes guard</li><li>Drafts and recovery</li><li>Cancel restores values</li><li>"Someone saved first" handling</li><li>Language switch keeps edits</li></ul></div>
+        <div class="group"><h3>Working together</h3><ul class="chips"><li>Live refresh</li><li>"Jane is also editing"</li><li>Changed fields highlighted</li><li>Field history</li></ul></div>
+        <div class="group"><h3>Security</h3><ul class="chips"><li>Fields hidden or read-only by role</li><li>Buttons follow permissions</li><li>Masked fields, audited reveal</li><li>Session timeout warning</li></ul></div>
+        <div class="group"><h3>Feedback</h3><ul class="chips"><li>Busy state</li><li>Bilingual notifications</li><li>Screen reader announcements</li><li>Errors with reference number</li></ul></div>
+        <div class="group"><h3>Operations</h3><ul class="chips"><li>Keyboard shortcuts</li><li>Load and save timing per screen</li><li>Work stopped when you leave a page</li></ul></div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="sec" id="hosting" aria-labelledby="h-host">
+      <div class="sec-head"><span class="sec-num">8</span><h2 id="h-host">Hosting</h2></div>
+      <p class="claim">The same build deploys to on-premises IIS or Azure App Service, on one instance or several, without code changes.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col"></th><th scope="col">On-premises IIS</th><th scope="col">Azure App Service</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Runtime</th><td>.NET 10 Hosting Bundle</td><td>.NET 10 (Windows or Linux)</td></tr>
+            <tr><th scope="row">Connections</th><td>WebSocket feature enabled</td><td>WebSockets turned on</td></tr>
+            <tr><th scope="row">Several instances</th><td>ARR with session affinity</td><td>Session affinity on (default)</td></tr>
+            <tr><th scope="row">Secrets</th><td>Protected configuration</td><td>Key Vault and managed identity</td></tr>
+            <tr><th scope="row">Encryption keys</th><td>In PostgreSQL, protected by certificate</td><td>In PostgreSQL, protected by Key Vault</td></tr>
+            <tr><th scope="row">Database</th><td>PostgreSQL with TLS and disk encryption</td><td>PostgreSQL Flexible Server, Entra sign-in, no password</td></tr>
+            <tr><th scope="row">Live updates</th><td colspan="2">PostgreSQL LISTEN / NOTIFY in both. No Redis or Azure SignalR Service required.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Health endpoints report database, live-update listener and reference-data status for monitoring and load balancers.</p>
+    </section>
+
+    <!-- 9 -->
+    <section class="sec" id="quality" aria-labelledby="h-qual">
+      <div class="sec-head"><span class="sec-num">9</span><h2 id="h-qual">Quality</h2></div>
+      <p class="claim">Every rule, permission and component is covered by automated tests. A fake Entra ID runs in a container, so the full sign-in flow is tested without a real tenant.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Layer</th><th scope="col">Proves</th><th scope="col">Tools</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Business</th><td>Every rule and every role × field × action</td><td class="min">xUnit, Csla.Testing</td></tr>
+            <tr><th scope="row">Components</th><td>Labels, errors, permissions, busy and unsaved states</td><td class="min">bUnit</td></tr>
+            <tr><th scope="row">Integration</th><td>Real PostgreSQL, audit, conflicts, two instances exchanging updates</td><td class="min">Testcontainers</td></tr>
+            <tr><th scope="row">End to end</th><td>Sign-in, roles, language switch, live updates across two browsers, accessibility scan</td><td class="min">Playwright, axe</td></tr>
+            <tr><th scope="row">Architecture</th><td>Layer boundaries, coding conventions, every label translated</td><td class="min">Automated rules</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">The build fails on any compiler warning, any vulnerable package, or coverage below 80% for business and component code.</p>
+    </section>
+
+    <!-- 10 -->
+    <section class="sec" id="delivery" aria-labelledby="h-del">
+      <div class="sec-head"><span class="sec-num">10</span><h2 id="h-del">Delivery</h2></div>
+      <p class="claim">Seven phases, each ending in working, tested code. Work is tracked on the DEV Jira board.</p>
+      <ol class="phases">
+        <li><b>Foundation</b><span>Repository, build rules, CI</span></li>
+        <li><b>Data and security</b><span>Database, audit, sign-in, headers</span></li>
+        <li><b>Business layer</b><span>CSLA base classes, sample features</span></li>
+        <li><b>Live updates</b><span>Change hub, presence, drafts</span></li>
+        <li><b>Components</b><span>Base component and all behaviours</span></li>
+        <li><b>Hardening</b><span>End-to-end tests, template packaging</span></li>
+        <li class="later"><b>Visual design</b><span>Later phase, GC Design System</span></li>
+      </ol>
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 760 210" role="img" aria-label="Code moves from a feature branch to the claude branch through a pull request with all tests passing. An automatic sync copies it to main with the AI-assistant files removed, and a check fails the build if one ever reaches main. New apps are created from the claude branch with dotnet new, with the AI guides optional.">
+            <defs><marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head-fill" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+            <rect class="d-box" x="20" y="30" width="150" height="52" rx="5"/>
+            <text class="d-title" x="95" y="53" text-anchor="middle">Feature branch</text>
+            <text class="d-muted" x="95" y="71" text-anchor="middle">DEV-&lt;n&gt;-&lt;name&gt;</text>
+            <line class="d-line" x1="170" y1="56" x2="298" y2="56" marker-end="url(#bh)"/>
+            <text class="d-label" x="234" y="46" text-anchor="middle">pull request</text>
+            <text class="d-muted" x="234" y="74" text-anchor="middle">all tests pass</text>
+            <rect class="d-box" x="300" y="30" width="150" height="52" rx="5"/>
+            <text class="d-title" x="375" y="53" text-anchor="middle">claude</text>
+            <text class="d-muted" x="375" y="71" text-anchor="middle">code + AI guides</text>
+            <line class="d-line" x1="450" y1="56" x2="578" y2="56" marker-end="url(#bh)"/>
+            <text class="d-label" x="514" y="46" text-anchor="middle">automatic sync</text>
+            <text class="d-muted" x="514" y="74" text-anchor="middle">AI files removed</text>
+            <rect class="d-key" x="580" y="30" width="150" height="52" rx="5"/>
+            <text class="d-title" x="655" y="53" text-anchor="middle">main</text>
+            <text class="d-text" x="655" y="71" text-anchor="middle">clean, protected</text>
+            <text class="d-muted" x="655" y="108" text-anchor="middle">A check fails the build</text>
+            <text class="d-muted" x="655" y="124" text-anchor="middle">if an AI file reaches main.</text>
+            <line class="d-line" x1="375" y1="82" x2="375" y2="146" marker-end="url(#bh)"/>
+            <text class="d-label" x="387" y="110">dotnet new</text>
+            <text class="d-muted" x="387" y="126">AI guides optional</text>
+            <rect class="d-box" x="300" y="148" width="150" height="52" rx="5"/>
+            <text class="d-title" x="375" y="171" text-anchor="middle">New app</text>
+            <text class="d-muted" x="375" y="189" text-anchor="middle">ready to build</text>
+          </svg>
+        </div>
+        <figcaption>The <code>claude</code> branch also carries guidance files for the AI coding assistant, and <code>main</code> never contains them. New apps can include those guides or leave them out with a template option.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 11 -->
+    <section class="sec" id="alternatives" aria-labelledby="h-alt">
+      <div class="sec-head"><span class="sec-num">11</span><h2 id="h-alt">Alternatives considered</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Area</th><th scope="col">Chosen</th><th scope="col">Rejected</th><th scope="col">Why rejected</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">UI hosting</th><td class="chosen">Blazor Server</td><td>Blazor WebAssembly or Auto</td><td>Business objects and data would run in the browser, which widens the attack surface.</td></tr>
+            <tr><th scope="row">UI hosting</th><td class="chosen">Blazor Server</td><td>MVC or Razor Pages</td><td>No live updates or rich forms without a separate front-end framework.</td></tr>
+            <tr><th scope="row">Design system</th><td class="chosen">GC Design System</td><td>WET / GCWeb</td><td>Built on jQuery, which clashes with how Blazor updates the page.</td></tr>
+            <tr><th scope="row">Cross-server updates</th><td class="chosen">PostgreSQL LISTEN / NOTIFY</td><td>Redis, Azure SignalR Service</td><td>Extra infrastructure. SignalR Service is cloud-only and needs its own Protected B assessment.</td></tr>
+            <tr><th scope="row">Record-level access</th><td class="chosen">Filtered at the query, checked by rules</td><td>Business rules only</td><td>A rule can allow or deny one record but can't filter a list. Filtering after loading would pull hidden data out of the database and break paging.</td></tr>
+            <tr><th scope="row">Audit capture</th><td class="chosen">In the app, same transaction</td><td>Database triggers only</td><td>Triggers can't see who is signed in.</td></tr>
+            <tr><th scope="row">Unsaved drafts</th><td class="chosen">Server-side, encrypted</td><td>Browser storage</td><td>It would leave Protected B data on the user's device.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="sec" id="risks" aria-labelledby="h-risk">
+      <div class="sec-head"><span class="sec-num">12</span><h2 id="h-risk">Risks</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Risk</th><th scope="col" class="min">Level</th><th scope="col">Mitigation</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Blazor Server keeps a live connection per user, which needs sticky sessions and server memory</th><td class="min"><span class="pill med">Medium</span></td><td>Drafts survive dropped connections. Connection limits are configured. Load test before the first production app.</td></tr>
+            <tr><th scope="row">Direct database edits bypass the app's audit trail</th><td class="min"><span class="pill med">Medium</span></td><td>Restricted database accounts, triggers that block audit changes, database-level auditing (pgAudit) for administrators.</td></tr>
+            <tr><th scope="row">No official GC Design System package for Blazor</th><td class="min"><span class="pill med">Medium</span></td><td>Thin wrappers pinned to version 1.7, which promises a stable API across 1.x. Covered by component and browser tests.</td></tr>
+            <tr><th scope="row">CSLA is a specialised skill</th><td class="min"><span class="pill med">Medium</span></td><td>Step-by-step guides, scaffolding and tests in the template. CSLA is open source (MIT) and actively maintained.</td></tr>
+            <tr><th scope="row">A live-update notice can be missed during a network blip</th><td class="min"><span class="pill low">Low</span></td><td>Screens resync after reconnecting. The version check on save still prevents lost updates.</td></tr>
+            <tr><th scope="row">.NET 10 support ends November 2028</th><td class="min"><span class="pill low">Low</span></td><td>Documented upgrade path to the next long-term release. Centrally managed package versions keep upgrades small.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="doc-foot">
+      <p>A detailed technical design backs this document and is available on request.</p>
+      <p>Versions referenced: .NET 10 (LTS), CSLA 10.2.0, EF Core 10 with Npgsql 10, GC Design System 1.7.0.</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  try {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.index a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var current = null;
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          if (current) current.removeAttribute('aria-current');
+          current = map[e.target.id];
+          if (current) {
+            current.setAttribute('aria-current', 'true');
+            if (current.scrollIntoView && window.matchMedia('(max-width: 880px)').matches) {
+              current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }
+          }
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('main .sec').forEach(function (s) { obs.observe(s); });
+  } catch (err) { /* the page works without the active-section highlight */ }
+})();
+</script>
+</body>
+</html>
