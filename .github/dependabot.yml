@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    target-branch: claude
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: DEV-38
+    groups:
+      nuget-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Major versions follow the .NET release we target (spec: stay on 10.x); upgrade them deliberately.
+      - dependency-name: "Microsoft.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Npgsql*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "EFCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Csla*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: claude
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: DEV-38
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
