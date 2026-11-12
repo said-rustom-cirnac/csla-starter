@@ -14,6 +14,8 @@ This file is about building the CSLA Starter template itself. The `dotnet new` t
 - `docs/superpowers/` and this file are about the template. Generated apps never get them, even with `--claude`.
 - With `--claude false`, the template also leaves out `.claude/`, every `CLAUDE.md`, `docs/claude/`, `.impeccable/`, `sync-main.yml` and `guard-main.yml`.
 - Guides under `docs/claude/` must describe any app made from the template, not this repository's history.
+- A new app's repository needs the one-time first sync described in `workflow.md`, because `sync-main.yml` only starts from `main`. The template's README must say so.
+- Generated apps drop the root `CLAUDE.md` line that points to this file.
 
 ## Repository settings
 

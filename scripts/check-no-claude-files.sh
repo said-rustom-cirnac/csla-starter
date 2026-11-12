@@ -19,10 +19,10 @@ else
 fi
 export CLAUDE_PATHS_FILE="$work/paths.txt"
 
-found="$(git -c core.quotePath=false ls-tree -r --name-only "$ref" | claude_paths_filter)"
-if [[ -n "$found" ]]; then
-  while IFS= read -r path; do
+git ls-tree -r -z --name-only "$ref" | claude_paths_filter > "$work/found"
+if [[ -s "$work/found" ]]; then
+  while IFS= read -r -d '' path; do
     echo "Claude-only file on $ref: $path"
-  done <<< "$found"
+  done < "$work/found"
   exit 1
 fi
