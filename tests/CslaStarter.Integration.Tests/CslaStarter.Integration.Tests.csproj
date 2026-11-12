@@ -10,6 +10,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CslaStarter.Data\CslaStarter.Data.csproj" />
     <ProjectReference Include="..\..\src\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\CslaStarter.Web\CslaStarter.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

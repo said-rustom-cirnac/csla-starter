@@ -34,10 +34,13 @@ public sealed class TestDatabase
         return new AppDbContext(options.Options);
     }
 
-    public async Task<Guid> AddUserAsync(string displayName, params int[] roleCodes)
+    public Task<Guid> AddUserAsync(string displayName, params int[] roleCodes) =>
+        AddUserAsync(displayName, Guid.NewGuid().ToString(), true, roleCodes);
+
+    public async Task<Guid> AddUserAsync(string displayName, string objectId, bool isActive, params int[] roleCodes)
     {
         await using var context = CreateContext();
-        var user = new AppUser { TenantId = "tenant-1", ObjectId = Guid.NewGuid().ToString(), DisplayName = displayName };
+        var user = new AppUser { TenantId = "tenant-1", ObjectId = objectId, DisplayName = displayName, IsActive = isActive };
         foreach (var code in roleCodes)
         {
             user.Roles.Add(new UserRole { RoleTypeCode = code });
