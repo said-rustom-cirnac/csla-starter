@@ -4,21 +4,35 @@ CSLA 10.2 business objects: validation, permissions and data portal operations. 
 
 **May reference:** Core, Dal, and the `Csla` package. Never EF Core or Npgsql.
 
+## Layout
+
+| Folder | Holds |
+|---|---|
+| `Base/` | `AppBusinessBase<T>`, `AppRootBase<T>`, `RuleInspector` |
+| `Types/` | `CslaType<T>`, `CslaTypeList`, `UserRoleType`, `ProjectStatusType` |
+| `Rules/` | `HasRole`, `IsSignedIn`, `SupportedLanguage` |
+| `Security/` | `CslaCurrentUser`, `CslaDataAccessContext` |
+| `Users/` | `UserEdit`, `UserProfile`, `UserList` |
+| `Projects/` | the sample feature |
+
 ## Rules
 
-- Follow the class layout in [conventions](../../docs/claude/conventions.md): registrations, properties, rules, data portal operations.
-- Every property has `[LocalizedDisplayName(nameof(Labels.Key))]`.
-- Rule messages use the `Func<string>` overloads. Rules are registered once per type per process, so a string captured at registration time would be stuck in one language.
-- **Role checks:** `HasRole(action, [property], params int[] roleCodes)`. CSLA evaluates only the **first** rule per (property, action), so put every allowed role in one rule.
-- **Lookups:** `*Type` classes derive from `CslaType<T>` and expose `public const int` codes.
+- **Class layout:** registrations, properties, rules, object authorization, data portal operations, enforced by tests. See [business objects](../../docs/claude/business-objects.md).
+- **Labels:** every registered property has `[LocalizedDisplayName(nameof(Labels.Key))]` in both languages, enforced by tests.
+- **Rule messages** use `Func<string>` overloads that read `Messages`.
+- **Role checks:** `HasRole(action, [property], params int[] UserRoleType codes)`, one rule per (property, action).
+- **Async rules** that need data run a command through the data portal; they never resolve a DAL directly.
+- **Aggregates save as one DTO round trip** and reload from the result. Children never call the DAL.
+- **Criteria are primitives**, not records or `CriteriaBase`.
 
 ## CSLA gotchas
 
-- Saving returns a new instance (`AutoCloneOnUpdate`): always `obj = await obj.SaveAsync()`.
-- Each data portal call runs in a new DI scope, off the UI thread. The user, culture and origin reach the data layer through `ApplicationContext`, not through scoped services.
-- `SetProperty` throws without write permission. `GetProperty` returns the default without read permission.
-- Field types must be types MobileFormatter supports: primitives, string, decimal, DateTime/DateTimeOffset, DateOnly/TimeOnly, Guid, byte[], enums, and nullable versions. No `List<string>`, dictionaries or POCOs; use child objects instead.
+- Saving returns a new instance: always `obj = await obj.SaveAsync()`.
+- A CSLA object keeps its scope's `ApplicationContext`, so never cache or share one across users. (`TypeDal` caches lookup rows instead.)
+- Each data portal call runs in a new DI scope. The user, culture and origin come through `ApplicationContext`.
+- `SetProperty` throws without write permission. `GetProperty` returns the default (`""` or `null`) without read permission.
+- Field types must be types MobileFormatter supports: primitives, string, decimal, DateTime/DateTimeOffset, DateOnly/TimeOnly, Guid, byte[], enums, nullables and `List<int>`. No dictionaries or POCOs.
 - With nullable reference types on, don't set properties in constructors. Use `[Create]`.
-- `UseLegacyOperationMethods` is off, so use attributed operations (`[Fetch]` and so on), never `DataPortal_XYZ`.
+- Data portal operations are instance methods (CSLA0015). `UseLegacyOperationMethods` is off.
 
-Guides: [architecture](../../docs/claude/architecture.md), [conventions](../../docs/claude/conventions.md).
+Guides: [business objects](../../docs/claude/business-objects.md), [conventions](../../docs/claude/conventions.md); recipes in [docs/claude/recipes](../../docs/claude/recipes/add-a-feature.md).

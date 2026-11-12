@@ -19,10 +19,17 @@
 | Project | Covers |
 |---|---|
 | `CslaStarter.Architecture.Tests` | Project reference graph, forbidden packages, razor file pairs, en-CA/fr-CA culture support, resource completeness, mock sign-in config, `CLAUDE.md` coverage and guide links |
-| `CslaStarter.Business.Tests` | Business objects, rules, authorization, `LocalizedDisplayName` |
+| `CslaStarter.Business.Tests` | Business objects with `CslaTestHost` and fake DALs: every rule, role × permission, the save round trip, commands, `LocalizedDisplayName` |
 | `CslaStarter.Integration.Tests` | Real PostgreSQL 18 (Testcontainers): schema, roles and grants, audit capture and append-only tables, security events, Data Protection keys, sign-in and roles, bootstrap-admin, the web host (headers, CSP, culture, health), session timeout |
 
 Later phases add `Components.Tests` (bUnit) and `E2E.Tests` (Playwright with the mock Entra ID). Add each one to this table when it's created.
+
+## Business test helpers
+
+- `CslaTestHost.Create(o => o.AsPrincipal(TestPrincipals.Admin).ConfigureServices(s => s.AddCslaStarterBusiness().AddSingleton<IXDal>(fake)))` builds a CSLA host. Fetch with `host.GetDataPortal<T>()`, and keep the host alive while you use the objects it returned.
+- `TestPrincipals.Admin`, `.Technical` and `.Client` are principals shaped like the claims transformation's output.
+- `AuthorizationRuleTester.For(rule).ForType<T>().AsUser(name, roles…)` tests one authorization rule.
+- To see an async rule's busy state, gate the fake DAL with a `TaskCompletionSource`. Then call `await obj.WaitForIdle(TimeSpan)`.
 
 ## Integration test helpers
 

@@ -55,6 +55,16 @@ The audit tables are append-only. A trigger rejects UPDATE, DELETE and TRUNCATE 
 
 `IAuditHistoryReader` (`AuditHistoryReader`) reads a record's history, its children included, newest first. It can filter to one property.
 
+## Record-level access
+
+- **Scoped entities:** entities marked `[RecordScoped]` get `HasQueryFilter(AppDbContext.RecordAccessFilter, …)` in `AppDbContext.OnModelCreating`, built from the `IDataAccessContext` the context was created for.
+  - In the sample, `ProjectAccess.SeesAllRoles` (Admin, Technical) see every project, and other users see projects they are members of.
+  - A context with no access context sees no scoped rows (fail closed).
+- **Hidden records:** a hidden record is simply not found (`NotFoundException`), so its existence never leaks.
+- **Bypassing the filter:** only code marked `[BypassRecordAccess]` may call `IgnoreQueryFilters([AppDbContext.RecordAccessFilter])`, and an architecture test enforces this. The sample's only bypass is the project code uniqueness check.
+- **No cycles:** never put filters on both sides of a navigation; EF recurses until the stack overflows. Membership rows are unfiltered and reachable only through their (filtered) project.
+- **Bulk SQL is banned:** `ExecuteUpdate`, `ExecuteDelete` and raw SQL are forbidden in Data, because they would bypass both the audit and the filter.
+
 ## Who is making the change
 
 The data layer never asks for the user directly. It reads `IDataAccessContext` (`UserId`, `UserName`, `CorrelationId`, `OriginId`). Each place that writes data registers the right one:
