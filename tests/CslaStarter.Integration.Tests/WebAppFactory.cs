@@ -12,6 +12,12 @@ public sealed class WebAppFactory(TestDatabase database) : WebApplicationFactory
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        // Same DI checks as Development: a singleton must never capture a scoped service.
+        builder.UseDefaultServiceProvider(options =>
+        {
+            options.ValidateScopes = true;
+            options.ValidateOnBuild = true;
+        });
         builder.UseSetting("ConnectionStrings:App", database.RuntimeConnectionString);
         builder.UseSetting("ConnectionStrings:Owner", database.OwnerConnectionString);
         builder.UseSetting("Authentication:Mode", "MockOidc");

@@ -18,7 +18,7 @@ public static class AuthenticationSetup
     /// <summary>
     /// Sign-in through Entra ID (Authentication:Mode = Entra, the default) or, for development and tests only, a
     /// mock OpenID Connect server (MockOidc, refused in Production). Roles come from our database; everything
-    /// requires a signed-in, active user unless an endpoint allows anonymous access.
+    /// requires a signed-in, active user with an app identity unless an endpoint allows anonymous access.
     /// </summary>
     public static IServiceCollection AddCslaStarterAuthentication(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
@@ -63,8 +63,10 @@ public static class AuthenticationSetup
         services.AddCascadingAuthenticationState();
         services.AddScoped<AuthenticationStateProvider, UserRevalidatingAuthenticationStateProvider>();
         services.AddAuthorizationBuilder()
+            // Deny by default: signed in, resolved to an app user (tid + oid were present), and still active.
             .SetFallbackPolicy(new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
+                .RequireClaim(EntraClaims.UserIdClaim)
                 .RequireAssertion(context => !context.User.HasClaim(EntraClaims.InactiveClaim, "true"))
                 .Build());
         return services;

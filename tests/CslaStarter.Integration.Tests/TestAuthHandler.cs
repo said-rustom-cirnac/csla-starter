@@ -12,6 +12,7 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
 {
     public const string SchemeName = "Test";
     public const string UserHeader = "X-Test-User";
+    public const string NoTenantHeader = "X-Test-No-Tenant";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -20,7 +21,13 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        var identity = new ClaimsIdentity([new Claim("tid", "tenant-1"), new Claim("oid", $"oid-{user}"), new Claim("name", user.ToString())], SchemeName);
+        var claims = new List<Claim> { new("oid", $"oid-{user}"), new("name", user.ToString()) };
+        if (!Request.Headers.ContainsKey(NoTenantHeader))
+        {
+            claims.Add(new Claim("tid", "tenant-1"));
+        }
+
+        var identity = new ClaimsIdentity(claims, SchemeName);
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
     }
 }

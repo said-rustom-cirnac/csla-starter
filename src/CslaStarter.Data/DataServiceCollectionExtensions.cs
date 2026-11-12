@@ -18,7 +18,7 @@ public static class DataServiceCollectionExtensions
     {
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton(new AppDatabaseConnection(connectionString));
-        services.AddScoped<ISecurityEventLog, SecurityEventLog>();
+        services.AddSingleton<ISecurityEventLog, SecurityEventLog>();
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddScoped<IAuditHistoryReader, AuditHistoryReader>();
         services.AddDbContext<AppDbContext>((provider, options) => options

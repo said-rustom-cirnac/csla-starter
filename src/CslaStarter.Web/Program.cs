@@ -1,7 +1,12 @@
 using CslaStarter.Core.Security;
 using CslaStarter.Data;
 using CslaStarter.Infrastructure.DataProtection;
+using CslaStarter.Infrastructure.Health;
 using CslaStarter.Infrastructure.Identity;
+using CslaStarter.Infrastructure.Localization;
+using CslaStarter.Infrastructure.Sessions;
+using CslaStarter.Infrastructure.Telemetry;
+using CslaStarter.Infrastructure.Web;
 using CslaStarter.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,9 +28,15 @@ builder.Services.AddCslaStarterData(appConnection);
 builder.Services.AddScoped<IDataAccessContext, HttpContextDataAccessContext>();
 builder.Services.AddCslaStarterDataProtection(builder.Configuration, builder.Environment);
 builder.Services.AddCslaStarterAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddCslaStarterSecurityHeaders();
+builder.Services.AddCslaStarterLocalization();
+builder.Services.AddCslaStarterSessions(builder.Configuration);
+builder.Services.AddCslaStarterHealth(appConnection);
+builder.Services.AddCslaStarterTelemetry(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseCslaStarterSecurityHeaders();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -35,12 +46,16 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRequestLocalization();
 app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets().AllowAnonymous();
+app.MapCultureEndpoint();
+app.MapCslaStarterHealth();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    // Our own CSP header already sets frame-ancestors 'none'; don't let Blazor add a second policy.
+    .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null);
 
 await app.RunAsync();
 return 0;
