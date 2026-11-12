@@ -1,6 +1,7 @@
 using CslaStarter.Core.Auditing;
 using CslaStarter.Core.Security;
 using CslaStarter.Dal.Types;
+using CslaStarter.Dal.Users;
 using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Dal;
 using CslaStarter.Data.Security;
@@ -28,6 +29,7 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddScoped<IAuditHistoryReader, AuditHistoryReader>();
         services.AddScoped<ITypeDal, TypeDal>();
+        services.AddScoped<IUserDal, UserDal>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseAppDatabase(database.DataSource)
             .AddInterceptors(provider.GetRequiredService<AuditSaveChangesInterceptor>()));

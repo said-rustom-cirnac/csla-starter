@@ -1,4 +1,5 @@
 using CslaStarter.Core.Security;
+using CslaStarter.Dal.Users;
 using CslaStarter.Data;
 using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Entities;
@@ -23,7 +24,7 @@ public interface IUserDirectory
     void Invalidate(string tenantId, string objectId);
 }
 
-public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog) : IUserDirectory
+public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog) : IUserDirectory, IUserRoleCacheInvalidator
 {
     private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
 

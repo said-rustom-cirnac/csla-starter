@@ -386,7 +386,7 @@ namespace CslaStarter.Data.Migrations
                     b.HasOne("CslaStarter.Data.Entities.AppUser", "User")
                         .WithMany("Roles")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_role_app_user_user_id");
 

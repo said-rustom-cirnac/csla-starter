@@ -20,4 +20,12 @@
   <data name="Type_DescriptionFr" xml:space="preserve"><value>French description</value></data>
   <data name="Type_IsActive" xml:space="preserve"><value>Active</value></data>
   <data name="Type_SortOrder" xml:space="preserve"><value>Sort order</value></data>
+  <data name="Common_Id" xml:space="preserve"><value>Identifier</value></data>
+  <data name="User_DisplayName" xml:space="preserve"><value>Display name</value></data>
+  <data name="User_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="User_PreferredLanguage" xml:space="preserve"><value>Preferred language</value></data>
+  <data name="User_IsActive" xml:space="preserve"><value>Active</value></data>
+  <data name="User_EmployeeNumber" xml:space="preserve"><value>Employee number</value></data>
+  <data name="User_Roles" xml:space="preserve"><value>Roles</value></data>
+  <data name="User_RoleType" xml:space="preserve"><value>Role</value></data>
 </root>

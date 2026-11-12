@@ -1,3 +1,4 @@
+using CslaStarter.Dal.Users;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -60,7 +61,9 @@ public static class AuthenticationSetup
         }
 
         services.AddMemoryCache();
-        services.AddSingleton<IUserDirectory, UserDirectory>();
+        services.AddSingleton<UserDirectory>();
+        services.AddSingleton<IUserDirectory>(provider => provider.GetRequiredService<UserDirectory>());
+        services.AddSingleton<IUserRoleCacheInvalidator>(provider => provider.GetRequiredService<UserDirectory>());
         services.AddSingleton<IClaimsTransformation, RoleClaimsTransformation>();
         services.AddCascadingAuthenticationState();
         services.AddScoped<AuthenticationStateProvider, UserRevalidatingAuthenticationStateProvider>();

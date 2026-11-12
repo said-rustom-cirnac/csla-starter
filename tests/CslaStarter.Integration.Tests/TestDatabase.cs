@@ -37,6 +37,7 @@ public sealed class TestDatabase
     public Task<Guid> AddUserAsync(string displayName, params int[] roleCodes) =>
         AddUserAsync(displayName, Guid.NewGuid().ToString(), true, roleCodes);
 
+
     public async Task<Guid> AddUserAsync(string displayName, string objectId, bool isActive, params int[] roleCodes)
     {
         await using var context = CreateContext();

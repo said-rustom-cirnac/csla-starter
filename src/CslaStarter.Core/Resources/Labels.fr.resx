@@ -20,4 +20,12 @@
   <data name="Type_DescriptionFr" xml:space="preserve"><value>Description française</value></data>
   <data name="Type_IsActive" xml:space="preserve"><value>Actif</value></data>
   <data name="Type_SortOrder" xml:space="preserve"><value>Ordre de tri</value></data>
+  <data name="Common_Id" xml:space="preserve"><value>Identifiant</value></data>
+  <data name="User_DisplayName" xml:space="preserve"><value>Nom affiché</value></data>
+  <data name="User_Email" xml:space="preserve"><value>Courriel</value></data>
+  <data name="User_PreferredLanguage" xml:space="preserve"><value>Langue préférée</value></data>
+  <data name="User_IsActive" xml:space="preserve"><value>Actif</value></data>
+  <data name="User_EmployeeNumber" xml:space="preserve"><value>Numéro d'employé</value></data>
+  <data name="User_Roles" xml:space="preserve"><value>Rôles</value></data>
+  <data name="User_RoleType" xml:space="preserve"><value>Rôle</value></data>
 </root>
