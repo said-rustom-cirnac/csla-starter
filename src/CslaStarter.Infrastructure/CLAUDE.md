@@ -1,14 +1,25 @@
 # CslaStarter.Infrastructure
 
-Runtime services that aren't data access: the change hub and its PostgreSQL LISTEN/NOTIFY backplane, presence, claims transformation (roles from our database), culture handling, the idle-timeout circuit handler, telemetry and health checks.
+Runtime services that aren't data access. Each folder exposes one `AddCslaStarter…` / `Use…` / `Map…` extension:
 
-**May reference:** Core, Data, Npgsql.
+| Folder | What |
+|---|---|
+| `Identity/` | Entra and mock OIDC sign-in, the `IUserDirectory` cache, `RoleClaimsTransformation`, revalidation, `AdminBootstrapper` and the `bootstrap-admin` command, the data access contexts |
+| `DataProtection/` | Keys in PostgreSQL, protected by a certificate or Key Vault |
+| `Web/` | `CspNonce` and the security headers middleware |
+| `Localization/` | Request culture providers and `/culture/set` |
+| `Sessions/` | `SessionTimeoutMonitor` and the circuit activity handler |
+| `Health/` | `/health/live` and `/health/ready` (database, pending migrations) |
+| `Telemetry/` | OpenTelemetry tracing, metrics and logs (OTLP when configured) |
+
+Later phases add the change hub and its PostgreSQL backplane, presence and drafts.
+
+**May reference:** Core, Data, Npgsql, and the shared ASP.NET Core framework.
 
 ## Rules
 
-- **Change notices** carry type, key, version and who made the change. They never carry field data.
-- **Delivery** is at-most-once, so notices are hints. Optimistic concurrency is the guarantee.
-- **Dispatch** only reaches subscribers of the changed topic, `(type, key)` or `(type)`. Never broadcast.
-- **Claims transformation** must be idempotent. It may run several times per request.
+- **Claims transformation** must stay idempotent; it may run several times per request.
+- **Lifetimes:** singletons never take scoped services. Integration tests validate scopes like Development does.
+- **Change notices** carry type, key, version and who made the change, never field data. Notices are hints; optimistic concurrency is the guarantee.
 
-Guides: [architecture](../../docs/claude/architecture.md).
+Guides: [security](../../docs/claude/security.md), [localization](../../docs/claude/localization.md), [architecture](../../docs/claude/architecture.md).

@@ -6,13 +6,18 @@ Contracts and localization shared by every layer. This project has no infrastruc
 
 ## Holds
 
-- **Interfaces other layers implement or consume:** `ICurrentUser`, `IEntityChangeNotifier` / `IEntityChangeHub`, `IPresenceTracker`, `IDraftStore`, `IAuditHistoryReader`, `ISecurityEventLog`, `IClock`.
-- **Resources:** `Labels.resx` + `Labels.fr.resx` hold field names; `Messages.resx` + `Messages.fr.resx` hold rule, error and UI text. Every key exists, non-empty, in both languages.
-- **Attributes:** `LocalizedDisplayNameAttribute`, a subclass of `DisplayNameAttribute` that reads `Labels` for the current UI culture, and `SensitiveAttribute`.
+- `Security/`:
+  - `IDataAccessContext`: who is making a data change.
+  - `ISecurityEventLog`, `SecurityEvent`, `SecurityEventKind`.
+  - `SystemRoles.Admin = 1`: the role code the platform depends on. The business `UserRoleType.Admin` uses it.
+- `Auditing/`: `IAuditHistoryReader`, `AuditQuery`, `AuditEntry`, `AuditChange`, `AuditPage`.
+- `Localization/`: `SupportedCultures` (`en-CA`, `fr-CA`) and `LocalizedDisplayNameAttribute`.
+- `Resources/`: `Labels` and `Messages` resources (`.resx` + `.fr.resx`), as strongly-typed classes generated at build.
 
 ## Rules
 
-- Never add EF Core, Npgsql, ASP.NET Core or CSLA here. `Core_ReferencesOnlyExtensionAbstractions` fails if you do.
+- Never add EF Core, Npgsql, ASP.NET Core or CSLA here. `Core_ReferencesOnlyExtensionAbstractions` checks package references.
 - Keep contracts free of persistence types. Use plain records and primitives.
+- Every resource key needs a non-empty value in both languages ([localization](../../docs/claude/localization.md)).
 
-Guides: [architecture](../../docs/claude/architecture.md), [conventions](../../docs/claude/conventions.md).
+Guides: [architecture](../../docs/claude/architecture.md), [conventions](../../docs/claude/conventions.md), [localization](../../docs/claude/localization.md).

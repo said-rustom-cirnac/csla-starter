@@ -1,0 +1,22 @@
+{
+  "interactiveLogin": true,
+  "tokenCallbacks": [
+    {
+      "issuerId": "entra",
+      "tokenExpiry": 3600,
+      "requestMappings": [
+        {
+          "requestParam": "subject",
+          "match": ".*",
+          "claims": {
+            "tid": "local-tenant",
+            "oid": "${subject}",
+            "name": "${subject}",
+            "preferred_username": "${subject}@local.test",
+            "email": "${subject}@local.test"
+          }
+        }
+      ]
+    }
+  ]
+}

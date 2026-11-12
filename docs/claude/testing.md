@@ -18,6 +18,14 @@
 
 | Project | Covers |
 |---|---|
-| `CslaStarter.Architecture.Tests` | Project reference graph, forbidden packages, razor file pairs, en-CA/fr-CA culture support, `CLAUDE.md` coverage and guide links |
+| `CslaStarter.Architecture.Tests` | Project reference graph, forbidden packages, razor file pairs, en-CA/fr-CA culture support, resource completeness, mock sign-in config, `CLAUDE.md` coverage and guide links |
+| `CslaStarter.Business.Tests` | Business objects, rules, authorization, `LocalizedDisplayName` |
+| `CslaStarter.Integration.Tests` | Real PostgreSQL 18 (Testcontainers): schema, roles and grants, audit capture and append-only tables, security events, Data Protection keys, sign-in and roles, bootstrap-admin, the web host (headers, CSP, culture, health), session timeout |
 
-Later phases add `Business.Tests` (Csla.Testing), `Components.Tests` (bUnit), `Integration.Tests` (Testcontainers PostgreSQL) and `E2E.Tests` (Playwright with a mock Entra ID). Add each one to this table when it's created.
+Later phases add `Components.Tests` (bUnit) and `E2E.Tests` (Playwright with the mock Entra ID). Add each one to this table when it's created.
+
+## Integration test helpers
+
+- `TestDatabase.CreateAsync(postgres)` gives each test a fresh copy of a migrated template database. `CreateContext()` connects as `app_runtime`; `asOwner: true` connects as `app_owner`.
+- `WebAppFactory(db)` hosts the real app on that database, in the `Testing` environment, with DI scope validation on. Requests are anonymous unless they send `X-Test-User: <name>` (`TestAuthHandler`).
+- Use `FakeTimeProvider` (Microsoft.Extensions.TimeProvider.Testing) for anything time-based.
