@@ -59,9 +59,9 @@ public sealed class FakeProjectDal : IProjectDal
         return !TakenCodes.Contains(code) && !Projects.Values.Any(p => p.Code == code && p.Id != excludingId);
     }
 
-    public Task<ProjectDto> CloseAsync(Guid id, CancellationToken cancellationToken)
+    public Task<ProjectDto> CloseAsync(Guid id, int closedStatusCode, CancellationToken cancellationToken)
     {
-        Projects[id] = Projects[id] with { StatusCode = 4, Version = Projects[id].Version + 1 };
+        Projects[id] = Projects[id] with { StatusCode = closedStatusCode, Version = Projects[id].Version + 1 };
         return Task.FromResult(Projects[id]);
     }
 

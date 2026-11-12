@@ -8,10 +8,16 @@
 
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Reflection-based conventions read the business assembly; no other src project is referenced. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CslaStarter.Business\CslaStarter.Business.csproj" />
   </ItemGroup>
 
 </Project>

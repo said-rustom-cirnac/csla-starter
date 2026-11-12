@@ -87,16 +87,13 @@ public sealed class ProjectDal(AppDbContext db) : IProjectDal
         !await db.Projects.IgnoreQueryFilters([AppDbContext.RecordAccessFilter])
             .AnyAsync(p => p.Code == code && p.Id != excludingId, cancellationToken);
 
-    public async Task<ProjectDto> CloseAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<ProjectDto> CloseAsync(Guid id, int closedStatusCode, CancellationToken cancellationToken)
     {
         var row = await LoadAsync(id, tracking: true, cancellationToken);
-        row.StatusCode = ClosedStatus;
+        row.StatusCode = closedStatusCode;
         await DalHelpers.SaveAggregateAsync(db, "Project", id, cancellationToken);
         return await FetchAsync(id, cancellationToken);
     }
-
-    // ProjectStatusType.Closed in the business layer; a test keeps them in step.
-    internal const int ClosedStatus = 4;
 
     private async Task<ProjectRow> LoadAsync(Guid id, bool tracking, CancellationToken cancellationToken)
     {

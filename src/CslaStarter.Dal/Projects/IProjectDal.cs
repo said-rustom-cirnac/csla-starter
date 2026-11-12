@@ -19,5 +19,6 @@ public interface IProjectDal
     /// <summary>Codes are unique across all projects, including ones the user cannot see.</summary>
     Task<bool> IsCodeUniqueAsync(string code, Guid excludingId, CancellationToken cancellationToken);
 
-    Task<ProjectDto> CloseAsync(Guid id, CancellationToken cancellationToken);
+    /// <summary>Sets the project's status to <c>closedStatusCode</c> (ProjectStatusType.Closed, owned by the business layer).</summary>
+    Task<ProjectDto> CloseAsync(Guid id, int closedStatusCode, CancellationToken cancellationToken);
 }

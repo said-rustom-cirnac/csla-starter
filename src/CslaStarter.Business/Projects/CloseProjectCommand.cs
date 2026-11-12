@@ -46,7 +46,7 @@ public sealed class CloseProjectCommand : CommandBase<CloseProjectCommand>
             return;
         }
 
-        await dal.CloseAsync(projectId, CancellationToken.None);
+        await dal.CloseAsync(projectId, ProjectStatusType.Closed, CancellationToken.None);
         Result = CloseProjectResult.Closed;
     }
 }
