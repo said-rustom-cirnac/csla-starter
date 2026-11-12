@@ -8,4 +8,7 @@
     <Project Path="src/CslaStarter.Infrastructure/CslaStarter.Infrastructure.csproj" />
     <Project Path="src/CslaStarter.Web/CslaStarter.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CslaStarter.Architecture.Tests/CslaStarter.Architecture.Tests.csproj" />
+  </Folder>
 </Solution>
