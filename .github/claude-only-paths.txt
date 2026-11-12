@@ -1,0 +1,7 @@
+# Paths that exist only on the claude branch. Used by sync-main.sh, check-no-claude-files.sh and the dotnet new template.
+# "dir/" matches that directory from the repo root; "**/NAME" matches a file named exactly NAME at any depth.
+.claude/
+docs/claude/
+docs/superpowers/
+.impeccable/
+**/CLAUDE.md

@@ -1,0 +1,43 @@
+name: Sync main
+
+# After CI passes on a push to claude, copy that exact commit to main as a snapshot without the Claude-only paths.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [claude]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Check out the commit that passed CI, so the sync scripts are the tested ones.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          ssh-key: ${{ secrets.SYNC_DEPLOY_KEY }}
+      - name: Build the snapshot commit
+        id: sync
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          sha="$(bash scripts/sync-main.sh "$SOURCE_SHA" origin/main)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Push to main
+        if: steps.sync.outputs.sha != 'up-to-date'
+        env:
+          SHA: ${{ steps.sync.outputs.sha }}
+        run: git push origin "$SHA:refs/heads/main"

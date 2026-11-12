@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.AspNetCore.App.Internal.Assets": {
+        "type": "Direct",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "cineG7aU2cpo+CC5rDORY4bFRya0mlaULDpzQ+ncfG0tMyZlWATyVAo2P29i0hH40EElK5O204pjT4XEYALb6g=="
+      },
+      "cslastarter.business": {
+        "type": "Project",
+        "dependencies": {
+          "CslaStarter.Core": "[1.0.0, )",
+          "CslaStarter.Dal": "[1.0.0, )"
+        }
+      },
+      "cslastarter.components": {
+        "type": "Project",
+        "dependencies": {
+          "CslaStarter.Business": "[1.0.0, )",
+          "CslaStarter.Core": "[1.0.0, )"
+        }
+      },
+      "cslastarter.core": {
+        "type": "Project"
+      },
+      "cslastarter.dal": {
+        "type": "Project",
+        "dependencies": {
+          "CslaStarter.Core": "[1.0.0, )"
+        }
+      },
+      "cslastarter.data": {
+        "type": "Project",
+        "dependencies": {
+          "CslaStarter.Core": "[1.0.0, )",
+          "CslaStarter.Dal": "[1.0.0, )"
+        }
+      },
+      "cslastarter.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "CslaStarter.Core": "[1.0.0, )",
+          "CslaStarter.Data": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}
