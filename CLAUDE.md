@@ -14,10 +14,13 @@ A starter for Government of Canada line-of-business web apps: .NET 10 Blazor Ser
 | Test (xUnit v3 on Microsoft Testing Platform) | `dotnet test` |
 | Script tests (sync and guard) | `bash scripts/tests/run.sh` |
 | Format check, as CI runs it | `dotnet format --verify-no-changes` |
-| Run the app | `dotnet run --project src/CslaStarter.Web` |
+| Local PostgreSQL + mock Entra ID | `docker compose up -d` (see [data access](docs/claude/data-access.md)) |
+| Apply migrations locally | `CSLASTARTER_DESIGN_CONNECTION="<Owner string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |
+| Run the app (Development uses the mock sign-in) | `dotnet run --project src/CslaStarter.Web` |
+| Create the first Admin (once per environment) | `dotnet run --project src/CslaStarter.Web -- bootstrap-admin --tenant <tid> --object-id <oid>` |
 | After adding or changing a package | `dotnet restore --force-evaluate`, then commit the changed `packages.lock.json` files |
 
-CI restores in locked mode, so a package change without updated lock files fails the build.
+CI restores in locked mode, so a package change without updated lock files fails the build. Integration tests need Docker (Testcontainers starts PostgreSQL).
 
 ## Architecture map
 
@@ -53,6 +56,8 @@ Web            → all (composition root only)
 7. Never commit to `main`. Only the sync workflow writes it. Work on `DEV-<n>-<slug>` branches cut from `claude`.
 8. Every commit message starts with the Jira key, for example `DEV-38`.
 9. Warnings are errors. Fix the cause; don't suppress the warning.
+10. Data changes go through EF Core so they are audited. Never write audit or security tables by hand, and never add raw SQL that bypasses `SaveChanges` for audited tables.
+11. Every inline `<script>` carries the CSP nonce (`CspNonce`); never loosen the CSP.
 
 ## Workflow
 
@@ -64,6 +69,9 @@ Branches, pull requests, the `claude` → `main` sync and Jira tracking are in [
 - [Conventions](docs/claude/conventions.md): naming, class layout, razor files, nullable rules.
 - [Workflow](docs/claude/workflow.md): branches, commits, sync to `main`, Claude-only paths.
 - [Testing](docs/claude/testing.md): running tests, filters, what each test project covers.
+- [Data access](docs/claude/data-access.md): PostgreSQL, the two database roles, migrations, audit capture.
+- [Security](docs/claude/security.md): sign-in, roles, bootstrap-admin, headers and CSP, sessions, keys.
+- [Localization](docs/claude/localization.md): resources, `[LocalizedDisplayName]`, choosing and switching the culture.
 
 Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`.
 
