@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\CslaStarter.Core\CslaStarter.Core.csproj" />
+    <ProjectReference Include="..\CslaStarter.Dal\CslaStarter.Dal.csproj" />
+  </ItemGroup>
+</Project>
