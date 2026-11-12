@@ -1,5 +1,7 @@
-using CslaStarter.Core.Security;
+using Csla.Configuration;
+using CslaStarter.Business;
 using CslaStarter.Data;
+using CslaStarter.Infrastructure.Database;
 using CslaStarter.Infrastructure.DataProtection;
 using CslaStarter.Infrastructure.Health;
 using CslaStarter.Infrastructure.Identity;
@@ -24,14 +26,24 @@ var appConnection = builder.Configuration.GetConnectionString("App")
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options => options.DetailedErrors = builder.Environment.IsDevelopment());
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddCslaStarterData(appConnection);
-builder.Services.AddScoped<IDataAccessContext, HttpContextDataAccessContext>();
+builder.Services.AddCsla(options => options
+    .AddAspNetCore()
+    .AddServerSideBlazor(blazor => blazor.UseCslaPermissionsPolicy = true)
+    .DataPortal(dataPortal =>
+    {
+        dataPortal.UseLegacyOperationMethods = false;
+        dataPortal.AddServerSideDataPortal();
+    }));
+builder.Services.AddCslaStarterBusiness();
+builder.Services.AddCslaStarterData(
+    appConnection,
+    builder.Configuration.GetValue<bool>("Database:UseEntraAuthentication") ? EntraDatabaseAuthentication.Configure : null);
 builder.Services.AddCslaStarterDataProtection(builder.Configuration, builder.Environment);
 builder.Services.AddCslaStarterAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddCslaStarterSecurityHeaders();
 builder.Services.AddCslaStarterLocalization();
 builder.Services.AddCslaStarterSessions(builder.Configuration);
-builder.Services.AddCslaStarterHealth(appConnection);
+builder.Services.AddCslaStarterHealth();
 builder.Services.AddCslaStarterTelemetry(builder.Configuration);
 
 var app = builder.Build();

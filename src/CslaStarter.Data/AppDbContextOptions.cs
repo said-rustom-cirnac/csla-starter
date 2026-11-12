@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CslaStarter.Data;
 
@@ -7,4 +8,7 @@ public static class AppDbContextOptions
 {
     public static DbContextOptionsBuilder UseAppDatabase(this DbContextOptionsBuilder builder, string connectionString) =>
         builder.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
+
+    public static DbContextOptionsBuilder UseAppDatabase(this DbContextOptionsBuilder builder, NpgsqlDataSource dataSource) =>
+        builder.UseNpgsql(dataSource).UseSnakeCaseNamingConvention();
 }

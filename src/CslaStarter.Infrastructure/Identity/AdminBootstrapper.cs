@@ -12,7 +12,7 @@ namespace CslaStarter.Infrastructure.Identity;
 /// Creates the very first Admin, once, from the deployment pipeline (connected as app_owner). It refuses when any
 /// Admin already exists, so it can never be used to grant Admin later.
 /// </summary>
-public sealed partial class AdminBootstrapper(AppDatabaseConnection ownerConnection, TimeProvider time, ILoggerFactory loggerFactory)
+public sealed partial class AdminBootstrapper(AppDatabase ownerDatabase, TimeProvider time, ILoggerFactory loggerFactory)
 {
     public const int Done = 0;
     public const int Refused = 2;
@@ -21,10 +21,7 @@ public sealed partial class AdminBootstrapper(AppDatabaseConnection ownerConnect
 
     public async Task<int> RunAsync(string tenantId, string objectId, string displayName, CancellationToken cancellationToken)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>();
-        options.UseAppDatabase(ownerConnection.ConnectionString)
-            .AddInterceptors(new AuditSaveChangesInterceptor(new SystemDataAccessContext("bootstrap-admin"), time));
-        await using var db = new AppDbContext(options.Options);
+        await using var db = ownerDatabase.CreateContext(new AuditSaveChangesInterceptor(new SystemDataAccessContext("bootstrap-admin"), time));
 
         if (await db.UserRoles.AnyAsync(r => r.RoleTypeCode == SystemRoles.Admin, cancellationToken))
         {
@@ -42,7 +39,7 @@ public sealed partial class AdminBootstrapper(AppDatabaseConnection ownerConnect
         user.Roles.Add(new UserRole { RoleTypeCode = SystemRoles.Admin });
         await db.SaveChangesAsync(cancellationToken);
 
-        var securityLog = new SecurityEventLog(ownerConnection, time, loggerFactory.CreateLogger<SecurityEventLog>());
+        var securityLog = new SecurityEventLog(ownerDatabase, time, loggerFactory.CreateLogger<SecurityEventLog>());
         await securityLog.WriteAsync(
             new SecurityEvent(SecurityEventKind.AdminBootstrapped, user.Id, user.DisplayName, $"First Admin created for tenant {tenantId}.", null),
             cancellationToken);
