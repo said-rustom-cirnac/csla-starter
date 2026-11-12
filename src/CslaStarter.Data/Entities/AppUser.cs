@@ -1,6 +1,9 @@
+using CslaStarter.Data.Auditing;
+
 namespace CslaStarter.Data.Entities;
 
 /// <summary>A person who signs in through Entra ID, keyed on tenant id + object id.</summary>
+[AuditEntity("User")]
 public class AppUser : IAuditedEntity, IAggregateRoot
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
@@ -17,6 +20,7 @@ public class AppUser : IAuditedEntity, IAggregateRoot
 
     public bool IsActive { get; set; } = true;
 
+    [AuditMask]
     public string? EmployeeNumber { get; set; }
 
     public DateTimeOffset CreatedOn { get; set; }

@@ -1,5 +1,6 @@
 using CslaStarter.Core.Security;
 using CslaStarter.Data;
+using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,9 +29,8 @@ public sealed class TestDatabase
     public AppDbContext CreateContext(IDataAccessContext? access = null, TimeProvider? time = null, bool asOwner = false)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>();
-        options.UseAppDatabase(asOwner ? OwnerConnectionString : RuntimeConnectionString);
-        _ = access;
-        _ = time;
+        options.UseAppDatabase(asOwner ? OwnerConnectionString : RuntimeConnectionString)
+            .AddInterceptors(new AuditSaveChangesInterceptor(access ?? FakeDataAccessContext.Tester, time ?? TimeProvider.System));
         return new AppDbContext(options.Options);
     }
 
