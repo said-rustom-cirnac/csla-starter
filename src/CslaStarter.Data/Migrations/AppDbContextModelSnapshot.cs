@@ -25,7 +25,6 @@ namespace CslaStarter.Data.Migrations
             modelBuilder.Entity("CslaStarter.Data.Entities.AppUser", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -218,6 +217,207 @@ namespace CslaStarter.Data.Migrations
                     b.ToTable("audit_event", (string)null);
                 });
 
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectMemberRow", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("ProjectId", "UserId")
+                        .HasName("pk_project_member");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_project_member_user_id");
+
+                    b.ToTable("project_member", (string)null);
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("Budget")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("budget");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("modified_by");
+
+                    b.Property<DateTimeOffset>("ModifiedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_on");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_project");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_project_code");
+
+                    b.HasIndex("StatusCode")
+                        .HasDatabaseName("ix_project_status_code");
+
+                    b.ToTable("project", (string)null);
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectStatusTypeRow", b =>
+                {
+                    b.Property<int>("Code")
+                        .HasColumnType("integer")
+                        .HasColumnName("code");
+
+                    b.Property<string>("DescriptionEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("description_en");
+
+                    b.Property<string>("DescriptionFr")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("description_fr");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Code")
+                        .HasName("pk_project_status_type");
+
+                    b.ToTable("project_status_type", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = 1,
+                            DescriptionEn = "Planned",
+                            DescriptionFr = "Planifié",
+                            IsActive = true,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Code = 2,
+                            DescriptionEn = "Active",
+                            DescriptionFr = "Actif",
+                            IsActive = true,
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Code = 3,
+                            DescriptionEn = "On hold",
+                            DescriptionFr = "En suspens",
+                            IsActive = true,
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Code = 4,
+                            DescriptionEn = "Closed",
+                            DescriptionFr = "Fermé",
+                            IsActive = true,
+                            SortOrder = 4
+                        });
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectTaskRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<bool>("IsDone")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_done");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_project_task");
+
+                    b.HasIndex("ProjectId", "SortOrder")
+                        .HasDatabaseName("ix_project_task_project_id_sort_order");
+
+                    b.ToTable("project_task", (string)null);
+                });
+
             modelBuilder.Entity("CslaStarter.Data.Entities.SecurityEventRow", b =>
                 {
                     b.Property<long>("Id")
@@ -374,6 +574,49 @@ namespace CslaStarter.Data.Migrations
                         .HasConstraintName("fk_audit_change_audit_event_audit_event_id");
                 });
 
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectMemberRow", b =>
+                {
+                    b.HasOne("CslaStarter.Data.Entities.ProjectRow", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_member_project_project_id");
+
+                    b.HasOne("CslaStarter.Data.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_member_app_user_user_id");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectRow", b =>
+                {
+                    b.HasOne("CslaStarter.Data.Entities.ProjectStatusTypeRow", null)
+                        .WithMany()
+                        .HasForeignKey("StatusCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_project_status_type_status_code");
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectTaskRow", b =>
+                {
+                    b.HasOne("CslaStarter.Data.Entities.ProjectRow", "Project")
+                        .WithMany("Tasks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_task_project_project_id");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("CslaStarter.Data.Entities.UserRole", b =>
                 {
                     b.HasOne("CslaStarter.Data.Entities.UserRoleTypeRow", null)
@@ -401,6 +644,13 @@ namespace CslaStarter.Data.Migrations
             modelBuilder.Entity("CslaStarter.Data.Entities.AuditEventRow", b =>
                 {
                     b.Navigation("Changes");
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.ProjectRow", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

@@ -64,3 +64,7 @@ The data layer never asks for the user directly. It reads `IDataAccessContext` (
 | HTTP requests | `HttpContextDataAccessContext` |
 | CSLA data portal | The CSLA context (added by the business layer) |
 | Platform operations (first sign-in, `bootstrap-admin`) | `SystemDataAccessContext("sign-in")` / `("bootstrap-admin")` with their own short-lived contexts |
+
+## Keys
+
+App-generated `Guid` keys are configured with `ValueGeneratedNever()`. Otherwise EF Core treats a new child that already has its id (found through a navigation) as an existing row, issues an UPDATE, and fails with a concurrency error. Every new entity with a `Guid` key needs this in its configuration.

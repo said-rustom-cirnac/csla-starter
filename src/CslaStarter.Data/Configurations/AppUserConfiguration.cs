@@ -10,6 +10,7 @@ internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
     {
         builder.ToTable("app_user");
         builder.HasKey(u => u.Id);
+        builder.Property(u => u.Id).ValueGeneratedNever(); // Guid v7 from the app; a new row found through a navigation is an insert
         builder.Property(u => u.TenantId).HasMaxLength(64);
         builder.Property(u => u.ObjectId).HasMaxLength(64);
         builder.Property(u => u.DisplayName).HasMaxLength(200);

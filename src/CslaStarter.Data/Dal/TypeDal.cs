@@ -24,6 +24,9 @@ public sealed class TypeDal(AppDbContext db) : ITypeDal
             "UserRoleType" => await db.UserRoleTypes.AsNoTracking()
                 .Select(t => new TypeDto(t.Code, t.DescriptionEn, t.DescriptionFr, t.IsActive, t.SortOrder))
                 .ToListAsync(cancellationToken),
+            "ProjectStatusType" => await db.ProjectStatusTypes.AsNoTracking()
+                .Select(t => new TypeDto(t.Code, t.DescriptionEn, t.DescriptionFr, t.IsActive, t.SortOrder))
+                .ToListAsync(cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(typeName), typeName, "Unknown *Type lookup."),
         };
         return Cache.GetOrAdd(typeName, rows);
