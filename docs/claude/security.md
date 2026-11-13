@@ -35,6 +35,7 @@ dotnet CslaStarter.Web.dll bootstrap-admin --tenant <tid> --object-id <oid> --na
   - The nonce is 128 random bits per request, as hex. `CspNonce` is a scoped service.
   - `App.razor` puts the nonce in `<meta name="csp-nonce">` (read by GC Design System's runtime) and on `<ImportMap>`.
   - Every inline script must carry the nonce. `Csp_EveryInlineScriptCarriesTheNonce` checks this.
+  - `form-action` allows `'self'` and the sign-in provider's origin, `AuthenticationSetup.ProviderOrigin`: `AzureAd:Instance` (login.microsoftonline.com by default) or the mock's authority. Sign-out posts to the app, which redirects to the provider, and `form-action` covers that redirect, so without the provider's origin the browser blocks signing out.
 - **Also set:** `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a deny-all `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, and HSTS (one year, include subdomains) outside Development.
 - The headers are added when the response starts, so they're also on the error page the exception handler re-executes.
 - **Behind a proxy or Azure App Service on Linux,** TLS ends at the front end. Set `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, or configure `UseForwardedHeaders` with the known proxies. Otherwise HTTPS redirection loops and the OIDC redirect URIs use `http`.
