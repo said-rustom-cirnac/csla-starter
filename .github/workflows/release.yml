@@ -1,0 +1,42 @@
+name: Release
+
+# Tag the claude branch (vX.Y.Z) to publish: the dotnet new template package, the SBOM and the EF migration bundle
+# are attached to a GitHub release. Everything is built and tested first.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Tag must be on claude
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/claude
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+      - name: Restore (locked)
+        run: |
+          dotnet restore --locked-mode
+          dotnet tool restore
+      - name: Build and test
+        run: |
+          dotnet build -c Release --no-restore
+          dotnet test -c Release --no-build
+      - name: Template package
+        run: dotnet pack template/CslaStarter.Templates.csproj -c Release -o out -p:Version="${GITHUB_REF_NAME#v}"
+      - name: SBOM (CycloneDX)
+        run: dotnet CycloneDX CslaStarter.slnx -o out -fn sbom.cdx.json -F Json
+      - name: EF migration bundle
+        run: dotnet ef migrations bundle -p src/CslaStarter.Data -s src/CslaStarter.Data -r linux-x64 --self-contained -o out/efbundle
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" out/*.nupkg out/sbom.cdx.json out/efbundle --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
