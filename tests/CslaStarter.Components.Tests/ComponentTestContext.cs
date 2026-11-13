@@ -11,10 +11,12 @@ using CslaStarter.Core.Auditing;
 using CslaStarter.Core.Drafts;
 using CslaStarter.Core.Realtime;
 using CslaStarter.Core.Security;
+using CslaStarter.Core.Sessions;
 using CslaStarter.Dal.Projects;
 using CslaStarter.Dal.Types;
 using CslaStarter.Dal.Users;
 using CslaStarter.Infrastructure.Realtime;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -49,9 +51,15 @@ public sealed class ComponentTestContext : BunitContext
         Services.AddSingleton<IPresenceTracker>(Presence);
         Services.AddSingleton<IDraftStore>(Drafts);
         Services.AddSingleton<ISecurityEventLog>(SecurityEvents);
+        Services.AddSingleton<ISessionActivity>(Session);
+        Services.AddSingleton<AntiforgeryStateProvider>(new TestAntiforgery());
         Services.AddSingleton<ILoggerFactory>(new LoggerFactory([new ListLoggerProvider(Logs)]));
         Services.AddFallbackServiceProvider(_scope.ServiceProvider);
         JSInterop.Mode = JSRuntimeMode.Loose;
+        SessionModule = JSInterop.SetupModule("./_content/CslaStarter.Components/session.js");
+        SessionModule.Mode = JSRuntimeMode.Loose;
+        ShortcutsModule = JSInterop.SetupModule("./_content/CslaStarter.Components/shortcuts.js");
+        ShortcutsModule.Mode = JSRuntimeMode.Loose;
     }
 
     private readonly IServiceScope _scope;
@@ -65,6 +73,12 @@ public sealed class ComponentTestContext : BunitContext
     public FakeUserDal Users { get; } = new();
 
     public FakeAuditHistoryReader AuditReader { get; } = new();
+
+    public FakeSessionActivity Session { get; } = new();
+
+    public BunitJSModuleInterop SessionModule { get; }
+
+    public BunitJSModuleInterop ShortcutsModule { get; }
 
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 11, 12, 10, 42, 0, TimeSpan.Zero));
 
@@ -92,6 +106,30 @@ public sealed class ComponentTestContext : BunitContext
 
         base.Dispose(disposing);
     }
+}
+
+public sealed class FakeSessionActivity : ISessionActivity
+{
+    public SessionPhase Phase { get; private set; }
+
+    public TimeSpan Remaining { get; set; } = TimeSpan.FromMinutes(2);
+
+    public int Activity { get; private set; }
+
+    public event Action<SessionPhase>? PhaseChanged;
+
+    public void RecordActivity() => Activity++;
+
+    public void Enter(SessionPhase phase)
+    {
+        Phase = phase;
+        PhaseChanged?.Invoke(phase);
+    }
+}
+
+public sealed class TestAntiforgery : AntiforgeryStateProvider
+{
+    public override AntiforgeryRequestToken? GetAntiforgeryToken() => new("test-token", "__RequestVerificationToken");
 }
 
 public sealed class ListLoggerProvider(List<string> logs) : ILoggerProvider

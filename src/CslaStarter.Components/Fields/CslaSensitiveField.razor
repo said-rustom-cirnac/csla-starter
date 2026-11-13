@@ -1,0 +1,19 @@
+@inherits CslaFieldBase<string?>
+@if (Info.Visible)
+{
+    <div data-changed="@IsChanged" data-highlighted="@IsHighlighted" data-sensitive>
+        @if (Revealed)
+        {
+            <gcds-input id="@FieldId" input-id="@InputId" name="@PropertyName" type="text" label="@LabelText" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" readonly="@Info.ReadOnly" maxlength="@Info.MaxLength" autocomplete="off" validate-on="other" value="@Text" @ongcdsinput="OnInput" @ongcdsblur="OnBlur"></gcds-input>
+        }
+        else
+        {
+            <gcds-input id="@FieldId" input-id="@InputId" name="@PropertyName" type="text" label="@LabelText" hint="@Info.Hint" readonly validate-on="other" value="@Mask"></gcds-input>
+            @if (CanReveal)
+            {
+                <gcds-button type="button" button-role="secondary" size="small" data-action="reveal" @ongcdsclick="RevealAsync">@Messages.Sensitive_Reveal</gcds-button>
+            }
+        }
+        <CslaFieldHistoryButton Model="Model" Property="@PropertyName" Label="@LabelText" />
+    </div>
+}

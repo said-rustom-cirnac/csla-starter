@@ -1,6 +1,12 @@
 @typeparam T where T : class
 @inherits CslaBaseComponent<T>
-<form id="@ComponentId" novalidate @onsubmit="SubmitAsync">
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" ConfirmExternalNavigation="@GuardsNavigation" />
+<form id="@ComponentId" novalidate @onsubmit="SubmitAsync" @ref="_formElement">
+    @if (PendingNavigation is not null)
+    {
+        <CslaConfirmDialog Message="@Messages.Leave_Confirm" ConfirmText="@Messages.Leave_Yes" CancelText="@Messages.Leave_No" OnConfirm="LeaveAsync" OnCancel="() => PendingNavigation = null" />
+    }
+
     @if (!IsClosed && FormContext is not null)
     {
         @if (Topic is { } topic)

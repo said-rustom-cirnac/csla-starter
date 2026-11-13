@@ -192,6 +192,10 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
 
     protected virtual ValueTask DisposeAsyncCore() => ValueTask.CompletedTask;
 
+    /// <summary>Records a security event for the current user (a sensitive value revealed, say).</summary>
+    protected Task WriteSecurityEventAsync(SecurityEventKind kind, string detail) =>
+        SecurityEvents.WriteAsync(new SecurityEvent(kind, CurrentUser.UserId, CurrentUser.DisplayName, detail, Activity.Current?.TraceId.ToString()), CancellationToken.None);
+
     private IDisposable Track(IDisposable subscription)
     {
         _subscriptions.Add(subscription);

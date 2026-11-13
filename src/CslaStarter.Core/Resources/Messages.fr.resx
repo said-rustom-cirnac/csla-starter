@@ -47,6 +47,14 @@
   <data name="Confirm_No" xml:space="preserve"><value>Le garder</value></data>
   <data name="Error_SummaryTitle" xml:space="preserve"><value>Corrigez ceci avant d'enregistrer</value></data>
   <data name="Toast_Region" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Session_Warning" xml:space="preserve"><value>Votre session prendra fin dans {0} minutes en raison de votre inactivité.</value></data>
+  <data name="Session_Stay" xml:space="preserve"><value>Rester connecté</value></data>
+  <data name="Leave_Confirm" xml:space="preserve"><value>Quitter cette page? Vos modifications non enregistrées seront perdues.</value></data>
+  <data name="Leave_Yes" xml:space="preserve"><value>Quitter</value></data>
+  <data name="Leave_No" xml:space="preserve"><value>Rester</value></data>
+  <data name="Sensitive_Reveal" xml:space="preserve"><value>Afficher</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+  <data name="Language_French" xml:space="preserve"><value>Français</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

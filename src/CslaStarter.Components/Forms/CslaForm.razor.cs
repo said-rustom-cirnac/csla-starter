@@ -10,7 +10,9 @@ using CslaStarter.Core.Drafts;
 using CslaStarter.Core.Realtime;
 using CslaStarter.Core.Resources;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 namespace CslaStarter.Components.Forms;
 
@@ -34,6 +36,10 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     private static readonly TimeSpan DraftAfter = TimeSpan.FromSeconds(2);
 
     private T? _original;
+    private ElementReference _formElement;
+    private IJSObjectReference? _shortcuts;
+    private DotNetObjectReference<CslaForm<T>>? _self;
+    private bool _leaving;
     private DraftAutosave? _autosave;
     private IDisposable? _flushRegistration;
     private IDisposable? _presence;
@@ -81,6 +87,12 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
 
     protected bool DraftRecordChanged => DraftOffer is not null && ViewModel.Model is IVersioned { Version: var version } && DraftOffer.Version != version;
 
+    /// <summary>Where the user tried to go with unsaved changes, waiting for Leave or Stay.</summary>
+    protected string? PendingNavigation { get; set; }
+
+    /// <summary>Unsaved edits that would be lost: internal navigation asks first, the browser warns on unload.</summary>
+    protected bool GuardsNavigation => !_leaving && !IsClosed && ViewModel?.IsDirty == true;
+
     /// <summary>The field whose history is open, if any.</summary>
     protected (string EntityType, string EntityKey, string Property)? History { get; private set; }
 
@@ -105,6 +117,20 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
 
     [Inject]
     private DraftFlushRegistry FlushRegistry { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+
+    /// <summary>Ctrl+S (from shortcuts.js).</summary>
+    [JSInvokable]
+    public Task ShortcutSave() => SaveAsync();
+
+    /// <summary>Esc (from shortcuts.js; ignored while a dialog is open).</summary>
+    [JSInvokable]
+    public Task ShortcutCancel() => ViewModel?.IsDirty == true ? CancelAsync() : Task.CompletedTask;
 
     /// <summary>Saves when the object is savable; otherwise shows every error. Returns whether it saved.</summary>
     public async Task<bool> SaveAsync()
@@ -186,11 +212,15 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         StateHasChanged();
     }
 
-    /// <summary>Writes the draft now when there are unsaved edits (before a language switch or sign-out).</summary>
+    /// <summary>
+    /// Writes the draft now when there are unsaved edits, before a language switch or a sign-out reloads the page; the
+    /// form then lets the page go without asking, since the draft keeps the edits.
+    /// </summary>
     public async Task FlushDraftAsync()
     {
         _autosave?.Cancel();
         await SaveDraftAsync();
+        _leaving = true;
     }
 
     protected override async Task OnInitializedAsync()
@@ -228,12 +258,60 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         await base.OnErrorAsync(operation, failure);
     }
 
-    protected override ValueTask DisposeAsyncCore()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _self = DotNetObjectReference.Create(this);
+            _shortcuts = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/CslaStarter.Components/shortcuts.js");
+            await _shortcuts.InvokeVoidAsync("attach", _formElement, _self);
+        }
+    }
+
+    protected override async ValueTask DisposeAsyncCore()
     {
         _presence?.Dispose();
         _autosave?.Dispose();
         _flushRegistration?.Dispose();
-        return base.DisposeAsyncCore();
+        if (_shortcuts is not null)
+        {
+            try
+            {
+                await _shortcuts.InvokeVoidAsync("detach", _formElement);
+                await _shortcuts.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The circuit is gone with the browser.
+            }
+        }
+
+        _self?.Dispose();
+        await base.DisposeAsyncCore();
+    }
+
+    protected void OnBeforeInternalNavigation(LocationChangingContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (GuardsNavigation)
+        {
+            context.PreventNavigation();
+            PendingNavigation = context.TargetLocation;
+        }
+    }
+
+    /// <summary>"Leave" with unsaved changes: they are discarded, draft included.</summary>
+    protected async Task LeaveAsync()
+    {
+        var target = PendingNavigation;
+        PendingNavigation = null;
+        _leaving = true;
+        _autosave?.Cancel();
+        await DeleteDraftAsync();
+        if (target is not null)
+        {
+            Navigation.NavigateTo(target);
+        }
     }
 
     protected async Task SubmitAsync() => await SaveAsync();

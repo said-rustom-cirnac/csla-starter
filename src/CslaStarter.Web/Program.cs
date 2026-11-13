@@ -1,5 +1,6 @@
 using Csla.Configuration;
 using CslaStarter.Business;
+using CslaStarter.Components;
 using CslaStarter.Data;
 using CslaStarter.Infrastructure.Database;
 using CslaStarter.Infrastructure.DataProtection;
@@ -46,6 +47,7 @@ builder.Services.AddCslaStarterSecurityHeaders();
 builder.Services.AddCslaStarterLocalization();
 builder.Services.AddCslaStarterSessions(builder.Configuration);
 builder.Services.AddCslaStarterRealtime(builder.Configuration);
+builder.Services.AddCslaStarterComponents();
 builder.Services.AddCslaStarterHealth();
 builder.Services.AddCslaStarterTelemetry(builder.Configuration);
 
@@ -67,6 +69,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapCultureEndpoint();
+app.MapSignOutEndpoint();
 app.MapCslaStarterHealth();
 app.MapRazorComponents<App>()
     // Our own CSP header already sets frame-ancestors 'none'; don't let Blazor add a second policy.
