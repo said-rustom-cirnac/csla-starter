@@ -80,6 +80,21 @@ public static class AuthenticationSetup
         return services;
     }
 
+    /// <summary>
+    /// The sign-in provider's origin: Entra's instance (AzureAd:Instance, login.microsoftonline.com by default) or the
+    /// mock's authority. Sign-in and sign-out both leave the app for it.
+    /// </summary>
+    public static string ProviderOrigin(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var authority = (configuration["Authentication:Mode"] ?? "Entra") == "MockOidc"
+            ? configuration["Authentication:MockOidc:Authority"]
+            : configuration["AzureAd:Instance"] ?? "https://login.microsoftonline.com/";
+        return new Uri(authority ?? throw new InvalidOperationException("Authentication:MockOidc:Authority is not set."))
+            .GetLeftPart(UriPartial.Authority);
+    }
+
     private static void ConfigureCookie(CookieAuthenticationOptions options)
     {
         options.Cookie.Name = CookieName;

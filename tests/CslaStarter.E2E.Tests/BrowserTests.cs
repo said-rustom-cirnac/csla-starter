@@ -72,7 +72,8 @@ public sealed class BrowserTests(E2EEnvironment environment)
         });
         if (target == "a project")
         {
-            await CreateProjectAsync(page, $"E2E-AXE-{Guid.NewGuid():N}"[..16], "Accessible project");
+            // Codes are upper case (ProjectEdit's format rule); a lower-case code would leave the form on its error summary.
+            await CreateProjectAsync(page, $"E2E-AXE-{Guid.NewGuid():N}"[..16].ToUpperInvariant(), "Accessible project");
         }
 
         await Expect(page.Locator("main form, main table").First).ToBeVisibleAsync();

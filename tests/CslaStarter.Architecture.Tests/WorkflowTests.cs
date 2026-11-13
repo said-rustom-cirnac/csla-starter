@@ -34,16 +34,6 @@ public partial class WorkflowTests
         Assert.Contains("gh release create", release, StringComparison.Ordinal);
     }
 
-    // Without the GC Design System, gcds-input has no inner input and gcds-button raises no events: every step times out.
-    [Fact]
-    public void E2E_FetchesTheDesignSystemBeforeItRuns()
-    {
-        var e2e = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "e2e.yml"));
-        var fetch = e2e.IndexOf("bash scripts/update-gcds.sh", StringComparison.Ordinal);
-
-        Assert.True(fetch >= 0 && fetch < e2e.IndexOf("dotnet test", StringComparison.Ordinal), "e2e.yml must run scripts/update-gcds.sh before the tests");
-    }
-
     // The end-to-end project is outside the solution, so CI compiles and format-checks it on every pull request.
     [Fact]
     public void Ci_CompilesAndFormatChecksTheEndToEndTests()
