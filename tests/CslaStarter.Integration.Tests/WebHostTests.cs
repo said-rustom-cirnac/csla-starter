@@ -88,8 +88,9 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
         Assert.True(hsts.IncludeSubDomains);
     }
 
+    // form-action allows the sign-in provider, here WebAppFactory's mock authority.
     private const string CspTemplate =
-        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://login.microsoftonline.com; upgrade-insecure-requests";
+        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' http://localhost:1; upgrade-insecure-requests";
 
     [Fact]
     public async Task SecurityHeaders_ArePresentWithFreshNonce()

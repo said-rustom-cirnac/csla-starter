@@ -27,12 +27,15 @@ present() { [[ -e "$app/$1" ]] || fail "$1 should be in the generated app"; }
 
 test_template_claude_true_keeps_guides_and_skills() {
   generate
-  present CLAUDE.md
-  present docs/claude/architecture.md
-  present .claude/settings.json
-  present src/Acme.Grants.Business/CLAUDE.md
-  grep -q "Jira project epic: (set this to your project's epic)" "$app/CLAUDE.md" || fail "the epic line was not replaced"
-  ! grep -q "template-dev" "$app/CLAUDE.md" || fail "the template-dev pointer leaked"
+  # On main there are no guides to keep (the release packs the template from claude), but the app must still work.
+  if [[ -e "$ROOT/CLAUDE.md" ]]; then
+    present CLAUDE.md
+    present docs/claude/architecture.md
+    present .claude/settings.json
+    present src/Acme.Grants.Business/CLAUDE.md
+    grep -q "Jira project epic: (set this to your project's epic)" "$app/CLAUDE.md" || fail "the epic line was not replaced"
+    ! grep -q "template-dev" "$app/CLAUDE.md" || fail "the template-dev pointer leaked"
+  fi
   local leaked
   leaked="$(grep -rnE --exclude-dir=bin --exclude-dir=obj "DEV-3[78]|\bSaid\b|[Pp]lan [0-9]|CSLA Starter" "$app" || true)"
   [[ -z "$leaked" ]] || fail "this repository's identity leaked: $leaked"
@@ -46,6 +49,24 @@ test_template_copies_the_design_system_unchanged() {
   generate
   diff -r "$ROOT/src/CslaStarter.Components/wwwroot/gcds" "$app/src/Acme.Grants.Components/wwwroot/gcds" > /dev/null \
     || fail "the generated app's wwwroot/gcds differs from the repository's"
+}
+
+# main is this repository minus its Claude-only paths (sync-main.sh), and CI runs these tests there too.
+test_template_claude_true_works_from_the_main_snapshot() {
+  local snapshot path
+  snapshot="$(mktemp -d)"
+  works+=("$snapshot")
+  trap 'rm -rf "${works[@]}"' EXIT
+  # shellcheck source=scripts/claude-paths.sh
+  source "$SCRIPTS/claude-paths.sh"
+  declare -A strip=()
+  while IFS= read -r -d '' path; do strip["$path"]=1; done < <(cd "$ROOT" && git ls-files -z -co --exclude-standard \
+    | CLAUDE_PATHS_FILE="$ROOT/.github/claude-only-paths.txt" claude_paths_filter)
+  (cd "$ROOT" && git ls-files -z -co --exclude-standard | while IFS= read -r -d '' path; do
+      [[ -z "${strip[$path]:-}" && -e "$path" ]] && printf '%s\0' "$path"
+    done | tar --null -T - -cf -) | tar -C "$snapshot" -xf -
+  [[ ! -e "$snapshot/CLAUDE.md" && -e "$snapshot/.template.config/template.json" ]] || fail "the snapshot is not main's shape"
+  ROOT="$snapshot" test_template_claude_true_keeps_guides_and_skills
 }
 
 # Every script a shipped workflow runs ships with it.
