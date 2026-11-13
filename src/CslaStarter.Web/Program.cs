@@ -6,6 +6,7 @@ using CslaStarter.Infrastructure.DataProtection;
 using CslaStarter.Infrastructure.Health;
 using CslaStarter.Infrastructure.Identity;
 using CslaStarter.Infrastructure.Localization;
+using CslaStarter.Infrastructure.Realtime;
 using CslaStarter.Infrastructure.Sessions;
 using CslaStarter.Infrastructure.Telemetry;
 using CslaStarter.Infrastructure.Web;
@@ -44,6 +45,7 @@ builder.Services.AddCslaStarterAuthentication(builder.Configuration, builder.Env
 builder.Services.AddCslaStarterSecurityHeaders();
 builder.Services.AddCslaStarterLocalization();
 builder.Services.AddCslaStarterSessions(builder.Configuration);
+builder.Services.AddCslaStarterRealtime(builder.Configuration);
 builder.Services.AddCslaStarterHealth();
 builder.Services.AddCslaStarterTelemetry(builder.Configuration);
 

@@ -20,7 +20,7 @@ public sealed class ProjectDalTests(PostgresFixture postgres) : IAsyncLifetime
         _clientUser = await _db.AddUserAsync("Cleo", 2);
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task ProjectDal_Insert_WithTasksAndMembers()

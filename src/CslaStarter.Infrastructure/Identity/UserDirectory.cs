@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using CslaStarter.Core.Realtime;
 using CslaStarter.Core.Security;
 using CslaStarter.Dal.Users;
 using CslaStarter.Data;
@@ -24,13 +26,35 @@ public interface IUserDirectory
     void Invalidate(string tenantId, string objectId);
 }
 
-public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog) : IUserDirectory, IUserRoleCacheInvalidator
+/// <remarks>
+/// Users are cached for 5 minutes. An access-changed notice (from any instance, through the change hub) forgets that
+/// user at once, so role changes and deactivation take effect everywhere without waiting for the _cache.
+/// </remarks>
+public sealed class UserDirectory : IUserDirectory, IUserRoleCacheInvalidator, IDisposable
 {
     private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
 
+    private readonly AppDatabase _database;
+    private readonly IMemoryCache _cache;
+    private readonly TimeProvider _time;
+    private readonly ISecurityEventLog _securityLog;
+    private readonly IDisposable? _accessNotices;
+
+    // Notices name the user by id; the cache is keyed by Entra identity.
+    private readonly ConcurrentDictionary<Guid, string> _keys = new();
+
+    public UserDirectory(AppDatabase database, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog, IEntityChangeHub? hub = null)
+    {
+        _database = database;
+        _cache = cache;
+        _time = time;
+        _securityLog = securityLog;
+        _accessNotices = hub?.Subscribe(ChangeTopic.ForType(EntityChange.UserAccessType), ForgetAsync);
+    }
+
     public async Task<DirectoryUser> GetOrProvisionAsync(string tenantId, string objectId, string displayName, string? email, CancellationToken cancellationToken)
     {
-        if (cache.TryGetValue(Key(tenantId, objectId), out DirectoryUser? cached) && cached is not null)
+        if (_cache.TryGetValue(Key(tenantId, objectId), out DirectoryUser? cached) && cached is not null)
         {
             return cached;
         }
@@ -39,7 +63,8 @@ public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, Time
             ?? await ProvisionAsync(tenantId, objectId, displayName, email, cancellationToken);
 
         var result = ToDirectoryUser(user);
-        cache.Set(Key(tenantId, objectId), result, CacheFor);
+        _keys[result.Id] = Key(tenantId, objectId);
+        _cache.Set(Key(tenantId, objectId), result, CacheFor);
         return result;
     }
 
@@ -56,7 +81,19 @@ public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, Time
         return user is null ? null : ToDirectoryUser(user);
     }
 
-    public void Invalidate(string tenantId, string objectId) => cache.Remove(Key(tenantId, objectId));
+    public void Invalidate(string tenantId, string objectId) => _cache.Remove(Key(tenantId, objectId));
+
+    public void Dispose() => _accessNotices?.Dispose();
+
+    private Task ForgetAsync(EntityChange change)
+    {
+        if (Guid.TryParse(change.EntityKey, out var userId) && _keys.TryRemove(userId, out var key))
+        {
+            _cache.Remove(key);
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task<AppUser?> FindAsync(string tenantId, string objectId, CancellationToken cancellationToken)
     {
@@ -80,7 +117,7 @@ public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, Time
             return await FindAsync(tenantId, objectId, cancellationToken) ?? throw new InvalidOperationException("User vanished after a unique violation.", e);
         }
 
-        await securityLog.WriteAsync(
+        await _securityLog.WriteAsync(
             new SecurityEvent(SecurityEventKind.SignIn, user.Id, user.DisplayName, "First sign-in: account created with no roles.", null),
             cancellationToken);
         return user;
@@ -96,7 +133,7 @@ public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, Time
     private static string? Fit(string? value, int length) => value is { Length: > 0 } && value.Length > length ? value[..length] : value;
 
     private AppDbContext CreateContext(string actor) =>
-        database.CreateContext(new AuditSaveChangesInterceptor(new SystemDataAccessContext(actor), time));
+        _database.CreateContext(new AuditSaveChangesInterceptor(new SystemDataAccessContext(actor), _time));
 
     private static string Key(string tenantId, string objectId) => $"user:{tenantId}:{objectId}";
 }

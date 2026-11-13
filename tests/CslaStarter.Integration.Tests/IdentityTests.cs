@@ -23,7 +23,7 @@ public sealed class IdentityTests(PostgresFixture postgres) : IAsyncLifetime
 
     public async ValueTask InitializeAsync() => _db = await TestDatabase.CreateAsync(postgres);
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task ClaimsTransformation_FirstSignIn_CreatesUserWithNoRoles()

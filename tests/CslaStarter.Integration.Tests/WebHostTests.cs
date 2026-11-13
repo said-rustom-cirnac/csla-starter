@@ -13,7 +13,7 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
 
     public async ValueTask InitializeAsync() => _db = await TestDatabase.CreateAsync(postgres);
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task Anonymous_RequestToHome_IsChallenged()

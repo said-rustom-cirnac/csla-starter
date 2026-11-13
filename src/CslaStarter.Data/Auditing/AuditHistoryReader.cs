@@ -53,7 +53,7 @@ public sealed class AuditHistoryReader(AppDbContext db) : IAuditHistoryReader
     private async Task EnsureVisibleAsync(string entityType, string entityKey, CancellationToken cancellationToken)
     {
         var scoped = db.Model.GetEntityTypes().FirstOrDefault(t =>
-            t.ClrType.GetCustomAttribute<RecordScopedAttribute>() is not null && (t.ClrType.GetCustomAttribute<AuditEntityAttribute>()?.Name ?? t.ClrType.Name) == entityType);
+            t.ClrType.GetCustomAttribute<RecordScopedAttribute>() is not null && EntityNaming.TypeName(t.ClrType) == entityType);
         if (scoped is null)
         {
             return;

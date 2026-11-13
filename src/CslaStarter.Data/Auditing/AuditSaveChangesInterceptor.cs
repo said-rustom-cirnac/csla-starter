@@ -1,10 +1,8 @@
 using System.Collections.Concurrent;
-using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using CslaStarter.Core.Security;
 using CslaStarter.Data.Entities;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -19,9 +17,6 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
 {
     private static readonly HashSet<string> TechnicalColumns =
         [nameof(IAggregateRoot.Version), nameof(IAuditedEntity.CreatedOn), nameof(IAuditedEntity.CreatedBy), nameof(IAuditedEntity.ModifiedOn), nameof(IAuditedEntity.ModifiedBy)];
-
-    private static readonly HashSet<Type> NeverAudited =
-        [typeof(AuditEventRow), typeof(AuditChangeRow), typeof(SecurityEventRow), typeof(DataProtectionKey)];
 
     private static readonly ConcurrentDictionary<(Type, string), PropertyInfo?> Properties = new();
 
@@ -70,7 +65,7 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
 
         foreach (var entry in context.ChangeTracker.Entries().ToList())
         {
-            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted) || IsNeverAudited(entry.Metadata.ClrType))
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted) || EntityNaming.IsIgnored(entry.Metadata.ClrType))
             {
                 continue;
             }
@@ -142,9 +137,8 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
 
     private AuditEventRow Event(EntityEntry entry, List<AuditChangeRow> changes, DateTimeOffset now)
     {
-        var type = entry.Metadata.ClrType;
-        var entityType = type.GetCustomAttribute<AuditEntityAttribute>()?.Name ?? type.Name;
-        var entityKey = string.Join('|', entry.Metadata.FindPrimaryKey()!.Properties.Select(p => Format(entry.Property(p.Name).CurrentValue)));
+        var entityType = EntityNaming.TypeName(entry.Metadata.ClrType);
+        var entityKey = EntityNaming.Key(entry);
         var root = entry.Entity as IHasAuditRoot;
 
         var auditEvent = new AuditEventRow
@@ -204,8 +198,8 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
             changes.Add(new AuditChangeRow
             {
                 Property = name,
-                OldValue = masked ? null : Format(oldValue),
-                NewValue = masked ? null : Format(newValue),
+                OldValue = masked ? null : EntityNaming.Format(oldValue),
+                NewValue = masked ? null : EntityNaming.Format(newValue),
                 IsMasked = masked,
                 TypeCodeOf = clrProperty?.GetCustomAttribute<AuditTypeCodeAttribute>()?.TypeName,
             });
@@ -216,18 +210,6 @@ public sealed class AuditSaveChangesInterceptor(IDataAccessContext access, TimeP
 
     private static readonly object Unchanged = new();
 
-    private static bool IsNeverAudited(Type type) =>
-        NeverAudited.Contains(type) || type.GetCustomAttribute<AuditIgnoreAttribute>() is not null;
-
     private static PropertyInfo? ClrProperty(Type type, string name) =>
         Properties.GetOrAdd((type, name), key => key.Item1.GetProperty(key.Item2));
-
-    private static string? Format(object? value) => value switch
-    {
-        null => null,
-        DateTimeOffset d => d.ToString("O", CultureInfo.InvariantCulture),
-        DateTime d => d.ToString("O", CultureInfo.InvariantCulture),
-        IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
-        _ => value.ToString(),
-    };
 }
