@@ -19,8 +19,16 @@ public static class SignOutEndpoint
     public const string Path = "/account/signout";
 
     public static IEndpointConventionBuilder MapSignOutEndpoint(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapPost(Path, async (HttpContext context, ISecurityEventLog securityEvents) =>
+        endpoints.MapPost(Path, async (HttpContext context, IAntiforgery antiforgery, ISecurityEventLog securityEvents) =>
         {
+            // The antiforgery middleware only records its verdict; endpoints that don't bind a form must check it.
+            var verdict = context.Features.Get<IAntiforgeryValidationFeature>();
+            if (verdict is { IsValid: false } || (verdict is null && !await antiforgery.IsRequestValidAsync(context)))
+            {
+                // A body, so status-code pages don't re-execute the (still invalid) form post.
+                return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "The request could not be verified.");
+            }
+
             await securityEvents.WriteAsync(
                 new SecurityEvent(SecurityEventKind.SignOut, EntraClaims.UserId(context.User), EntraClaims.DisplayName(context.User), "Signed out.", Activity.Current?.TraceId.ToString()),
                 context.RequestAborted);
