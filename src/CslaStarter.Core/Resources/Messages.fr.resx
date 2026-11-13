@@ -10,11 +10,13 @@
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>
   <data name="Common_MaxLength" xml:space="preserve"><value>{0} ne peut pas dépasser {1} caractères.</value></data>
   <data name="User_UnsupportedLanguage" xml:space="preserve"><value>{0} doit être anglais (en-CA) ou français (fr-CA).</value></data>
+  <data name="Common_CheckFailed" xml:space="preserve"><value>{0} n'a pas pu être vérifié pour le moment. Réessayez dans un instant.</value></data>
   <data name="Project_CodeFormat" xml:space="preserve"><value>{0} ne peut contenir que des majuscules, des chiffres et des traits d'union.</value></data>
   <data name="Project_CodeTaken" xml:space="preserve"><value>{0} est déjà utilisé par un autre projet.</value></data>
   <data name="Project_EndBeforeStart" xml:space="preserve"><value>{0} ne peut pas précéder la date de début.</value></data>
   <data name="Project_BudgetNegative" xml:space="preserve"><value>{0} ne peut pas être négatif.</value></data>
   <data name="Project_InvalidStatus" xml:space="preserve"><value>{0} n'est pas un statut valide.</value></data>
   <data name="Project_CloseWithOpenTasks" xml:space="preserve"><value>Ce projet a encore des tâches ouvertes. Terminez-les ou supprimez-les avant de le fermer.</value></data>
+  <data name="Project_CloseWithCommand" xml:space="preserve"><value>Utilisez Fermer le projet pour fermer un projet : les tâches ouvertes sont vérifiées d'abord.</value></data>
   <data name="Project_Closed" xml:space="preserve"><value>Le projet est fermé.</value></data>
 </root>

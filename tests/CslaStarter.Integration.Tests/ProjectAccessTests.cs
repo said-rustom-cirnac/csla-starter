@@ -1,5 +1,8 @@
+using CslaStarter.Core.Auditing;
+using CslaStarter.Dal;
 using CslaStarter.Data;
 using CslaStarter.Data.Access;
+using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +15,7 @@ public sealed class ProjectAccessTests(PostgresFixture postgres) : IAsyncLifetim
     private static readonly FakeDataAccessContext Admin = new(Guid.Parse("0193a000-0000-7000-8000-0000000000a1"), "Admin", Roles: [1]);
     private static readonly FakeDataAccessContext Technical = new(Guid.Parse("0193a000-0000-7000-8000-0000000000b1"), "Tech", Roles: [3]);
     private static readonly FakeDataAccessContext Client = new(ClientId, "Client", Roles: [2]);
+    private static readonly Guid TheirTaskId = Guid.CreateVersion7();
 
     private TestDatabase _db = null!;
     private Guid _mine;
@@ -29,7 +33,7 @@ public sealed class ProjectAccessTests(PostgresFixture postgres) : IAsyncLifetim
         mine.Members.Add(new ProjectMemberRow { UserId = clientUserId });
         mine.Tasks.Add(new ProjectTaskRow { Title = "Mine task" });
         var theirs = NewProject("P-THEIRS");
-        theirs.Tasks.Add(new ProjectTaskRow { Title = "Their task" });
+        theirs.Tasks.Add(new ProjectTaskRow { Id = TheirTaskId, Title = "Their task" });
         context.Projects.AddRange(mine, theirs);
         await context.SaveChangesAsync(Ct);
         (_mine, _theirs) = (mine.Id, theirs.Id);
@@ -79,6 +83,17 @@ public sealed class ProjectAccessTests(PostgresFixture postgres) : IAsyncLifetim
         await using var context = _db.CreateContext(await AsClientAsync());
 
         Assert.Equal(["Mine task"], await context.ProjectTasks.Select(t => t.Title).ToListAsync(Ct));
+    }
+
+    [Fact]
+    public async Task RecordAccess_History_OfHiddenProject_IsNotFound()
+    {
+        await using var context = _db.CreateContext(await AsClientAsync());
+        var history = new AuditHistoryReader(context);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => history.GetAsync(new AuditQuery("Project", _theirs.ToString()), Ct));
+        await Assert.ThrowsAsync<NotFoundException>(() => history.GetAsync(new AuditQuery("ProjectTask", TheirTaskId.ToString()), Ct));
+        Assert.NotEmpty((await history.GetAsync(new AuditQuery("Project", _mine.ToString()), Ct)).Entries);
     }
 
     [Fact]

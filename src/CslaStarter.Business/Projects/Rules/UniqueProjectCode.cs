@@ -7,7 +7,9 @@ namespace CslaStarter.Business.Projects.Rules;
 
 /// <summary>
 /// The project code must not be used by any other project. Asynchronous: the field shows "Checking…" while it runs.
-/// The check goes through the data portal (<see cref="ProjectCodeExistsCommand"/>), so it gets its own scope.
+/// It runs only where the user edits (never inside a data portal operation, which would share that operation's
+/// DbContext); saves are guarded by the unique index instead. Users who can't edit projects don't run it, so it can't
+/// be used to discover codes of projects they can't see.
 /// </summary>
 public sealed class UniqueProjectCode : BusinessRuleAsync
 {
@@ -21,12 +23,14 @@ public sealed class UniqueProjectCode : BusinessRuleAsync
         _message = message;
         InputProperties.Add(code);
         InputProperties.Add(id);
+        RunMode = RunModes.DenyOnServerSidePortal;
     }
 
     protected override async Task ExecuteAsync(IRuleContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (context.InputPropertyValues[PrimaryProperty!] is not string { Length: > 0 } code)
+        if (context.InputPropertyValues[PrimaryProperty!] is not string { Length: > 0 } code
+            || !BusinessRules.HasPermission(context.ApplicationContext, AuthorizationActions.EditObject, typeof(ProjectCodeExistsCommand)))
         {
             return;
         }

@@ -12,6 +12,16 @@ public sealed class FakeProjectDal : IProjectDal
     /// <summary>When set, code checks wait for it, so a test can see the "Checking…" busy state.</summary>
     public TaskCompletionSource? CodeCheckGate { get; set; }
 
+    /// <summary>When set, code checks throw it (a database timeout, say).</summary>
+    public Exception? CodeCheckFailure { get; set; }
+
+    /// <summary>When true, saves fail on the database's unique index for the code.</summary>
+    public bool DuplicateCodeOnSave { get; set; }
+
+    public int CodeChecks { get; private set; }
+
+    public uint? ClosedWithVersion { get; private set; }
+
     public ProjectSaveDto? LastSaved { get; private set; }
 
     public ProjectDto Add(Guid id, string code, int status = 2, decimal? budget = 1000m, IReadOnlyList<ProjectTaskDto>? tasks = null, params Guid[] members)
@@ -51,6 +61,13 @@ public sealed class FakeProjectDal : IProjectDal
 
     public async Task<bool> IsCodeUniqueAsync(string code, Guid excludingId, CancellationToken cancellationToken)
     {
+        CodeChecks++;
+        if (CodeCheckFailure is not null)
+        {
+            await Task.Yield();
+            throw CodeCheckFailure;
+        }
+
         if (CodeCheckGate is not null)
         {
             await CodeCheckGate.Task;
@@ -59,14 +76,20 @@ public sealed class FakeProjectDal : IProjectDal
         return !TakenCodes.Contains(code) && !Projects.Values.Any(p => p.Code == code && p.Id != excludingId);
     }
 
-    public Task<ProjectDto> CloseAsync(Guid id, int closedStatusCode, CancellationToken cancellationToken)
+    public Task<ProjectDto> CloseAsync(Guid id, uint version, int closedStatusCode, CancellationToken cancellationToken)
     {
+        ClosedWithVersion = version;
         Projects[id] = Projects[id] with { StatusCode = closedStatusCode, Version = Projects[id].Version + 1 };
         return Task.FromResult(Projects[id]);
     }
 
     private Task<ProjectDto> Save(ProjectSaveDto project, uint version)
     {
+        if (DuplicateCodeOnSave)
+        {
+            throw new DuplicateValueException("Project", "Code");
+        }
+
         LastSaved = project;
         var dto = new ProjectDto(project.Id, project.Code, project.Name, project.Description, project.StatusCode, project.Budget, project.StartDate, project.EndDate,
             project.Tasks, project.MemberUserIds.Select(m => new ProjectMemberDto(m, "Member")).ToList(), version, DateTimeOffset.UnixEpoch, "t", DateTimeOffset.UnixEpoch, "t");

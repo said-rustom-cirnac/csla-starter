@@ -45,3 +45,33 @@ public sealed class NotFoundException : Exception
     {
     }
 }
+
+/// <summary>A save broke a unique index: another record already has this value (for example, a project code).</summary>
+public sealed class DuplicateValueException : Exception
+{
+    public DuplicateValueException()
+    {
+    }
+
+    public DuplicateValueException(string message)
+        : base(message)
+    {
+    }
+
+    public DuplicateValueException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
+    public DuplicateValueException(string entityType, string property, Exception? innerException = null)
+        : base($"Another {entityType} already has this {property}.", innerException)
+    {
+        EntityType = entityType;
+        Property = property;
+    }
+
+    public string EntityType { get; } = string.Empty;
+
+    /// <summary>The property the unique index covers, as the business object names it.</summary>
+    public string Property { get; } = string.Empty;
+}

@@ -17,7 +17,11 @@ public sealed class PostgresFixture : IAsyncLifetime
     public const string RuntimePassword = "runtime-test-password";
     private const string TemplateDatabase = "cslastarter_template";
 
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18").Build();
+    // Every test database has its own connection pools (one per role), and idle pooled connections stay open for a few
+    // minutes, so a run holds far more than PostgreSQL's default 100 connections.
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18")
+        .WithCommand("-c", "max_connections=1000")
+        .Build();
     private readonly SemaphoreSlim _createLock = new(1, 1);
 
     public string AdminConnectionString => _container.GetConnectionString();

@@ -60,7 +60,31 @@ public sealed class ProjectDalTests(PostgresFixture postgres) : IAsyncLifetime
         var loaded = await InsertAsync("P-103", [Task("Original")], []);
         await UseDal(dal => dal.UpdateAsync(SaveDto(loaded, [.. loaded.Tasks, Task("By someone else")], []), Ct));
 
-        await Assert.ThrowsAsync<ConcurrencyException>(() => UseDal(dal => dal.UpdateAsync(SaveDto(loaded, loaded.Tasks, []) with { Name = "Mine" }, Ct)));
+        // My save changes nothing on the root, only a child: the root's version still makes it collide.
+        await Assert.ThrowsAsync<ConcurrencyException>(() => UseDal(dal => dal.UpdateAsync(SaveDto(loaded, [loaded.Tasks[0] with { IsDone = true }], []), Ct)));
+    }
+
+    [Fact]
+    public async Task ProjectDal_Close_StaleVersion_ThrowsConcurrency()
+    {
+        var checkedVersion = await InsertAsync("P-104", [], []);
+        await UseDal(dal => dal.UpdateAsync(SaveDto(checkedVersion, [Task("Added after the check")], []), Ct));
+
+        await Assert.ThrowsAsync<ConcurrencyException>(() => UseDal(dal => dal.CloseAsync(checkedVersion.Id, checkedVersion.Version, 4, Ct)));
+        Assert.Equal(1, (await UseDal(dal => dal.FetchAsync(checkedVersion.Id, Ct))).StatusCode);
+    }
+
+    [Fact]
+    public async Task ProjectDal_DuplicateCode_ThrowsDuplicateValue()
+    {
+        await InsertAsync("P-DUP", [], []);
+        var other = await InsertAsync("P-OTHER", [], []);
+
+        var onInsert = await Assert.ThrowsAsync<DuplicateValueException>(() => InsertAsync("P-DUP", [], []));
+        var onUpdate = await Assert.ThrowsAsync<DuplicateValueException>(() => UseDal(dal => dal.UpdateAsync(SaveDto(other, [], []) with { Code = "P-DUP" }, Ct)));
+
+        Assert.Equal(("Project", "Code"), (onInsert.EntityType, onInsert.Property));
+        Assert.Equal("Code", onUpdate.Property);
     }
 
     [Fact]

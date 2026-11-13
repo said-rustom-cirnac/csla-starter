@@ -1,5 +1,6 @@
 using CslaStarter.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CslaStarter.Data.Dal;
 
@@ -25,7 +26,13 @@ internal static class DalHelpers
         }
     }
 
-    public static async Task SaveAggregateAsync(DbContext context, string entityType, Guid key, CancellationToken cancellationToken)
+    /// <summary>
+    /// Saves, translating a stale root version into <see cref="CslaStarter.Dal.ConcurrencyException"/> and a broken unique
+    /// index named in <paramref name="uniqueIndexes"/> (index name → business property) into
+    /// <see cref="CslaStarter.Dal.DuplicateValueException"/>.
+    /// </summary>
+    public static async Task SaveAggregateAsync(
+        DbContext context, string entityType, Guid key, CancellationToken cancellationToken, IReadOnlyDictionary<string, string>? uniqueIndexes = null)
     {
         try
         {
@@ -34,6 +41,11 @@ internal static class DalHelpers
         catch (DbUpdateConcurrencyException e)
         {
             throw new CslaStarter.Dal.ConcurrencyException($"{entityType} {key} was changed by someone else.", e);
+        }
+        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } unique
+            && unique.ConstraintName is { } index && uniqueIndexes is not null && uniqueIndexes.ContainsKey(index))
+        {
+            throw new CslaStarter.Dal.DuplicateValueException(entityType, uniqueIndexes[index], e);
         }
     }
 

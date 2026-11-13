@@ -2,6 +2,16 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Csla.Testing": {
+        "type": "Direct",
+        "requested": "[10.2.0, )",
+        "resolved": "10.2.0",
+        "contentHash": "tCGpzpXZbFbUNN2GGL2YWa7TKg+sZ3+QR+yks6gjFRHWed0Ypv8DgKSfHkDQySJ3wBrPDSMP8PB/zXthLxEWKA==",
+        "dependencies": {
+          "Csla": "10.2.0",
+          "Microsoft.Extensions.Logging": "10.0.0"
+        }
+      },
       "Microsoft.AspNetCore.Mvc.Testing": {
         "type": "Direct",
         "requested": "[10.0.15, )",

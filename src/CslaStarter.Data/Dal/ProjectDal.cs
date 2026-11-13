@@ -12,6 +12,8 @@ namespace CslaStarter.Data.Dal;
 /// </summary>
 public sealed class ProjectDal(AppDbContext db) : IProjectDal
 {
+    private static readonly Dictionary<string, string> UniqueIndexes = new(StringComparer.Ordinal) { ["ix_project_code"] = "Code" };
+
     public async Task<ProjectDto> FetchAsync(Guid id, CancellationToken cancellationToken) =>
         Map(await LoadAsync(id, tracking: false, cancellationToken));
 
@@ -55,7 +57,7 @@ public sealed class ProjectDal(AppDbContext db) : IProjectDal
         var row = new ProjectRow { Id = project.Id };
         Apply(row, project);
         db.Projects.Add(row);
-        await db.SaveChangesAsync(cancellationToken);
+        await DalHelpers.SaveAggregateAsync(db, "Project", project.Id, cancellationToken, UniqueIndexes);
         return await FetchAsync(project.Id, cancellationToken);
     }
 
@@ -66,7 +68,7 @@ public sealed class ProjectDal(AppDbContext db) : IProjectDal
         DalHelpers.ExpectVersion(db, row, project.Version);
         Apply(row, project);
         DalHelpers.TouchRoot(db, row);
-        await DalHelpers.SaveAggregateAsync(db, "Project", project.Id, cancellationToken);
+        await DalHelpers.SaveAggregateAsync(db, "Project", project.Id, cancellationToken, UniqueIndexes);
         return await FetchAsync(project.Id, cancellationToken);
     }
 
@@ -87,9 +89,10 @@ public sealed class ProjectDal(AppDbContext db) : IProjectDal
         !await db.Projects.IgnoreQueryFilters([AppDbContext.RecordAccessFilter])
             .AnyAsync(p => p.Code == code && p.Id != excludingId, cancellationToken);
 
-    public async Task<ProjectDto> CloseAsync(Guid id, int closedStatusCode, CancellationToken cancellationToken)
+    public async Task<ProjectDto> CloseAsync(Guid id, uint version, int closedStatusCode, CancellationToken cancellationToken)
     {
         var row = await LoadAsync(id, tracking: true, cancellationToken);
+        DalHelpers.ExpectVersion(db, row, version);
         row.StatusCode = closedStatusCode;
         await DalHelpers.SaveAggregateAsync(db, "Project", id, cancellationToken);
         return await FetchAsync(id, cancellationToken);

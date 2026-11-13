@@ -21,7 +21,8 @@ CSLA 10.2 business objects: validation, permissions and data portal operations. 
 - **Labels:** every registered property has `[LocalizedDisplayName(nameof(Labels.Key))]` in both languages, enforced by tests.
 - **Rule messages** use `Func<string>` overloads that read `Messages`.
 - **Role checks:** `HasRole(action, [property], params int[] UserRoleType codes)`, one rule per (property, action).
-- **Async rules** that need data run a command through the data portal; they never resolve a DAL directly.
+- **Async rules** that need data run a command through the data portal (they never resolve a DAL directly), set `RunMode = RunModes.DenyOnServerSidePortal`, and leave the save to a database constraint. Register `UseCslaStarterRules()` in `AddCsla` so a failing rule breaks instead of ending the process.
+- **Aggregate invariants** are checked on save too (member changes, closing), not only in helper methods.
 - **Aggregates save as one DTO round trip** and reload from the result. Children never call the DAL.
 - **Criteria are primitives**, not records or `CriteriaBase`.
 
@@ -29,7 +30,7 @@ CSLA 10.2 business objects: validation, permissions and data portal operations. 
 
 - Saving returns a new instance: always `obj = await obj.SaveAsync()`.
 - A CSLA object keeps its scope's `ApplicationContext`, so never cache or share one across users. (`TypeDal` caches lookup rows instead.)
-- Each data portal call runs in a new DI scope. The user, culture and origin come through `ApplicationContext`.
+- A data portal call from a circuit runs in a new DI scope, but **calls made inside a data portal operation share its scope** (and its `DbContext`). The user, culture and origin come through `ApplicationContext`.
 - `SetProperty` throws without write permission. `GetProperty` returns the default (`""` or `null`) without read permission.
 - Field types must be types MobileFormatter supports: primitives, string, decimal, DateTime/DateTimeOffset, DateOnly/TimeOnly, Guid, byte[], enums, nullables and `List<int>`. No dictionaries or POCOs.
 - With nullable reference types on, don't set properties in constructors. Use `[Create]`.

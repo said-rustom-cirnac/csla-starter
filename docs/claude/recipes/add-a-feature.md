@@ -14,7 +14,7 @@ Follow the Projects sample, file for file.
      - `IsRowVersion()` on `Version`;
      - `ClientCascade` from the root to its children (so deletes are audited);
      - `HasQueryFilter(AppDbContext.RecordAccessFilter, …)` in `AppDbContext.OnModelCreating` when scoped. Never filter both sides of a navigation: EF recurses forever.
-   - **DAL:** load with `Include`, call `DalHelpers.ExpectVersion`, reconcile the children by key, call `DalHelpers.TouchRoot`, then `DalHelpers.SaveAggregateAsync`, and return a fresh fetch. Lists filter, sort, count, then page. Register the DAL in `AddCslaStarterData`.
+   - **DAL:** load with `Include`, call `DalHelpers.ExpectVersion`, reconcile the children by key, call `DalHelpers.TouchRoot`, then `DalHelpers.SaveAggregateAsync` (pass your unique indexes so violations become `DuplicateValueException`), and return a fresh fetch. Lists filter, sort, count, then page. Register the DAL in `AddCslaStarterData`.
    - **Migration:** `dotnet ef migrations add Add<Feature> -p src/CslaStarter.Data -s src/CslaStarter.Data -o Migrations`.
 4. **Business:** under `Business/<Feature>/`:
    - the root (`AppRootBase<T>`), its children and child lists, the read-only list and its row, commands, and `Rules/`;

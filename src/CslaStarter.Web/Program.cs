@@ -27,6 +27,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options => options.DetailedErrors = builder.Environment.IsDevelopment());
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddCsla(options => options
+    .UseCslaStarterRules()
     .AddAspNetCore()
     .AddServerSideBlazor(blazor => blazor.UseCslaPermissionsPolicy = true)
     .DataPortal(dataPortal =>

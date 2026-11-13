@@ -26,7 +26,7 @@ Later phases add `Components.Tests` (bUnit) and `E2E.Tests` (Playwright with the
 
 ## Business test helpers
 
-- `CslaTestHost.Create(o => o.AsPrincipal(TestPrincipals.Admin).ConfigureServices(s => s.AddCslaStarterBusiness().AddSingleton<IXDal>(fake)))` builds a CSLA host. Fetch with `host.GetDataPortal<T>()`, and keep the host alive while you use the objects it returned.
+- `CslaTestHost.Create(o => o.AsPrincipal(TestPrincipals.Admin).ConfigureCsla(c => c.UseCslaStarterRules()).ConfigureServices(s => s.AddCslaStarterBusiness().AddSingleton<IXDal>(fake)))` builds a CSLA host configured like the app. Fetch with `host.GetDataPortal<T>()`, and keep the host alive while you use the objects it returned. `Integration.Tests/BusinessEndToEndTests` does the same over the real DALs and PostgreSQL.
 - `TestPrincipals.Admin`, `.Technical` and `.Client` are principals shaped like the claims transformation's output.
 - `AuthorizationRuleTester.For(rule).ForType<T>().AsUser(name, roles…)` tests one authorization rule.
 - To see an async rule's busy state, gate the fake DAL with a `TaskCompletionSource`. Then call `await obj.WaitForIdle(TimeSpan)`.

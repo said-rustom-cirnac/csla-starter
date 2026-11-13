@@ -31,7 +31,11 @@ CSLA's own analyzer CSLA0007 is turned off for Business in `.editorconfig`, beca
 
 - **Messages:** always use the `Func<string>` overloads with `Messages.*`, for example `new Required(NameProperty, () => Messages.Common_Required)`. CSLA formats `{0}` with the property's friendly name in the current language.
 - **Custom rules** live in `Business/Rules` (shared) or `<Feature>/Rules`, and format their message through the friendly name too (see `EndAfterStart`, `NotNegative`, `SupportedLanguage`).
-- **Async rules** (`BusinessRuleAsync`) mark the property busy, which components show as "Checking…". If a rule needs data, it runs a **command through the data portal** (see `UniqueProjectCode` → `ProjectCodeExistsCommand`), so the check gets its own scope. Never resolve a DAL inside a rule.
+- **Async rules** (`BusinessRuleAsync`) mark the property busy, which components show as "Checking…". If a rule needs data:
+  - It runs a **command through the data portal** (see `UniqueProjectCode` → `ProjectCodeExistsCommand`). Never resolve a DAL inside a rule.
+  - It sets `RunMode = RunModes.DenyOnServerSidePortal`. Inside a data portal operation (`CheckRules()` in Fetch, revalidation on save) a nested data portal call shares the operation's scope and `DbContext`, and two async rules at once would use it concurrently. The save is guarded by the database instead: a unique index surfaces as `DuplicateValueException`, which the object turns into a `ValidationException` with the rule's message.
+  - The command authorizes like the object: a check that looks past record-level access (code uniqueness) is limited to users who may edit, and the rule skips for everyone else.
+  - A rule that throws doesn't end the process: `UseCslaStarterRules()` (in `AddCsla`) breaks it with "couldn't be checked, try again" and logs the error.
 - **Several properties:** use `Dependency(StartDateProperty, EndDateProperty)` when a change to one must re-run the other's rules.
 
 ## Permissions
@@ -44,7 +48,8 @@ CSLA's own analyzer CSLA0007 is turned off for Business in `.editorconfig`, beca
 
 - CSLA evaluates only the **first** rule per (property, action), so list every allowed role in one `HasRole`.
 - A property without read permission returns its default (`""` or `null`), and a setter without write permission throws `Csla.Security.SecurityException`.
-- For child collections, guard the root's add and remove methods with `CanWriteProperty(XProperty)`, as `AssignRole` and `AddMember` do.
+- For child collections, guard the root's add and remove methods with `CanWriteProperty(XProperty)`, as `AssignRole` and `AddMember` do, **and check again when saving** (`Members.IsDirty && !CanWriteProperty(MembersProperty)` throws in `ProjectEdit`): the list itself is public, so `Members.Remove(...)` bypasses the helper.
+- **Invariants live on the save path**, not only in helpers and commands: `ClosedByCommandOnly` refuses editing the status to Closed, so the close rules in `CloseProjectCommand` can't be skipped.
 - **Per-record decisions** happen in the operation: `CloseProjectCommand` checks "Admin, or a Technical member of this project".
 - **Who sees which records** is the data layer's job, through record-level access. A hidden record simply isn't found.
 - **Static helpers** for the UI: `X.CanEdit(applicationContext)`, `X.CanCreate(applicationContext)`.

@@ -1,3 +1,4 @@
+using CslaStarter.Core.Security;
 using CslaStarter.Dal;
 using CslaStarter.Dal.Users;
 using CslaStarter.Data.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CslaStarter.Data.Dal;
 
-public sealed class UserDal(AppDbContext db, IUserRoleCacheInvalidator invalidator) : IUserDal
+public sealed class UserDal(AppDbContext db, IUserRoleCacheInvalidator invalidator, ISecurityEventLog securityEvents, IDataAccessContext access) : IUserDal
 {
     public async Task<UserDto> FetchAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -42,6 +43,7 @@ public sealed class UserDal(AppDbContext db, IUserRoleCacheInvalidator invalidat
     {
         ArgumentNullException.ThrowIfNull(user);
         var row = await LoadForUpdateAsync(user.Id, user.Version, cancellationToken);
+        var rolesBefore = RoleList(row.Roles.Select(r => r.RoleTypeCode));
         row.DisplayName = user.DisplayName;
         row.IsActive = user.IsActive;
         row.EmployeeNumber = user.EmployeeNumber;
@@ -59,6 +61,15 @@ public sealed class UserDal(AppDbContext db, IUserRoleCacheInvalidator invalidat
         DalHelpers.TouchRoot(db, row);
         await DalHelpers.SaveAggregateAsync(db, "User", user.Id, cancellationToken);
         invalidator.Invalidate(row.TenantId, row.ObjectId);
+
+        var rolesAfter = RoleList(row.Roles.Select(r => r.RoleTypeCode));
+        if (rolesAfter != rolesBefore)
+        {
+            await securityEvents.WriteAsync(
+                new SecurityEvent(SecurityEventKind.RoleChanged, access.UserId, access.UserName, $"User {user.Id} roles {rolesBefore} -> {rolesAfter}", access.CorrelationId),
+                cancellationToken);
+        }
+
         return await FetchAsync(user.Id, cancellationToken);
     }
 
@@ -73,6 +84,8 @@ public sealed class UserDal(AppDbContext db, IUserRoleCacheInvalidator invalidat
         invalidator.Invalidate(row.TenantId, row.ObjectId);
         return await FetchAsync(profile.Id, cancellationToken);
     }
+
+    private static string RoleList(IEnumerable<int> codes) => string.Join(',', codes.Order());
 
     private async Task<AppUser> LoadForUpdateAsync(Guid id, uint version, CancellationToken cancellationToken)
     {

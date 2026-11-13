@@ -7,6 +7,7 @@ using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
+using CslaStarter.Dal;
 using CslaStarter.Dal.Projects;
 
 namespace CslaStarter.Business.Projects;
@@ -23,6 +24,7 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
     public static readonly PropertyInfo<string> NameProperty = RegisterProperty<string>(nameof(Name));
     public static readonly PropertyInfo<string?> DescriptionProperty = RegisterProperty<string?>(nameof(Description));
     public static readonly PropertyInfo<int> StatusCodeProperty = RegisterProperty<int>(nameof(StatusCode));
+    public static readonly PropertyInfo<int> OriginalStatusCodeProperty = RegisterProperty<int>(nameof(OriginalStatusCode));
     public static readonly PropertyInfo<decimal?> BudgetProperty = RegisterProperty<decimal?>(nameof(Budget));
     public static readonly PropertyInfo<DateOnly?> StartDateProperty = RegisterProperty<DateOnly?>(nameof(StartDate));
     public static readonly PropertyInfo<DateOnly?> EndDateProperty = RegisterProperty<DateOnly?>(nameof(EndDate));
@@ -62,6 +64,14 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
     {
         get => GetProperty(StatusCodeProperty);
         set => SetProperty(StatusCodeProperty, value);
+    }
+
+    /// <summary>The status when the project was loaded (0 when new): rules allow keeping it even if since retired.</summary>
+    [LocalizedDisplayName(nameof(Labels.Project_Status))]
+    public int OriginalStatusCode
+    {
+        get => GetProperty(OriginalStatusCodeProperty);
+        private set => LoadProperty(OriginalStatusCodeProperty, value);
     }
 
     [LocalizedDisplayName(nameof(Labels.Project_Budget))]
@@ -144,7 +154,8 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
         BusinessRules.AddRule(new Required(NameProperty, () => Messages.Common_Required));
         BusinessRules.AddRule(new MaxLength(NameProperty, 200, () => Messages.Common_MaxLength));
         BusinessRules.AddRule(new MaxLength(DescriptionProperty, 2000, () => Messages.Common_MaxLength));
-        BusinessRules.AddRule(new ActiveStatus(StatusCodeProperty, () => Messages.Project_InvalidStatus));
+        BusinessRules.AddRule(new ActiveStatus(StatusCodeProperty, OriginalStatusCodeProperty, () => Messages.Project_InvalidStatus));
+        BusinessRules.AddRule(new ClosedByCommandOnly(StatusCodeProperty, OriginalStatusCodeProperty, ProjectStatusType.Closed, () => Messages.Project_CloseWithCommand));
         BusinessRules.AddRule(new NotNegative(BudgetProperty, () => Messages.Project_BudgetNegative));
         BusinessRules.AddRule(new EndAfterStart(EndDateProperty, StartDateProperty, () => Messages.Project_EndBeforeStart));
         BusinessRules.AddRule(new Dependency(StartDateProperty, EndDateProperty));
@@ -185,11 +196,11 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
 
     [Insert]
     private async Task Insert([Inject] IProjectDal dal, [Inject] IChildDataPortal<ProjectTaskList> tasksPortal, [Inject] IChildDataPortal<ProjectMemberList> membersPortal) =>
-        Load(await dal.InsertAsync(ToSaveDto(), CancellationToken.None), tasksPortal, membersPortal);
+        Load(await SaveAsync(dto => dal.InsertAsync(dto, CancellationToken.None)), tasksPortal, membersPortal);
 
     [Update]
     private async Task Update([Inject] IProjectDal dal, [Inject] IChildDataPortal<ProjectTaskList> tasksPortal, [Inject] IChildDataPortal<ProjectMemberList> membersPortal) =>
-        Load(await dal.UpdateAsync(ToSaveDto(), CancellationToken.None), tasksPortal, membersPortal);
+        Load(await SaveAsync(dto => dal.UpdateAsync(dto, CancellationToken.None)), tasksPortal, membersPortal);
 
     [DeleteSelf]
     private Task DeleteSelf([Inject] IProjectDal dal) => dal.DeleteAsync(Id, Version, CancellationToken.None);
@@ -199,6 +210,25 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
     {
         Id = id;
         return dal.DeleteAsync(Id, null, CancellationToken.None);
+    }
+
+    // The member list can be changed directly (Members.Remove...), so the permission is checked again when saving. A
+    // duplicate code that slipped past the rule (it doesn't run on the server) fails on the unique index instead.
+    private async Task<ProjectDto> SaveAsync(Func<ProjectSaveDto, Task<ProjectDto>> save)
+    {
+        if (Members.IsDirty && !CanWriteProperty(MembersProperty))
+        {
+            throw new Csla.Security.SecurityException(Messages.AccessDenied_Title);
+        }
+
+        try
+        {
+            return await save(ToSaveDto());
+        }
+        catch (DuplicateValueException e) when (e.Property == nameof(Code))
+        {
+            throw new ValidationException(RuleMessages.Format(() => Messages.Project_CodeTaken, CodeProperty.FriendlyName), e);
+        }
     }
 
     private ProjectSaveDto ToSaveDto() => new(
@@ -215,6 +245,7 @@ public sealed class ProjectEdit : AppRootBase<ProjectEdit>
             Name = project.Name;
             Description = project.Description;
             StatusCode = project.StatusCode;
+            OriginalStatusCode = project.StatusCode;
             Budget = project.Budget;
             StartDate = project.StartDate;
             EndDate = project.EndDate;

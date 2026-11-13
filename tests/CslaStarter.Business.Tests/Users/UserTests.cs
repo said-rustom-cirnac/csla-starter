@@ -66,7 +66,7 @@ public class UserTests
     {
         using var host = Host(TestPrincipals.Client);
 
-        await Assert.ThrowsAnyAsync<Exception>(() => host.GetDataPortal<UserEdit>().FetchAsync(_bobId));
+        await Denied.Assert(() => host.GetDataPortal<UserEdit>().FetchAsync(_bobId));
         Assert.Empty(_dal.Fetched);
     }
 
@@ -122,7 +122,7 @@ public class UserTests
         }
 
         using var clientHost = Host(TestPrincipals.Client);
-        await Assert.ThrowsAnyAsync<Exception>(() => clientHost.GetDataPortal<UserList>().FetchAsync(string.Empty, 0, 1, 25));
+        await Denied.Assert(() => clientHost.GetDataPortal<UserList>().FetchAsync(string.Empty, 0, 1, 25));
     }
 
     private CslaTestHost Host(ClaimsPrincipal principal) => CslaTestHost.Create(o => o
