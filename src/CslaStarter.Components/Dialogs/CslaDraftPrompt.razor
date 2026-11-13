@@ -1,0 +1,9 @@
+<div role="alertdialog" aria-labelledby="@TitleId" data-csla-draft>
+    <p id="@TitleId">@Prompt</p>
+    @if (RecordChanged)
+    {
+        <p>@Messages.Draft_RecordChanged</p>
+    }
+    <gcds-button type="button" data-action="restore" @ongcdsclick="OnRestore">@Messages.Draft_Restore</gcds-button>
+    <gcds-button type="button" button-role="secondary" data-action="discard" @ongcdsclick="OnDiscard">@Messages.Draft_Discard</gcds-button>
+</div>

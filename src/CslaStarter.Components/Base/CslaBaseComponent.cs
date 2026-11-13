@@ -25,6 +25,7 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
     private readonly List<IDisposable> _subscriptions = [];
     private int _busy;
     private bool _disposed;
+    private ILogger? _logger;
 
     protected CslaBaseComponent() =>
         ComponentId = "csla-" + Interlocked.Increment(ref _lastId).ToString(CultureInfo.InvariantCulture);
@@ -48,6 +49,9 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
 
     [Inject]
     protected ApplicationContext ApplicationContext { get; set; } = default!;
+
+    /// <summary>A logger named after the concrete component.</summary>
+    protected ILogger Logger => _logger ??= LoggerFactory.CreateLogger(GetType());
 
     /// <summary>This circuit's id in change notices and presence.</summary>
     protected string OriginId => Origin.Id;
@@ -178,7 +182,7 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
         }
         else if (failure.Kind == BusinessErrorKind.Unexpected)
         {
-            LogUnexpected(LoggerFactory.CreateLogger(GetType()), failure.Exception, operation);
+            LogUnexpected(Logger, failure.Exception, operation);
         }
 
         Toasts.Show(ToastKind.Error, failure.Message);
@@ -212,7 +216,7 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
         catch (Exception ex) when (ex is not ObjectDisposedException)
 #pragma warning restore CA1031
         {
-            LogLiveUpdateFailed(LoggerFactory.CreateLogger(GetType()), ex);
+            LogLiveUpdateFailed(Logger, ex);
         }
         catch (ObjectDisposedException)
         {

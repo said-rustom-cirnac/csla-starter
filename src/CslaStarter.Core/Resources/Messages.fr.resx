@@ -28,6 +28,11 @@
   <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Garder la sienne</value></data>
   <data name="Conflict_Added" xml:space="preserve"><value>Ajouté</value></data>
   <data name="Conflict_Removed" xml:space="preserve"><value>Supprimé</value></data>
+  <data name="Draft_RestorePrompt" xml:space="preserve"><value>Restaurer vos modifications non enregistrées de {0}?</value></data>
+  <data name="Draft_RecordChanged" xml:space="preserve"><value>Cet enregistrement a changé depuis. Révisez-le avant d'enregistrer.</value></data>
+  <data name="Draft_Restore" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="Draft_Discard" xml:space="preserve"><value>Abandonner</value></data>
+  <data name="Draft_Restored" xml:space="preserve"><value>Vos modifications non enregistrées ont été restaurées.</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

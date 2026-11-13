@@ -13,6 +13,11 @@
             <CslaChangeBanner ChangedBy="@RemoteChange.ChangedByName" Deleted="@(RemoteChange.Kind == Core.Realtime.ChangeKind.Deleted)" OnReload="ReloadAsync" OnKeepMine="KeepMine" />
         }
 
+        @if (DraftOffer is not null)
+        {
+            <CslaDraftPrompt SavedAt="DraftOffer.SavedAt" RecordChanged="@DraftRecordChanged" OnRestore="RestoreDraftAsync" OnDiscard="DiscardDraftAsync" />
+        }
+
         @if (Conflict is not null)
         {
             <CslaConflictDialog Differences="Conflict.Differences" BothChanged="Conflict.BothChanged" OnUseTheirs="UseTheirsAsync" OnApplyMine="ApplyMineAsync" />

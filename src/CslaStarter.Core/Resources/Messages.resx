@@ -28,6 +28,11 @@
   <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Keep theirs</value></data>
   <data name="Conflict_Added" xml:space="preserve"><value>Added</value></data>
   <data name="Conflict_Removed" xml:space="preserve"><value>Removed</value></data>
+  <data name="Draft_RestorePrompt" xml:space="preserve"><value>Restore your unsaved changes from {0}?</value></data>
+  <data name="Draft_RecordChanged" xml:space="preserve"><value>This record changed since then. Review it before saving.</value></data>
+  <data name="Draft_Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Draft_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Draft_Restored" xml:space="preserve"><value>Your unsaved changes were restored.</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>

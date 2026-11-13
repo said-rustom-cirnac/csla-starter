@@ -1,13 +1,16 @@
 using System.Runtime.ExceptionServices;
 using Csla.Core;
 using CslaStarter.Business.Base;
+using CslaStarter.Business.Drafts;
 using CslaStarter.Business.Errors;
 using CslaStarter.Components.Base;
+using CslaStarter.Components.Drafts;
 using CslaStarter.Components.Services;
 using CslaStarter.Core.Drafts;
 using CslaStarter.Core.Realtime;
 using CslaStarter.Core.Resources;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace CslaStarter.Components.Forms;
 
@@ -20,14 +23,19 @@ namespace CslaStarter.Components.Forms;
 /// <item>after a backplane reconnect it re-checks the version;</item>
 /// <item>if the user loses access, it closes with a message and discards the draft;</item>
 /// <item>a save that loses the race opens the conflict dialog;</item>
-/// <item>presence says who else has the record open.</item>
+/// <item>presence says who else has the record open;</item>
+/// <item>while dirty, a draft is saved 2 seconds after the last edit, and offered back when the record is opened again.</item>
 /// </list>
 /// Errors show once a field is touched or a save is attempted; CSLA is the only validator (the form is <c>novalidate</c>).
 /// </summary>
-public partial class CslaForm<T> : CslaBaseComponent<T>
+public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
     where T : class
 {
+    private static readonly TimeSpan DraftAfter = TimeSpan.FromSeconds(2);
+
     private T? _original;
+    private DraftAutosave? _autosave;
+    private IDisposable? _flushRegistration;
     private IDisposable? _presence;
     private PresenceMode? _presenceMode;
 
@@ -60,6 +68,11 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
 
     protected ConflictState? Conflict { get; private set; }
 
+    /// <summary>A draft found when the form opened, waiting for Restore or Discard.</summary>
+    protected Draft? DraftOffer { get; private set; }
+
+    protected bool DraftRecordChanged => DraftOffer is not null && ViewModel.Model is IVersioned { Version: var version } && DraftOffer.Version != version;
+
     protected ChangeTopic? Topic => EntityType is { Length: > 0 } type && EntityKey is { Length: > 0 } key ? ChangeTopic.ForRecord(type, key) : null;
 
     [Inject]
@@ -70,6 +83,9 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
 
     [Inject]
     private IDraftStore Drafts { get; set; } = default!;
+
+    [Inject]
+    private DraftFlushRegistry FlushRegistry { get; set; } = default!;
 
     /// <summary>Saves when the object is savable; otherwise shows every error. Returns whether it saved.</summary>
     public async Task<bool> SaveAsync()
@@ -94,6 +110,8 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
         });
         if (saved)
         {
+            _autosave?.Cancel();
+            await DeleteDraftAsync();
             Baseline();
             RemoteChange = null;
             Toasts.Show(ToastKind.Success, Messages.Toast_Saved);
@@ -109,9 +127,18 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
     public async Task CancelAsync()
     {
         await ViewModel.CancelAsync();
+        _autosave?.Cancel();
+        await DeleteDraftAsync();
         FormContext?.Snapshot();
         UpdatePresence();
         StateHasChanged();
+    }
+
+    /// <summary>Writes the draft now when there are unsaved edits (before a language switch or sign-out).</summary>
+    public async Task FlushDraftAsync()
+    {
+        _autosave?.Cancel();
+        await SaveDraftAsync();
     }
 
     protected override async Task OnInitializedAsync()
@@ -132,6 +159,9 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
             StartLiveUpdates();
             FormContext = new CslaFormContext<T>(ComponentId, ViewModel, Time);
             Baseline();
+            _autosave = new DraftAutosave(Time, DraftAfter, () => InvokeAsync(SaveDraftAsync));
+            _flushRegistration = FlushRegistry.Register(this);
+            await OfferDraftAsync();
         }
     }
 
@@ -149,13 +179,20 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
     protected override ValueTask DisposeAsyncCore()
     {
         _presence?.Dispose();
+        _autosave?.Dispose();
+        _flushRegistration?.Dispose();
         return base.DisposeAsyncCore();
     }
 
     protected async Task SubmitAsync() => await SaveAsync();
 
     /// <summary>Discards my edits and shows the record as it is now ("Reload" on the banner).</summary>
-    protected Task ReloadAsync() => RefreshAsync(RemoteChange);
+    protected async Task ReloadAsync()
+    {
+        _autosave?.Cancel();
+        await DeleteDraftAsync();
+        await RefreshAsync(RemoteChange);
+    }
 
     protected void KeepMine()
     {
@@ -175,6 +212,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
         await ReplaceModelAsync(Conflict.Theirs);
         Conflict = null;
         Baseline();
+        _autosave?.Cancel();
         await DeleteDraftAsync();
     }
 
@@ -192,6 +230,75 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
         _original = server;
         FormContext!.Snapshot(server);
     }
+
+    protected async Task RestoreDraftAsync()
+    {
+        if (DraftOffer is null)
+        {
+            return;
+        }
+
+        var server = Clone(ViewModel.Model!);
+        if (DraftCodec.TryDeserialize<T>(ApplicationContext, DraftOffer.Payload) is { } restored)
+        {
+            await ReplaceModelAsync(restored);
+            _original = server;
+            FormContext!.Snapshot(server);
+            Announcer.Announce(Messages.Draft_Restored);
+        }
+        else
+        {
+            await DeleteDraftAsync();
+        }
+
+        DraftOffer = null;
+    }
+
+    protected async Task DiscardDraftAsync()
+    {
+        DraftOffer = null;
+        await DeleteDraftAsync();
+    }
+
+    private async Task OfferDraftAsync()
+    {
+        if (DraftKey() is not { } key || await Drafts.GetAsync(key, DisposalToken) is not { } draft)
+        {
+            return;
+        }
+
+        // A draft written before a deploy that changed the class can't be read back: it is no draft.
+        if (DraftCodec.TryDeserialize<T>(ApplicationContext, draft.Payload) is null)
+        {
+            await Drafts.DeleteAsync(key, DisposalToken);
+            return;
+        }
+
+        DraftOffer = draft;
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        if (IsClosed || !ViewModel.IsDirty || DraftKey() is not { } key)
+        {
+            return;
+        }
+
+        try
+        {
+            var version = ViewModel.Model is IVersioned { Version: var v } ? v : (uint?)null;
+            await Drafts.SaveAsync(key, version, DraftCodec.Serialize(ApplicationContext, ViewModel.Model!), CancellationToken.None);
+        }
+#pragma warning disable CA1031 // A draft is a convenience: failing to write one must never disturb the edit.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            LogDraftFailed(Logger, ex);
+        }
+    }
+
+    private DraftKey? DraftKey() =>
+        CurrentUser.UserId is { } me && EntityType is { Length: > 0 } type && EntityKey is { Length: > 0 } key ? new DraftKey(me, type, key) : null;
 
     private void StartLiveUpdates()
     {
@@ -336,10 +443,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
         StateHasChanged();
     }
 
-    private Task DeleteDraftAsync() =>
-        CurrentUser.UserId is { } me && EntityType is { } type && EntityKey is { } key
-            ? Drafts.DeleteAsync(new DraftKey(me, type, key), CancellationToken.None)
-            : Task.CompletedTask;
+    private Task DeleteDraftAsync() => DraftKey() is { } key ? Drafts.DeleteAsync(key, CancellationToken.None) : Task.CompletedTask;
 
     // The object as the server has it: the baseline for "changed" markers and for merging after a conflict.
     private void Baseline()
@@ -371,6 +475,11 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
     {
         _ = InvokeAsync(() =>
         {
+            if (ViewModel.IsDirty)
+            {
+                _autosave?.Touch();
+            }
+
             UpdatePresence();
             StateHasChanged();
         });
@@ -394,6 +503,9 @@ public partial class CslaForm<T> : CslaBaseComponent<T>
 
     // Rule results and busy changes can arrive off the renderer (async rules finish on the thread pool).
     private void RenderLater() => _ = InvokeAsync(StateHasChanged);
+
+    [LoggerMessage(EventId = 4100, Level = LogLevel.Warning, Message = "Saving a draft failed; the edits are still in the form.")]
+    private static partial void LogDraftFailed(ILogger logger, Exception exception);
 
     protected sealed record ConflictState(T Theirs, IReadOnlyList<FieldDifference> Differences, IReadOnlyList<FieldDifference> BothChanged);
 }
