@@ -8,4 +8,15 @@
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>
+  <data name="Common_MaxLength" xml:space="preserve"><value>{0} cannot be longer than {1} characters.</value></data>
+  <data name="User_UnsupportedLanguage" xml:space="preserve"><value>{0} must be English (en-CA) or French (fr-CA).</value></data>
+  <data name="Common_CheckFailed" xml:space="preserve"><value>{0} couldn't be checked right now. Try again in a moment.</value></data>
+  <data name="Project_CodeFormat" xml:space="preserve"><value>{0} may contain only capital letters, digits and hyphens.</value></data>
+  <data name="Project_CodeTaken" xml:space="preserve"><value>{0} is already used by another project.</value></data>
+  <data name="Project_EndBeforeStart" xml:space="preserve"><value>{0} cannot be before the start date.</value></data>
+  <data name="Project_BudgetNegative" xml:space="preserve"><value>{0} cannot be negative.</value></data>
+  <data name="Project_InvalidStatus" xml:space="preserve"><value>{0} is not a valid status.</value></data>
+  <data name="Project_CloseWithOpenTasks" xml:space="preserve"><value>This project still has open tasks. Finish or remove them before closing it.</value></data>
+  <data name="Project_CloseWithCommand" xml:space="preserve"><value>Use Close project to close a project: it checks for open tasks first.</value></data>
+  <data name="Project_Closed" xml:space="preserve"><value>The project is closed.</value></data>
 </root>

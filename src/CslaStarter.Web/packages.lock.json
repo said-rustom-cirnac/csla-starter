@@ -2,6 +2,24 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Csla.AspNetCore": {
+        "type": "Direct",
+        "requested": "[10.2.0, )",
+        "resolved": "10.2.0",
+        "contentHash": "tXT3wlFS6FYH/xRGKIuDFS4F99NQZ8g+DB+iPz5KN2/3ExterKjNpD27AXAnEk/bHk5/U4iHpD/YOZQ1CH9YZA==",
+        "dependencies": {
+          "Csla": "10.2.0"
+        }
+      },
+      "Csla.Blazor": {
+        "type": "Direct",
+        "requested": "[10.2.0, )",
+        "resolved": "10.2.0",
+        "contentHash": "yCs+FV4X4oViN4P5httyImoMpV+vrMMcCfzVSzk3t7XIhqgpAX57SOMyUWcYsO3/O+t5Vi8eYq4htPSkJFHTgA==",
+        "dependencies": {
+          "Csla": "10.2.0"
+        }
+      },
       "Microsoft.AspNetCore.App.Internal.Assets": {
         "type": "Direct",
         "requested": "[10.0.15, )",
@@ -247,6 +265,11 @@
           "System.Memory.Data": "10.0.10"
         }
       },
+      "System.ComponentModel.Annotations": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
+      },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
         "resolved": "11.0.0",
@@ -279,6 +302,7 @@
       "cslastarter.business": {
         "type": "Project",
         "dependencies": {
+          "Csla": "[10.2.0, )",
           "CslaStarter.Core": "[1.0.0, )",
           "CslaStarter.Dal": "[1.0.0, )"
         }
@@ -353,6 +377,15 @@
         "contentHash": "GeFv8sGwRKvDKwI2WFy8r0mhmlxEVZg24Sit2NogTjiSO8RVjllWM65OT6e1sKjOvG8V74y7hAbaELUUPjZQSw==",
         "dependencies": {
           "Azure.Core": "1.53.0"
+        }
+      },
+      "Csla": {
+        "type": "CentralTransitive",
+        "requested": "[10.2.0, )",
+        "resolved": "10.2.0",
+        "contentHash": "9r6uAMYC3bXHU36UzMNhyhZW3JDAnazprxD1lML2l3eyAPW2Ip5H66BHBCJtqXPfdAAxdsevmuCToAEWgCmvSg==",
+        "dependencies": {
+          "System.ComponentModel.Annotations": "5.0.0"
         }
       },
       "EFCore.NamingConventions": {

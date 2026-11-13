@@ -165,10 +165,10 @@ public sealed class IdentityTests(PostgresFixture postgres) : IAsyncLifetime
         new(new ClaimsIdentity([new Claim("tid", "tenant-1"), new Claim("oid", objectId), new Claim("name", name)], "Test"));
 
     private UserDirectory Directory() => new(
-        new AppDatabaseConnection(_db.RuntimeConnectionString),
+        AppDatabase.Create(_db.RuntimeConnectionString),
         new MemoryCache(new MemoryCacheOptions()),
         TimeProvider.System,
-        new SecurityEventLog(new AppDatabaseConnection(_db.RuntimeConnectionString), TimeProvider.System, NullLogger<SecurityEventLog>.Instance));
+        new SecurityEventLog(AppDatabase.Create(_db.RuntimeConnectionString), TimeProvider.System, NullLogger<SecurityEventLog>.Instance));
 
     private RoleClaimsTransformation Transformation() => new(Directory());
 
@@ -184,7 +184,7 @@ public sealed class IdentityTests(PostgresFixture postgres) : IAsyncLifetime
         }).Build();
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton(new AppDatabaseConnection(_db.RuntimeConnectionString));
+        services.AddSingleton(AppDatabase.Create(_db.RuntimeConnectionString));
         services.AddCslaStarterAuthentication(configuration, new TestHostEnvironment(environment));
         return services.BuildServiceProvider();
     }

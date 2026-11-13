@@ -1,6 +1,5 @@
 using CslaStarter.Core.Security;
 using CslaStarter.Data.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace CslaStarter.Data.Security;
@@ -9,7 +8,7 @@ namespace CslaStarter.Data.Security;
 /// Writes security events to the append-only security_event table and to the log (for SIEM forwarding). Uses its
 /// own short-lived context so it never saves a caller's unrelated pending changes.
 /// </summary>
-public sealed partial class SecurityEventLog(AppDatabaseConnection connection, TimeProvider time, ILogger<SecurityEventLog> logger) : ISecurityEventLog
+public sealed partial class SecurityEventLog(AppDatabase database, TimeProvider time, ILogger<SecurityEventLog> logger) : ISecurityEventLog
 {
     private const int MaxDetailLength = 2000;
     private const int MaxUserNameLength = 200;
@@ -18,9 +17,7 @@ public sealed partial class SecurityEventLog(AppDatabaseConnection connection, T
     {
         ArgumentNullException.ThrowIfNull(securityEvent);
 
-        var options = new DbContextOptionsBuilder<AppDbContext>();
-        options.UseAppDatabase(connection.ConnectionString);
-        await using var db = new AppDbContext(options.Options);
+        await using var db = database.CreateContext();
         db.SecurityEvents.Add(new SecurityEventRow
         {
             Kind = (int)securityEvent.Kind,

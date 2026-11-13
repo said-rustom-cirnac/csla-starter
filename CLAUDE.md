@@ -69,9 +69,11 @@ Branches, pull requests, the `claude` → `main` sync and Jira tracking are in [
 - [Conventions](docs/claude/conventions.md): naming, class layout, razor files, nullable rules.
 - [Workflow](docs/claude/workflow.md): branches, commits, sync to `main`, Claude-only paths.
 - [Testing](docs/claude/testing.md): running tests, filters, what each test project covers.
+- [Business objects](docs/claude/business-objects.md): CSLA base classes, layout, rules, permissions, data portal patterns.
 - [Data access](docs/claude/data-access.md): PostgreSQL, the two database roles, migrations, audit capture.
 - [Security](docs/claude/security.md): sign-in, roles, bootstrap-admin, headers and CSP, sessions, keys.
 - [Localization](docs/claude/localization.md): resources, `[LocalizedDisplayName]`, choosing and switching the culture.
+- Recipes: [add a feature](docs/claude/recipes/add-a-feature.md), [add a `*Type`](docs/claude/recipes/add-a-type.md), [remove the Projects sample](docs/claude/recipes/remove-sample.md).
 
 Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`.
 

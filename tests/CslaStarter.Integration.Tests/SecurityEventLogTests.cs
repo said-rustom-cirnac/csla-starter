@@ -20,7 +20,7 @@ public sealed class SecurityEventLogTests(PostgresFixture postgres) : IAsyncLife
     {
         var at = new DateTimeOffset(2026, 11, 12, 15, 30, 0, TimeSpan.Zero);
         var userId = Guid.CreateVersion7();
-        var log = new SecurityEventLog(new AppDatabaseConnection(_db.RuntimeConnectionString), new FakeTimeProvider(at), NullLogger<SecurityEventLog>.Instance);
+        var log = new SecurityEventLog(AppDatabase.Create(_db.RuntimeConnectionString), new FakeTimeProvider(at), NullLogger<SecurityEventLog>.Instance);
 
         await log.WriteAsync(new SecurityEvent(SecurityEventKind.AccessDenied, userId, "Ada", "Edit Project 42", "corr-9"), TestContext.Current.CancellationToken);
 

@@ -10,10 +10,11 @@ public static class HealthSetup
 {
     private const string Ready = "ready";
 
-    public static IServiceCollection AddCslaStarterHealth(this IServiceCollection services, string connectionString)
+    /// <summary>Uses the app's shared NpgsqlDataSource (registered by AddCslaStarterData).</summary>
+    public static IServiceCollection AddCslaStarterHealth(this IServiceCollection services)
     {
         services.AddHealthChecks()
-            .AddNpgSql(connectionString, name: "database", tags: [Ready])
+            .AddNpgSql(name: "database", tags: [Ready])
             .AddCheck<MigrationsHealthCheck>("migrations", tags: [Ready]);
         return services;
     }

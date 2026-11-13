@@ -53,3 +53,11 @@ dotnet_diagnostic.CA1707.severity = none
 # EF Core migrations are generated code.
 [src/CslaStarter.Data/Migrations/**.cs]
 generated_code = true
+
+# CSLA0007 flags the null-forgiving GetProperty(...)! that non-nullable string properties need. The business layout
+# convention test enforces the same rule (property bodies only call Get/Set/Load/ReadProperty) without that false hit.
+[src/CslaStarter.Business/**.cs]
+dotnet_diagnostic.CSLA0007.severity = none
+
+[tests/CslaStarter.Business.Tests/**.cs]
+dotnet_diagnostic.CSLA0007.severity = none

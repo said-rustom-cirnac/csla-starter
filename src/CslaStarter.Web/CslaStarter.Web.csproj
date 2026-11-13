@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Csla.AspNetCore" />
+    <PackageReference Include="Csla.Blazor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CslaStarter.Core\CslaStarter.Core.csproj" />
     <ProjectReference Include="..\CslaStarter.Dal\CslaStarter.Dal.csproj" />
     <ProjectReference Include="..\CslaStarter.Business\CslaStarter.Business.csproj" />

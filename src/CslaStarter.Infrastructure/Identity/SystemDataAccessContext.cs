@@ -10,6 +10,8 @@ public sealed class SystemDataAccessContext(string actor) : IDataAccessContext
 
     public string UserName { get; } = actor;
 
+    public IReadOnlySet<int> RoleCodes { get; } = new HashSet<int>();
+
     public string? CorrelationId => Activity.Current?.TraceId.ToString();
 
     public string? OriginId => null;

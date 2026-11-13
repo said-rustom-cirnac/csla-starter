@@ -1,4 +1,5 @@
 using CslaStarter.Core.Security;
+using CslaStarter.Dal.Users;
 using CslaStarter.Data;
 using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Entities;
@@ -23,7 +24,7 @@ public interface IUserDirectory
     void Invalidate(string tenantId, string objectId);
 }
 
-public sealed class UserDirectory(AppDatabaseConnection connection, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog) : IUserDirectory
+public sealed class UserDirectory(AppDatabase database, IMemoryCache cache, TimeProvider time, ISecurityEventLog securityLog) : IUserDirectory, IUserRoleCacheInvalidator
 {
     private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
 
@@ -94,13 +95,8 @@ public sealed class UserDirectory(AppDatabaseConnection connection, IMemoryCache
     // Entra allows longer names than our columns; a long name must never block sign-in.
     private static string? Fit(string? value, int length) => value is { Length: > 0 } && value.Length > length ? value[..length] : value;
 
-    private AppDbContext CreateContext(string actor)
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>();
-        options.UseAppDatabase(connection.ConnectionString)
-            .AddInterceptors(new AuditSaveChangesInterceptor(new SystemDataAccessContext(actor), time));
-        return new AppDbContext(options.Options);
-    }
+    private AppDbContext CreateContext(string actor) =>
+        database.CreateContext(new AuditSaveChangesInterceptor(new SystemDataAccessContext(actor), time));
 
     private static string Key(string tenantId, string objectId) => $"user:{tenantId}:{objectId}";
 }
