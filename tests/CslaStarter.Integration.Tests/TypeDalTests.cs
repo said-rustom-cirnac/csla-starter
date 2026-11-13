@@ -12,7 +12,7 @@ public sealed class TypeDalTests(PostgresFixture postgres) : IAsyncLifetime
         TypeDal.ResetCache();
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task TypeDal_FetchesSeededUserRoles()

@@ -29,7 +29,7 @@ public sealed class BusinessEndToEndTests(PostgresFixture postgres) : IAsyncLife
         _client = await _db.AddUserAsync("Cleo Client", 2);
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task Project_AdminCreatesEditsAndSaves_ClientMemberSeesIt()

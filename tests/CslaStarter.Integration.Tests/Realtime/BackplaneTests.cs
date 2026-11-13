@@ -29,6 +29,7 @@ public sealed class BackplaneTests(PostgresFixture postgres) : IAsyncLifetime
     {
         await _a.DisposeAsync();
         await _b.DisposeAsync();
+        await _db.DisposeAsync();
     }
 
     [Fact]

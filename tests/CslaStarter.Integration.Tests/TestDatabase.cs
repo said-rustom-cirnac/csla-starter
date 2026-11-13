@@ -6,14 +6,21 @@ using CslaStarter.Data.Entities;
 using CslaStarter.Data.Realtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace CslaStarter.Integration.Tests;
 
-/// <summary>A fresh, migrated database for one test, reachable as app_owner and as app_runtime.</summary>
-public sealed class TestDatabase
+/// <summary>
+/// A fresh, migrated database for one test, reachable as app_owner and as app_runtime. Dispose it when the test ends:
+/// the copies would otherwise fill the container's disk.
+/// </summary>
+public sealed class TestDatabase : IAsyncDisposable
 {
+    private readonly PostgresFixture _postgres;
+
     private TestDatabase(PostgresFixture postgres, string name)
     {
+        _postgres = postgres;
         Name = name;
         OwnerConnectionString = postgres.ConnectionString(name, "app_owner", PostgresFixture.OwnerPassword);
         RuntimeConnectionString = postgres.ConnectionString(name, "app_runtime", PostgresFixture.RuntimePassword);
@@ -27,6 +34,13 @@ public sealed class TestDatabase
 
     public static async Task<TestDatabase> CreateAsync(PostgresFixture postgres) =>
         new(postgres, await postgres.CreateDatabaseAsync());
+
+    public async ValueTask DisposeAsync()
+    {
+        NpgsqlConnection.ClearPool(new NpgsqlConnection(OwnerConnectionString));
+        NpgsqlConnection.ClearPool(new NpgsqlConnection(RuntimeConnectionString));
+        await _postgres.DropDatabaseAsync(Name);
+    }
 
     /// <summary>
     /// A context as the app sees it: connected as app_runtime unless <paramref name="asOwner"/>, publishing committed

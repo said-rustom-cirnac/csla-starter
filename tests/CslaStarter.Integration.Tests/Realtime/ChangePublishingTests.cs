@@ -19,7 +19,7 @@ public sealed class ChangePublishingTests(PostgresFixture postgres) : IAsyncLife
 
     public async ValueTask InitializeAsync() => _db = await TestDatabase.CreateAsync(postgres);
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task Publish_Insert_PublishesInserted()
