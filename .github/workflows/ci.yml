@@ -31,5 +31,7 @@ jobs:
         run: dotnet build -c Release --no-restore
       - name: Test
         run: dotnet test -c Release --no-build
-      - name: Script tests
+      - name: Script tests (template packing included; a generated app is built)
         run: bash scripts/tests/run.sh
+        env:
+          TEMPLATE_BUILD: '1'
