@@ -99,16 +99,17 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
     }
 
     /// <summary>
-    /// Calls <paramref name="handler"/> on this circuit's renderer for each change on <paramref name="topic"/> made
-    /// elsewhere (this circuit's own changes are skipped, except access changes). Ends when the component is disposed.
+    /// Calls <paramref name="handler"/> on this circuit's renderer for each change on <paramref name="topic"/>. Changes
+    /// this circuit made itself are skipped (an editor already shows them) unless <paramref name="includeOwn"/>, and
+    /// access changes always arrive. Ends when the component is disposed.
     /// </summary>
-    protected IDisposable Subscribe(ChangeTopic topic, Func<EntityChange, Task> handler)
+    protected IDisposable Subscribe(ChangeTopic topic, Func<EntityChange, Task> handler, bool includeOwn = false)
     {
         ArgumentNullException.ThrowIfNull(handler);
         var origin = Origin.Id;
         return Track(ChangeHub.Subscribe(topic, change =>
         {
-            if (change.OriginId != origin || change.Kind == ChangeKind.AccessChanged)
+            if (includeOwn || change.OriginId != origin || change.Kind == ChangeKind.AccessChanged)
             {
                 Dispatch(() => handler(change));
             }

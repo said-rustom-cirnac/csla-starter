@@ -16,5 +16,5 @@ export function afterWebStarted(blazor) {
     blazor.registerCustomEventType('gcdschange', { browserEventName: 'gcdsChange', createEventArgs: withValue });
     blazor.registerCustomEventType('gcdsblur', { browserEventName: 'gcdsBlur', createEventArgs: empty });
     blazor.registerCustomEventType('gcdsfocus', { browserEventName: 'gcdsFocus', createEventArgs: empty });
-    blazor.registerCustomEventType('gcdsclick', { browserEventName: 'gcdsClick', createEventArgs: empty });
+    blazor.registerCustomEventType('gcdsclick', { browserEventName: 'gcdsClick', createEventArgs: withValue });
 }

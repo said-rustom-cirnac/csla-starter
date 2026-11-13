@@ -1,4 +1,5 @@
 using Csla;
+using CslaStarter.Core;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
 using CslaStarter.Dal.Users;
@@ -7,7 +8,7 @@ namespace CslaStarter.Business.Users;
 
 /// <summary>One row of the user list.</summary>
 [Serializable]
-public sealed class UserInfo : ReadOnlyBase<UserInfo>
+public sealed class UserInfo : ReadOnlyBase<UserInfo>, IEntityIdentity
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));
     public static readonly PropertyInfo<string> DisplayNameProperty = RegisterProperty<string>(nameof(DisplayName));
@@ -29,6 +30,10 @@ public sealed class UserInfo : ReadOnlyBase<UserInfo>
 
     [LocalizedDisplayName(nameof(Labels.User_Roles))]
     public IReadOnlyList<int> RoleCodes => GetProperty(RoleCodesProperty)!;
+
+    public string EntityType => "User";
+
+    public string EntityKey => Id.ToString();
 
     [FetchChild]
     private void FetchChild(UserInfoDto row)

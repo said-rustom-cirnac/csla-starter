@@ -24,6 +24,10 @@ public sealed class FakeProjectDal : IProjectDal
 
     public int Fetches { get; private set; }
 
+    public int ListFetches { get; private set; }
+
+    public ProjectListCriteria? LastListCriteria { get; private set; }
+
     public ProjectSaveDto? LastSaved { get; private set; }
 
     public ProjectDto Add(Guid id, string code, int status = 2, decimal? budget = 1000m, IReadOnlyList<ProjectTaskDto>? tasks = null, params Guid[] members)
@@ -42,6 +46,8 @@ public sealed class FakeProjectDal : IProjectDal
 
     public Task<PagedResult<ProjectInfoDto>> FetchListAsync(ProjectListCriteria criteria, CancellationToken cancellationToken)
     {
+        ListFetches++;
+        LastListCriteria = criteria;
         var items = Projects.Values.Select(p => new ProjectInfoDto(p.Id, p.Code, p.Name, p.StatusCode, p.Budget, p.Tasks.Count(t => !t.IsDone), p.Tasks.Count)).ToList();
         return Task.FromResult(new PagedResult<ProjectInfoDto>(items, items.Count));
     }

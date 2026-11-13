@@ -1,6 +1,7 @@
 using Csla;
 using Csla.Rules;
 using Csla.Serialization.Mobile;
+using CslaStarter.Business.Base;
 using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
 using CslaStarter.Dal.Users;
@@ -12,7 +13,7 @@ namespace CslaStarter.Business.Users;
 /// Fetch with <c>(string search, int roleCode, int page, int pageSize)</c>: an empty search and role code 0 mean "no filter".
 /// </summary>
 [Serializable]
-public sealed class UserList : ReadOnlyListBase<UserList, UserInfo>
+public sealed class UserList : ReadOnlyListBase<UserList, UserInfo>, IPagedList
 {
     private int _totalCount;
 

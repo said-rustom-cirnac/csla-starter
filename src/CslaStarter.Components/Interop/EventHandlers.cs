@@ -10,10 +10,10 @@ namespace CslaStarter.Components.Interop;
 [EventHandler("ongcdschange", typeof(GcdsEventArgs), enableStopPropagation: true, enablePreventDefault: false)]
 [EventHandler("ongcdsblur", typeof(EventArgs), enableStopPropagation: true, enablePreventDefault: false)]
 [EventHandler("ongcdsfocus", typeof(EventArgs), enableStopPropagation: true, enablePreventDefault: false)]
-[EventHandler("ongcdsclick", typeof(EventArgs), enableStopPropagation: true, enablePreventDefault: false)]
+[EventHandler("ongcdsclick", typeof(GcdsEventArgs), enableStopPropagation: true, enablePreventDefault: false)]
 public static class EventHandlers;
 
-/// <summary>A GCDS event's <c>detail</c>: the field's value as text (several values are comma-separated).</summary>
+/// <summary>A GCDS event's <c>detail</c>: the field's value as text (several values are comma-separated); for gcds-pagination, the page.</summary>
 public sealed class GcdsEventArgs : EventArgs
 {
     public string? Value { get; set; }

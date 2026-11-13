@@ -1,0 +1,8 @@
+@typeparam TItem where TItem : class, CslaStarter.Core.IEntityIdentity
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<tr data-key="@Item.EntityKey" aria-selected="@(Selected ? "true" : "false")" @onclick="SelectAsync">
+    @foreach (var column in Columns)
+    {
+        <td>@column.CellFor(Item)</td>
+    }
+</tr>

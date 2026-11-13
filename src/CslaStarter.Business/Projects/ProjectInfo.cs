@@ -2,6 +2,7 @@ using Csla;
 using Csla.Rules;
 using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
+using CslaStarter.Core;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
 using CslaStarter.Dal.Projects;
@@ -10,7 +11,7 @@ namespace CslaStarter.Business.Projects;
 
 /// <summary>One row of the project list. The budget follows the same read rule as on ProjectEdit.</summary>
 [Serializable]
-public sealed class ProjectInfo : ReadOnlyBase<ProjectInfo>
+public sealed class ProjectInfo : ReadOnlyBase<ProjectInfo>, IEntityIdentity
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));
     public static readonly PropertyInfo<string> CodeProperty = RegisterProperty<string>(nameof(Code));
@@ -40,6 +41,10 @@ public sealed class ProjectInfo : ReadOnlyBase<ProjectInfo>
 
     [LocalizedDisplayName(nameof(Labels.Project_TaskCount))]
     public int TaskCount => GetProperty(TaskCountProperty);
+
+    public string EntityType => "Project";
+
+    public string EntityKey => Id.ToString();
 
     protected override void AddBusinessRules()
     {
