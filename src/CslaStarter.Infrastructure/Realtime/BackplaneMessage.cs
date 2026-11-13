@@ -40,3 +40,33 @@ internal sealed record BackplaneMessage(string Instance, string Type, string Key
 
     public EntityChange ToChange() => new(Type, Key, Kind, Version, UserId, UserName ?? string.Empty, Origin);
 }
+
+/// <summary>A presence message as it travels between instances, with the sending instance.</summary>
+internal sealed record PresenceWire(string Instance, PresenceAction Action, string Type, string? Key, Guid UserId, string Name, string Circuit, PresenceMode Mode)
+{
+    private const int MaxNameLength = 200;
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
+    public static string Serialize(string instance, PresenceMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        var entry = message.Entry;
+        var name = entry.DisplayName.Length > MaxNameLength ? entry.DisplayName[..MaxNameLength] : entry.DisplayName;
+        return JsonSerializer.Serialize(new PresenceWire(instance, message.Action, message.EntityType, message.EntityKey, entry.UserId, name, entry.CircuitId, entry.Mode), Json);
+    }
+
+    public static PresenceWire? TryDeserialize(string payload)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<PresenceWire>(payload, Json) is { Instance.Length: > 0, Type.Length: > 0, Circuit.Length: > 0 } wire ? wire : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    public PresenceMessage ToMessage() => new(Action, Type, Key, new PresenceEntry(UserId, Name ?? string.Empty, Circuit, Mode));
+}
