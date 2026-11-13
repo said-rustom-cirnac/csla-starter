@@ -1,10 +1,12 @@
 using CslaStarter.Core.Auditing;
+using CslaStarter.Core.Drafts;
 using CslaStarter.Core.Security;
 using CslaStarter.Dal.Projects;
 using CslaStarter.Dal.Types;
 using CslaStarter.Dal.Users;
 using CslaStarter.Data.Auditing;
 using CslaStarter.Data.Dal;
+using CslaStarter.Data.Drafts;
 using CslaStarter.Data.Realtime;
 using CslaStarter.Data.Security;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +37,7 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<ITypeDal, TypeDal>();
         services.AddScoped<IUserDal, UserDal>();
         services.AddScoped<IProjectDal, ProjectDal>();
+        services.AddScoped<IDraftStore, DraftStore>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseAppDatabase(database.DataSource)
             .AddInterceptors(

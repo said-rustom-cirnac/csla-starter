@@ -19,6 +19,7 @@ public static class RealtimeSetup
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IEntityChangeHub, EntityChangeHub>();
         services.AddSingleton<IPresenceTracker, PresenceTracker>();
+        services.AddHostedService<DraftCleanupService>();
 
         switch (configuration["Realtime:Backplane"] ?? "Postgres")
         {

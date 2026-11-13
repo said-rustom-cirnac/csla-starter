@@ -1,4 +1,5 @@
 using CslaStarter.Core.Realtime;
+using CslaStarter.Data;
 using CslaStarter.Infrastructure.Realtime;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -135,6 +136,7 @@ public sealed class RealtimeSetupTests
             .Build();
         using var provider = new ServiceCollection()
             .AddLogging()
+            .AddSingleton(AppDatabase.Create("Host=localhost;Database=unused"))
             .AddCslaStarterRealtime(configuration)
             .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
 

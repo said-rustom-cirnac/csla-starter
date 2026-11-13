@@ -38,6 +38,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IDataAc
 
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
+    public DbSet<DraftRow> Drafts => Set<DraftRow>();
+
     // Read by the query filters (EF turns them into query parameters for each query).
     private bool SeesAllProjects => access is not null && access.RoleCodes.Overlaps(ProjectAccess.SeesAllRoles);
 
