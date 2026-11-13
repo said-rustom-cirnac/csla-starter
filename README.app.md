@@ -6,7 +6,7 @@ A secure, bilingual line-of-business web application: .NET 10, Blazor Server, CS
 
 1. **Local database and mock Entra ID:** `docker compose up -d` (PostgreSQL 18 and mock-oauth2-server), then apply the migrations:
    `CSLASTARTER_DESIGN_CONNECTION="<Owner connection string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data`
-2. **GC Design System assets:** `bash scripts/update-gcds.sh` (needs Node.js) fetches the pinned packages into the component library. Commit what it writes, including `scripts/gcds.integrity`.
+2. **GC Design System assets:** they ship in the component library (`wwwroot/gcds`). To move to a new version, change the pins in `scripts/update-gcds.sh`, run `bash scripts/update-gcds.sh` (needs Node.js), and commit what it writes, including `scripts/gcds.integrity`.
 3. **Run:** `dotnet run --project src/CslaStarter.Web`. Sign in through the mock Entra ID, then make yourself the first administrator:
    `dotnet src/CslaStarter.Web/bin/Debug/net10.0/CslaStarter.Web.dll bootstrap-admin --tenant <tid> --object-id <oid>`
 4. **Tests:** `dotnet test` (Docker needed for the integration tests). The end-to-end tests run with `E2E=1` once Playwright's browsers are installed (see `tests/CslaStarter.E2E.Tests`).
