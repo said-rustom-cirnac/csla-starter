@@ -37,6 +37,8 @@
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <!-- Matches what Microsoft.EntityFrameworkCore.Design 10.0.x needs (transitive pinning applies it there too). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />
     <PackageVersion Include="bunit" Version="2.15.2" />

@@ -25,8 +25,12 @@ public static class BootstrapAdminCommand
             return 1;
         }
 
-        var bootstrapper = new AdminBootstrapper(new AppDatabaseConnection(owner), TimeProvider.System, loggerFactory);
-        return await bootstrapper.RunAsync(tenant, objectId, options.GetValueOrDefault("--name", "Administrator"), cancellationToken);
+        var ownerDatabase = AppDatabase.Create(owner);
+        await using (ownerDatabase.DataSource)
+        {
+            var bootstrapper = new AdminBootstrapper(ownerDatabase, TimeProvider.System, loggerFactory);
+            return await bootstrapper.RunAsync(tenant, objectId, options.GetValueOrDefault("--name", "Administrator"), cancellationToken);
+        }
     }
 
     private static Dictionary<string, string> Parse(IReadOnlyList<string> args)

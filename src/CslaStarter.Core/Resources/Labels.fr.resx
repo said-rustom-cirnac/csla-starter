@@ -10,4 +10,39 @@
   <data name="Common_New" xml:space="preserve"><value>Nouveau</value></data>
   <data name="UserRole_Admin" xml:space="preserve"><value>Administrateur</value></data>
   <data name="Language_Toggle" xml:space="preserve"><value>English</value></data>
+  <data name="Audit_CreatedOn" xml:space="preserve"><value>Créé le</value></data>
+  <data name="Audit_CreatedBy" xml:space="preserve"><value>Créé par</value></data>
+  <data name="Audit_ModifiedOn" xml:space="preserve"><value>Dernière modification le</value></data>
+  <data name="Audit_ModifiedBy" xml:space="preserve"><value>Dernière modification par</value></data>
+  <data name="Common_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="Type_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Type_DescriptionEn" xml:space="preserve"><value>Description anglaise</value></data>
+  <data name="Type_DescriptionFr" xml:space="preserve"><value>Description française</value></data>
+  <data name="Type_IsActive" xml:space="preserve"><value>Actif</value></data>
+  <data name="Type_SortOrder" xml:space="preserve"><value>Ordre de tri</value></data>
+  <data name="Common_Id" xml:space="preserve"><value>Identifiant</value></data>
+  <data name="User_DisplayName" xml:space="preserve"><value>Nom affiché</value></data>
+  <data name="User_Email" xml:space="preserve"><value>Courriel</value></data>
+  <data name="User_PreferredLanguage" xml:space="preserve"><value>Langue préférée</value></data>
+  <data name="User_IsActive" xml:space="preserve"><value>Actif</value></data>
+  <data name="User_EmployeeNumber" xml:space="preserve"><value>Numéro d'employé</value></data>
+  <data name="User_Roles" xml:space="preserve"><value>Rôles</value></data>
+  <data name="User_RoleType" xml:space="preserve"><value>Rôle</value></data>
+  <data name="Project_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Project_Name" xml:space="preserve"><value>Nom</value></data>
+  <data name="Project_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Project_Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Project_Budget" xml:space="preserve"><value>Budget</value></data>
+  <data name="Project_StartDate" xml:space="preserve"><value>Date de début</value></data>
+  <data name="Project_EndDate" xml:space="preserve"><value>Date de fin</value></data>
+  <data name="Project_Tasks" xml:space="preserve"><value>Tâches</value></data>
+  <data name="Project_Members" xml:space="preserve"><value>Membres</value></data>
+  <data name="Project_OpenTaskCount" xml:space="preserve"><value>Tâches ouvertes</value></data>
+  <data name="Project_TaskCount" xml:space="preserve"><value>Tâches</value></data>
+  <data name="Task_Title" xml:space="preserve"><value>Titre</value></data>
+  <data name="Task_IsDone" xml:space="preserve"><value>Terminée</value></data>
+  <data name="Task_DueDate" xml:space="preserve"><value>Date d'échéance</value></data>
+  <data name="Task_SortOrder" xml:space="preserve"><value>Ordre</value></data>
+  <data name="Member_User" xml:space="preserve"><value>Utilisateur</value></data>
+  <data name="Member_DisplayName" xml:space="preserve"><value>Nom</value></data>
 </root>

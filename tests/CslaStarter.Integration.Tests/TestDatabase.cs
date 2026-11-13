@@ -31,11 +31,12 @@ public sealed class TestDatabase
         var options = new DbContextOptionsBuilder<AppDbContext>();
         options.UseAppDatabase(asOwner ? OwnerConnectionString : RuntimeConnectionString)
             .AddInterceptors(new AuditSaveChangesInterceptor(access ?? FakeDataAccessContext.Tester, time ?? TimeProvider.System));
-        return new AppDbContext(options.Options);
+        return new AppDbContext(options.Options, access ?? FakeDataAccessContext.Tester);
     }
 
     public Task<Guid> AddUserAsync(string displayName, params int[] roleCodes) =>
         AddUserAsync(displayName, Guid.NewGuid().ToString(), true, roleCodes);
+
 
     public async Task<Guid> AddUserAsync(string displayName, string objectId, bool isActive, params int[] roleCodes)
     {

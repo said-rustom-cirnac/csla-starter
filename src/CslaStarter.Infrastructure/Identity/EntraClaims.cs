@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CslaStarter.Core.Security;
 
 namespace CslaStarter.Infrastructure.Identity;
 
@@ -8,9 +9,9 @@ namespace CslaStarter.Infrastructure.Identity;
 /// </summary>
 public static class EntraClaims
 {
-    public const string UserIdClaim = "csla_starter:user_id";
-    public const string LanguageClaim = "csla_starter:lang";
-    public const string InactiveClaim = "csla_starter:inactive";
+    public const string UserIdClaim = AppClaimTypes.UserId;
+    public const string LanguageClaim = AppClaimTypes.Language;
+    public const string InactiveClaim = AppClaimTypes.Inactive;
 
     public static string? TenantId(ClaimsPrincipal principal) =>
         First(principal, "tid", "http://schemas.microsoft.com/identity/claims/tenantid");

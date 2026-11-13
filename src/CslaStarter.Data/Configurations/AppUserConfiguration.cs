@@ -10,6 +10,7 @@ internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
     {
         builder.ToTable("app_user");
         builder.HasKey(u => u.Id);
+        builder.Property(u => u.Id).ValueGeneratedNever(); // Guid v7 from the app; a new row found through a navigation is an insert
         builder.Property(u => u.TenantId).HasMaxLength(64);
         builder.Property(u => u.ObjectId).HasMaxLength(64);
         builder.Property(u => u.DisplayName).HasMaxLength(200);
@@ -20,6 +21,7 @@ internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(u => u.ModifiedBy).HasMaxLength(200);
         builder.Property(u => u.Version).IsRowVersion();
         builder.HasIndex(u => new { u.TenantId, u.ObjectId }).IsUnique();
-        builder.HasMany(u => u.Roles).WithOne(r => r.User).HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
+        // ClientCascade: EF deletes role rows itself (and audits them); the database never cascades behind its back.
+        builder.HasMany(u => u.Roles).WithOne(r => r.User).HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.ClientCascade);
     }
 }

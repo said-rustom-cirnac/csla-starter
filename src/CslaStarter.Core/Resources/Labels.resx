@@ -10,4 +10,39 @@
   <data name="Common_New" xml:space="preserve"><value>New</value></data>
   <data name="UserRole_Admin" xml:space="preserve"><value>Administrator</value></data>
   <data name="Language_Toggle" xml:space="preserve"><value>Français</value></data>
+  <data name="Audit_CreatedOn" xml:space="preserve"><value>Created on</value></data>
+  <data name="Audit_CreatedBy" xml:space="preserve"><value>Created by</value></data>
+  <data name="Audit_ModifiedOn" xml:space="preserve"><value>Last changed on</value></data>
+  <data name="Audit_ModifiedBy" xml:space="preserve"><value>Last changed by</value></data>
+  <data name="Common_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="Type_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Type_DescriptionEn" xml:space="preserve"><value>English description</value></data>
+  <data name="Type_DescriptionFr" xml:space="preserve"><value>French description</value></data>
+  <data name="Type_IsActive" xml:space="preserve"><value>Active</value></data>
+  <data name="Type_SortOrder" xml:space="preserve"><value>Sort order</value></data>
+  <data name="Common_Id" xml:space="preserve"><value>Identifier</value></data>
+  <data name="User_DisplayName" xml:space="preserve"><value>Display name</value></data>
+  <data name="User_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="User_PreferredLanguage" xml:space="preserve"><value>Preferred language</value></data>
+  <data name="User_IsActive" xml:space="preserve"><value>Active</value></data>
+  <data name="User_EmployeeNumber" xml:space="preserve"><value>Employee number</value></data>
+  <data name="User_Roles" xml:space="preserve"><value>Roles</value></data>
+  <data name="User_RoleType" xml:space="preserve"><value>Role</value></data>
+  <data name="Project_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Project_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Project_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Project_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Project_Budget" xml:space="preserve"><value>Budget</value></data>
+  <data name="Project_StartDate" xml:space="preserve"><value>Start date</value></data>
+  <data name="Project_EndDate" xml:space="preserve"><value>End date</value></data>
+  <data name="Project_Tasks" xml:space="preserve"><value>Tasks</value></data>
+  <data name="Project_Members" xml:space="preserve"><value>Members</value></data>
+  <data name="Project_OpenTaskCount" xml:space="preserve"><value>Open tasks</value></data>
+  <data name="Project_TaskCount" xml:space="preserve"><value>Tasks</value></data>
+  <data name="Task_Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Task_IsDone" xml:space="preserve"><value>Done</value></data>
+  <data name="Task_DueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="Task_SortOrder" xml:space="preserve"><value>Order</value></data>
+  <data name="Member_User" xml:space="preserve"><value>User</value></data>
+  <data name="Member_DisplayName" xml:space="preserve"><value>Name</value></data>
 </root>

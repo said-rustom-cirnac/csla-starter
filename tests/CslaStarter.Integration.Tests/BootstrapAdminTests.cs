@@ -43,5 +43,5 @@ public sealed class BootstrapAdminTests(PostgresFixture postgres) : IAsyncLifeti
     }
 
     private AdminBootstrapper Bootstrapper() =>
-        new(new AppDatabaseConnection(_db.OwnerConnectionString), TimeProvider.System, NullLoggerFactory.Instance);
+        new(AppDatabase.Create(_db.OwnerConnectionString), TimeProvider.System, NullLoggerFactory.Instance);
 }

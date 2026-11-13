@@ -7,6 +7,10 @@ public static class SourceFiles
         Directory.EnumerateFiles(folder, "*.razor", SearchOption.AllDirectories)
             .Where(path => !IsBuildOutput(path));
 
+    public static IEnumerable<string> CSharp(string folder) =>
+        Directory.EnumerateFiles(folder, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !IsBuildOutput(path));
+
     private static bool IsBuildOutput(string path)
     {
         var segments = RepoPaths.Relative(path).Split('/');
