@@ -7,7 +7,7 @@
         "rule": "overused-font",
         "value": "lato",
         "createdAt": "2026-11-12T17:46:43.447Z",
-        "reason": "Claude: Lato is the GC Design System heading face; Said chose the GC Design System for this project"
+        "reason": "Claude: Lato is the GC Design System heading face; the GC Design System is this project's UI kit"
       }
     ]
   }

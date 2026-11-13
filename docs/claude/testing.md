@@ -6,6 +6,8 @@
 - Run one class: `dotnet test --filter-class "*ClaudeDocsTests"`.
 - Run one method: `dotnet test --filter-method "*Environment_SupportsCanadianCultures"`.
 - Shell script tests: `bash scripts/tests/run.sh`. It runs every `test_*` function in `scripts/tests/*.test.sh`, each in its own shell.
+- **Coverage gate:** CI runs `Business.Tests` and `Components.Tests` again with `--coverage --coverage-output-format cobertura`, and `scripts/check-coverage.sh 80 …` fails the build if `CslaStarter.Business` or `CslaStarter.Components` drops below 80% of lines. Locally: `dotnet test --project tests/CslaStarter.Business.Tests --coverage --coverage-output-format cobertura --coverage-output Business.cobertura.xml --results-directory TestResults/coverage`, then the same check.
+- **End-to-end tests** compile on every pull request (CI builds the project, outside the solution) and run in the `E2E` workflow.
 
 ## Rules
 
@@ -22,8 +24,7 @@
 | `CslaStarter.Business.Tests` | Business objects with `CslaTestHost` and fake DALs: every rule, role × permission, the save round trip, commands, `LocalizedDisplayName` |
 | `CslaStarter.Components.Tests` | bUnit: every `Csla*` component rendered over real business objects and fake DALs, with the real change hub and presence tracker; plus the pure helpers (diffs, merges, hints, debounce) |
 | `CslaStarter.Integration.Tests` | Real PostgreSQL 18 (Testcontainers): schema, roles and grants, audit capture and append-only tables, security events, Data Protection keys, sign-in and roles, bootstrap-admin, the web host (headers, CSP, culture, health), session timeout |
-
-A later phase adds `E2E.Tests` (Playwright with the mock Entra ID). Add it to this table when it's created.
+| `CslaStarter.E2E.Tests` | A real browser (Playwright Chromium) against the app on Kestrel with PostgreSQL and the mock Entra ID in containers: sign-in and sign-out, two browsers seeing live updates and presence, a language switch keeping edits, the session timeout, and an axe WCAG 2.1 AA scan of the sample pages. **Opt-in:** outside the solution, it runs with `E2E=1` (see its `CLAUDE.md`); the `E2E` workflow runs it on pushes to `claude` and nightly, apart from CI. |
 
 ## Business test helpers
 

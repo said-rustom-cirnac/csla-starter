@@ -28,6 +28,23 @@ public partial class ClaudeDocsTests
         Assert.True(missing.Count == 0, "Add a CLAUDE.md to: " + string.Join(", ", missing));
     }
 
+    [Theory]
+    [InlineData("new-business-object")]
+    [InlineData("new-type")]
+    [InlineData("new-component")]
+    public void Skills_ExistWithFrontMatter(string skill)
+    {
+        Assert.SkipUnless(ClaudeFilesPresent, "No .claude folder, so the Claude guides are not part of this checkout.");
+
+        var path = Path.Combine(RepoPaths.Root, ".claude", "skills", skill, "SKILL.md");
+        Assert.True(File.Exists(path), $"Missing skill {skill}");
+        var text = File.ReadAllText(path);
+        Assert.StartsWith("---", text, StringComparison.Ordinal);
+        Assert.Contains($"name: {skill}", text, StringComparison.Ordinal);
+        Assert.Contains("description:", text, StringComparison.Ordinal);
+        Assert.Contains("dotnet test", text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ClaudeMdLinks_PointToExistingFiles()
     {

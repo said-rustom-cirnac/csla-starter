@@ -50,7 +50,7 @@ How open screens learn that a record changed, who else has it open, and how unsa
 An `AccessChanged` notice for a user:
 - clears that user from `UserDirectory`'s cache on every instance;
 - makes that user's open circuits revalidate at once (`UserRevalidatingAuthenticationStateProvider`). A deactivated user is signed out; a role change updates the circuit's roles in place;
-- tells open screens to re-check access (plan 5): an editor whose record is now hidden closes with a message and its draft is discarded.
+- tells open screens to re-check access: an editor whose record is now hidden closes with a message and its draft is discarded.
 
 ## Drafts
 

@@ -12,7 +12,7 @@ A starter for Government of Canada line-of-business web apps: .NET 10 Blazor Ser
 |---|---|
 | Build (warnings are errors) | `dotnet build -c Release` |
 | Test (xUnit v3 on Microsoft Testing Platform) | `dotnet test` |
-| Script tests (sync and guard) | `bash scripts/tests/run.sh` |
+| Script tests (sync, guard, coverage check) | `bash scripts/tests/run.sh` |
 | Format check, as CI runs it | `dotnet format --verify-no-changes` |
 | Local PostgreSQL + mock Entra ID | `docker compose up -d` (see [data access](docs/claude/data-access.md)) |
 | Apply migrations locally | `CSLASTARTER_DESIGN_CONNECTION="<Owner string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |
@@ -76,6 +76,10 @@ Branches, pull requests, the `claude` → `main` sync and Jira tracking are in [
 - [Realtime](docs/claude/realtime.md): change notices, the PostgreSQL backplane, presence, access changes, drafts.
 - [Components](docs/claude/components.md): the `Csla*` family, the base contract, forms, tables, GCDS interop, testing with bUnit.
 - Recipes: [add a feature](docs/claude/recipes/add-a-feature.md), [add a page](docs/claude/recipes/add-a-page.md), [add a `*Type`](docs/claude/recipes/add-a-type.md), [remove the Projects sample](docs/claude/recipes/remove-sample.md).
+
+## Skills
+
+`.claude/skills/`: `new-business-object`, `new-type` and `new-component`. Each one walks through the matching recipe and ends with `dotnet test`.
 
 Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`.
 
