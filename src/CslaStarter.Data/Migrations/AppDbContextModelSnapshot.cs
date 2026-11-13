@@ -217,6 +217,48 @@ namespace CslaStarter.Data.Migrations
                     b.ToTable("audit_event", (string)null);
                 });
 
+            modelBuilder.Entity("CslaStarter.Data.Entities.DraftRow", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("EntityKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("entity_key");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<byte[]>("Payload")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset>("SavedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("saved_at");
+
+                    b.Property<long?>("Version")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("UserId", "EntityType", "EntityKey")
+                        .HasName("pk_draft");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_draft_expires_at");
+
+                    b.ToTable("draft", (string)null);
+                });
+
             modelBuilder.Entity("CslaStarter.Data.Entities.ProjectMemberRow", b =>
                 {
                     b.Property<Guid>("ProjectId")
@@ -572,6 +614,16 @@ namespace CslaStarter.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_audit_change_audit_event_audit_event_id");
+                });
+
+            modelBuilder.Entity("CslaStarter.Data.Entities.DraftRow", b =>
+                {
+                    b.HasOne("CslaStarter.Data.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_draft_app_user_user_id");
                 });
 
             modelBuilder.Entity("CslaStarter.Data.Entities.ProjectMemberRow", b =>

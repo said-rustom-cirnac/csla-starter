@@ -21,5 +21,7 @@ EF Core 10 with PostgreSQL (Npgsql). It holds:
   - Never write `audit_*` or `security_event` rows yourself.
 - **Migrations:** run as `app_owner`. Grants for `app_runtime` are applied by `RuntimeGrants` inside the migrations. Hand-written SQL goes in a class next to the migration.
 - **Record-level access** (from the business phase on): `[RecordScoped]` entities get the named query filter `"RecordAccess"`. Only `[BypassRecordAccess]` code may call `IgnoreQueryFilters(["RecordAccess"])`.
+- **Change notices** are published by `ChangePublishingInterceptor` after commit, one per aggregate root. Mark rows that grant access with `[AccessGrant(nameof(UserId), …)]` so the user gets an access-changed notice. Never publish by hand.
+- **Drafts:** `DraftStore` (encrypted, per user, 8 hours) uses its own short-lived contexts.
 
-Guide: [data access](../../docs/claude/data-access.md).
+Guides: [data access](../../docs/claude/data-access.md), [realtime](../../docs/claude/realtime.md).

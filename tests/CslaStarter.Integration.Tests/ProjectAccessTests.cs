@@ -39,7 +39,7 @@ public sealed class ProjectAccessTests(PostgresFixture postgres) : IAsyncLifetim
         (_mine, _theirs) = (mine.Id, theirs.Id);
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Fact]
     public async Task RecordAccess_Fetch_HiddenProject_IsNotFound()

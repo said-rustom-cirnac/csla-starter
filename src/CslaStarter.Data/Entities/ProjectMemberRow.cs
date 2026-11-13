@@ -1,3 +1,4 @@
+using CslaStarter.Data.Access;
 using CslaStarter.Data.Auditing;
 
 namespace CslaStarter.Data.Entities;
@@ -7,6 +8,7 @@ namespace CslaStarter.Data.Entities;
 /// project filter reads it); reach it only through a project.
 /// </summary>
 [AuditEntity("ProjectMember")]
+[AccessGrant(nameof(UserId))]
 public class ProjectMemberRow : IHasAuditRoot
 {
     [AuditIgnore]

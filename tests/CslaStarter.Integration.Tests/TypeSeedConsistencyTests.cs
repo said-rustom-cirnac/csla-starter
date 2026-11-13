@@ -20,7 +20,7 @@ public sealed class TypeSeedConsistencyTests(PostgresFixture postgres) : IAsyncL
         TypeDal.ResetCache();
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 
     [Theory]
     [MemberData(nameof(TypeNames))]

@@ -1,9 +1,11 @@
+using CslaStarter.Data.Access;
 using CslaStarter.Data.Auditing;
 
 namespace CslaStarter.Data.Entities;
 
 /// <summary>A person who signs in through Entra ID, keyed on tenant id + object id.</summary>
 [AuditEntity("User")]
+[AccessGrant(nameof(Id), nameof(IsActive))]
 public class AppUser : IAuditedEntity, IAggregateRoot
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

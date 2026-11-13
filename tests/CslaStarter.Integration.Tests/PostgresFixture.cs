@@ -70,6 +70,9 @@ public sealed class PostgresFixture : IAsyncLifetime
         return name;
     }
 
+    /// <summary>Drops a test database, closing whatever connections still use it.</summary>
+    public Task DropDatabaseAsync(string name) => ExecuteAdminAsync($"DROP DATABASE IF EXISTS {name} WITH (FORCE)");
+
     public async ValueTask DisposeAsync()
     {
         await _container.DisposeAsync();
