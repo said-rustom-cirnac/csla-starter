@@ -1,5 +1,6 @@
 // Blazor JS initializer for CslaStarter.Components (loaded automatically by the Blazor Web App script).
-// Registers the GC Design System's custom events under names that differ from the browser event names.
+// Loads the self-hosted GC Design System under the strict CSP (Stencil's injected styles carry the page's nonce),
+// and registers its custom events under names that differ from the browser event names.
 
 const valueOf = detail => {
     if (detail === null || detail === undefined) return null;
@@ -10,6 +11,19 @@ const valueOf = detail => {
 
 const withValue = e => ({ value: valueOf(e.detail) });
 const empty = () => ({});
+
+export async function beforeWebStart() {
+    try {
+        const loader = await import('./gcds/loader/index.js');
+        const nonce = document.querySelector('meta[name="csp-nonce"]')?.content;
+        if (nonce) {
+            loader.setNonce(nonce);
+        }
+        await loader.defineCustomElements(window);
+    } catch (error) {
+        console.warn('The GC Design System assets are missing: run scripts/update-gcds.sh.', error);
+    }
+}
 
 export function afterWebStarted(blazor) {
     blazor.registerCustomEventType('gcdsinput', { browserEventName: 'gcdsInput', createEventArgs: withValue });

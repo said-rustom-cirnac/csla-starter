@@ -89,7 +89,7 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
     }
 
     private const string CspTemplate =
-        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://login.microsoftonline.com; upgrade-insecure-requests";
+        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://login.microsoftonline.com; upgrade-insecure-requests";
 
     [Fact]
     public async Task SecurityHeaders_ArePresentWithFreshNonce()
@@ -230,6 +230,20 @@ public sealed partial class WebHostTests(PostgresFixture postgres) : IAsyncLifet
 
     [GeneratedRegex("'nonce-([^']+)'")]
     private static partial Regex NonceInCsp();
+
+    [Fact]
+    public async Task Csp_StylesUseNonces_NeverUnsafeInline_AndTheComponentScriptIsServed()
+    {
+        await using var factory = new WebAppFactory(_db);
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        using var script = await client.GetAsync("/_content/CslaStarter.Components/CslaStarter.Components.lib.module.js", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, script.StatusCode);
+        var csp = string.Join(' ', script.Headers.GetValues("Content-Security-Policy"));
+        Assert.Contains("style-src 'self' 'nonce-", csp, StringComparison.Ordinal);
+        Assert.DoesNotContain("unsafe-inline", csp, StringComparison.Ordinal);
+    }
 
     [GeneratedRegex("<script[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex ScriptTag();

@@ -23,6 +23,8 @@ public sealed class WebAppFactory(TestDatabase database) : WebApplicationFactory
             options.ValidateScopes = true;
             options.ValidateOnBuild = true;
         });
+        // Serve the component library's static assets (_content/...) as Development and a published app do.
+        builder.UseStaticWebAssets();
         builder.UseSetting("ConnectionStrings:App", database.RuntimeConnectionString);
         builder.UseSetting("ConnectionStrings:Owner", database.OwnerConnectionString);
         builder.UseSetting("Authentication:Mode", "MockOidc");
