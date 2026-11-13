@@ -36,3 +36,6 @@ Later phases add `Components.Tests` (bUnit) and `E2E.Tests` (Playwright with the
 - `TestDatabase.CreateAsync(postgres)` gives each test a fresh copy of a migrated template database. `CreateContext()` connects as `app_runtime`; `asOwner: true` connects as `app_owner`.
 - `WebAppFactory(db)` hosts the real app on that database, in the `Testing` environment, with DI scope validation on. Requests are anonymous unless they send `X-Test-User: <name>` (`TestAuthHandler`).
 - Use `FakeTimeProvider` (Microsoft.Extensions.TimeProvider.Testing) for anything time-based.
+- Dispose the `TestDatabase` in the test class's `DisposeAsync` (`=> _db.DisposeAsync()`): it drops the copy, which would otherwise fill the container's disk.
+- `TestDatabase.CreateContext(access, notifier: recorder)` also publishes committed changes to a recording `IEntityChangeNotifier`.
+- `Eventually.True(() => condition)` polls instead of sleeping, for anything that crosses the backplane.

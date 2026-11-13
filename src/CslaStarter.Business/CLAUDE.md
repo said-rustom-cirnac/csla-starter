@@ -14,6 +14,7 @@ CSLA 10.2 business objects: validation, permissions and data portal operations. 
 | `Security/` | `CslaCurrentUser`, `CslaDataAccessContext` |
 | `Users/` | `UserEdit`, `UserProfile`, `UserList` |
 | `Projects/` | the sample feature |
+| `Drafts/` | `DraftCodec`: a business object graph to draft bytes and back |
 
 ## Rules
 

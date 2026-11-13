@@ -73,6 +73,7 @@ Branches, pull requests, the `claude` → `main` sync and Jira tracking are in [
 - [Data access](docs/claude/data-access.md): PostgreSQL, the two database roles, migrations, audit capture.
 - [Security](docs/claude/security.md): sign-in, roles, bootstrap-admin, headers and CSP, sessions, keys.
 - [Localization](docs/claude/localization.md): resources, `[LocalizedDisplayName]`, choosing and switching the culture.
+- [Realtime](docs/claude/realtime.md): change notices, the PostgreSQL backplane, presence, access changes, drafts.
 - Recipes: [add a feature](docs/claude/recipes/add-a-feature.md), [add a `*Type`](docs/claude/recipes/add-a-type.md), [remove the Projects sample](docs/claude/recipes/remove-sample.md).
 
 Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`.
