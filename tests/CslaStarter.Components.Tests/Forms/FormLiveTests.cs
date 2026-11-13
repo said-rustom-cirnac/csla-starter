@@ -131,10 +131,16 @@ public sealed class FormLiveTests : IDisposable
 
         host.WaitForElement("[data-csla-conflict]");
         Assert.Contains("Mine", host.Find("[data-csla-conflict]").TextContent, StringComparison.Ordinal);
+        // The merge re-runs the rules, so the code's uniqueness is checked again: hold that check to see Save wait for it.
+        _context.Projects.CodeCheckGate = new TaskCompletionSource();
         await host.Find("[data-csla-conflict] gcds-button[data-action=apply-mine]").TriggerEventAsync("ongcdsclick", EventArgs.Empty);
         host.WaitForAssertion(() => Assert.Empty(host.FindAll("[data-csla-conflict]")));
         Assert.Equal(("Mine", "Their description", 6u), (form.ViewModel.Model!.Name, form.ViewModel.Model.Description, form.ViewModel.Model.Version));
         Assert.True(form.ViewModel.IsDirty);
+        Assert.False(await host.InvokeAsync(form.SaveAsync));
+
+        _context.Projects.CodeCheckGate.SetResult();
+        host.WaitForAssertion(() => Assert.True(form.ViewModel.IsSavable));
         Assert.True(await host.InvokeAsync(form.SaveAsync));
         Assert.Equal(("Mine", "Their description"), (_context.Projects.LastSaved!.Name, _context.Projects.LastSaved.Description));
     }
