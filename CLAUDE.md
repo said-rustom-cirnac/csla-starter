@@ -12,7 +12,7 @@ A starter for Government of Canada line-of-business web apps: .NET 10 Blazor Ser
 |---|---|
 | Build (warnings are errors) | `dotnet build -c Release` |
 | Test (xUnit v3 on Microsoft Testing Platform) | `dotnet test` |
-| Script tests (sync and guard) | `bash scripts/tests/run.sh` |
+| Script tests (sync, guard, coverage check) | `bash scripts/tests/run.sh` |
 | Format check, as CI runs it | `dotnet format --verify-no-changes` |
 | Local PostgreSQL + mock Entra ID | `docker compose up -d` (see [data access](docs/claude/data-access.md)) |
 | Apply migrations locally | `CSLASTARTER_DESIGN_CONNECTION="<Owner string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |

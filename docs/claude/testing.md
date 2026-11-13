@@ -6,6 +6,8 @@
 - Run one class: `dotnet test --filter-class "*ClaudeDocsTests"`.
 - Run one method: `dotnet test --filter-method "*Environment_SupportsCanadianCultures"`.
 - Shell script tests: `bash scripts/tests/run.sh`. It runs every `test_*` function in `scripts/tests/*.test.sh`, each in its own shell.
+- **Coverage gate:** CI runs `Business.Tests` and `Components.Tests` again with `--coverage --coverage-output-format cobertura`, and `scripts/check-coverage.sh 80 …` fails the build if `CslaStarter.Business` or `CslaStarter.Components` drops below 80% of lines. Locally: `dotnet test --project tests/CslaStarter.Business.Tests --coverage --coverage-output-format cobertura --coverage-output Business.cobertura.xml --results-directory TestResults/coverage`, then the same check.
+- **End-to-end tests** compile on every pull request (CI builds the project, outside the solution) and run in the `E2E` workflow.
 
 ## Rules
 

@@ -16,7 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CslaStarter.Components.Tests.Forms;
 
-/// <summary>The form behaviours the Plan 5 review found broken in realistic use.</summary>
+/// <summary>Form behaviours that break in realistic use: lost access, failed deletes, restored drafts, leaving.</summary>
 public sealed class FormReviewTests : IDisposable
 {
     private readonly Guid _projectId = Guid.CreateVersion7();

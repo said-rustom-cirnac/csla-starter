@@ -48,8 +48,9 @@ Work is tracked on the DEV board. The epic is on line 3 of the root `CLAUDE.md`.
 ## Releases
 
 1. Tag a commit on `claude` with `vX.Y.Z` and push the tag: `git tag v0.1.0 && git push origin v0.1.0`.
-2. The `Release` workflow checks that the tag is on `claude`, restores in locked mode, builds and tests, then attaches three files to a GitHub release:
-   - `CslaStarter.Templates.X.Y.Z.nupkg`: the `dotnet new csla-blazor` template (`dotnet new install <file>`);
+2. The `Release` workflow checks that the tag is on `claude`, restores in locked mode, builds and tests, then attaches these files to a GitHub release:
+   - `CslaStarter.Web-vX.Y.Z.zip`: the published app, for IIS or App Service (zip deploy);
+   - `CslaStarter.Templates.X.Y.Z.nupkg` (the template repository only): the `dotnet new csla-blazor` template (`dotnet new install <file>`);
    - `sbom.cdx.json`: the CycloneDX software bill of materials;
    - `efbundle`: the self-contained EF Core migration bundle for linux-x64 (`./efbundle --connection "<Owner connection string>"`).
 3. **Only pinned actions:** every `uses:` in `.github/workflows` names a full commit SHA (`WorkflowTests` enforce it).

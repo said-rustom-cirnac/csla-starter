@@ -28,7 +28,7 @@ new_repo() {
   git add -A && git commit -qm "DEV-1 add files"
 }
 
-sync_once() { "$SCRIPTS/sync-main.sh" claude main; }
+sync_once() { bash "$SCRIPTS/sync-main.sh" claude main; }
 
 # Sync and move main to the new commit, as the workflow's push would.
 apply_sync() {
@@ -129,14 +129,14 @@ test_sync_handles_accented_file_names() {
 test_guard_fails_on_nested_claude_md() {
   new_repo
   local out
-  if out="$("$SCRIPTS/check-no-claude-files.sh" claude)"; then fail "guard passed on claude"; fi
+  if out="$(bash "$SCRIPTS/check-no-claude-files.sh" claude)"; then fail "guard passed on claude"; fi
   grep -qxF "Claude-only file on claude: src/A/CLAUDE.md" <<< "$out" || fail "guard output: $out"
 }
 
 test_guard_passes_on_synced_main() {
   new_repo
   apply_sync > /dev/null
-  "$SCRIPTS/check-no-claude-files.sh" main
+  bash "$SCRIPTS/check-no-claude-files.sh" main
 }
 
 test_sync_ignores_older_source_commit() {
@@ -148,7 +148,7 @@ test_sync_ignores_older_source_commit() {
   apply_sync > /dev/null
   local before
   before="$(git rev-parse main)"
-  [[ "$("$SCRIPTS/sync-main.sh" "$older" main)" == up-to-date ]] || fail "an older claude commit was synced over a newer one"
+  [[ "$(bash "$SCRIPTS/sync-main.sh" "$older" main)" == up-to-date ]] || fail "an older claude commit was synced over a newer one"
   [[ "$(git rev-parse main)" == "$before" ]] || fail "main moved"
 }
 
@@ -190,6 +190,6 @@ test_guard_keeps_builtin_patterns_when_list_is_emptied() {
   echo '# emptied' > .github/claude-only-paths.txt
   git add -A && git commit -qm "DEV-9 empty the list"
   local out
-  if out="$("$SCRIPTS/check-no-claude-files.sh" claude)"; then fail "guard passed with an emptied list"; fi
+  if out="$(bash "$SCRIPTS/check-no-claude-files.sh" claude)"; then fail "guard passed with an emptied list"; fi
   grep -qxF "Claude-only file on claude: src/A/CLAUDE.md" <<< "$out" || fail "guard output: $out"
 }

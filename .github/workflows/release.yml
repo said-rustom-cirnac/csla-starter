@@ -1,7 +1,10 @@
 name: Release
 
-# Tag the claude branch (vX.Y.Z) to publish: the dotnet new template package, the SBOM and the EF migration bundle
-# are attached to a GitHub release. Everything is built and tested first.
+# Tag a commit on the work branch (vX.Y.Z) to publish it: the app package (a zip for IIS or App Service), the EF
+# migration bundle and the SBOM are attached to a GitHub release, after everything is built and tested.
+#if (false)
+# The template repository also attaches the dotnet new template package.
+#endif
 on:
   push:
     tags: ['v*']
@@ -17,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Tag must be on claude
+      - name: Tag must be on the work branch
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/claude
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
@@ -30,8 +33,14 @@ jobs:
         run: |
           dotnet build -c Release --no-restore
           dotnet test -c Release --no-build
+      - name: App package (IIS and App Service)
+        run: |
+          dotnet publish src/CslaStarter.Web -c Release --no-restore -o out/web
+          (cd out/web && zip -qr "../CslaStarter.Web-${GITHUB_REF_NAME}.zip" .)
+      #if (false)
       - name: Template package
         run: dotnet pack template/CslaStarter.Templates.csproj -c Release -o out -p:Version="${GITHUB_REF_NAME#v}"
+      #endif
       - name: SBOM (CycloneDX)
         run: dotnet CycloneDX CslaStarter.slnx -o out -fn sbom.cdx.json -F Json
       - name: EF migration bundle
@@ -39,4 +48,6 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" out/*.nupkg out/sbom.cdx.json out/efbundle --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: |
+          shopt -s nullglob
+          gh release create "$GITHUB_REF_NAME" out/*.nupkg out/*.zip out/sbom.cdx.json out/efbundle --title "$GITHUB_REF_NAME" --generate-notes --verify-tag

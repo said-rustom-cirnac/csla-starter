@@ -11,7 +11,6 @@
   "name": "CSLA Starter: Blazor Server, CSLA 10, PostgreSQL",
   "description": "A secured, bilingual Government of Canada line-of-business app: Blazor Server, CSLA 10.2, EF Core on PostgreSQL, Entra ID, live updates and the GC Design System.",
   "shortName": "csla-blazor",
-  "sourceName": "CslaStarter",
   "preferNameDirectory": true,
   "tags": {
     "language": "C#",
@@ -30,6 +29,21 @@
       "defaultValue": "false",
       "description": "Skip the restore that creates the package lock files."
     },
+    "safeName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "safeNamespace",
+      "replaces": "CslaStarter",
+      "fileRename": "CslaStarter",
+      "description": "Project, namespace and file names: Acme.Grants (acme-grants becomes acme_grants, so paths and references agree)."
+    },
+    "titleName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity",
+      "replaces": "CSLA Starter",
+      "description": "The app's title in its guides."
+    },
     "jiraEpic": {
       "type": "generated",
       "generator": "constant",
@@ -45,6 +59,99 @@
         "value": ""
       },
       "replaces": "Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`."
+    },
+    "commitExample": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "for example `ABC-123`"
+      },
+      "replaces": "for example `DEV-38`"
+    },
+    "dependabotPrefix": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "prefix: deps"
+      },
+      "replaces": "prefix: DEV-38",
+      "description": "Set this to your Jira key."
+    },
+    "pullRequestTargets": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "[claude, main]",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "[claude, main]"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "[main]"
+          }
+        ]
+      }
+    },
+    "workBranchList": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "[claude]",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "[claude]"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "[main]"
+          }
+        ]
+      }
+    },
+    "dependabotBranch": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "target-branch: claude",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "target-branch: claude"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "target-branch: main"
+          }
+        ]
+      }
+    },
+    "releaseBranch": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "origin/claude",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "origin/claude"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "origin/main"
+          }
+        ]
+      }
     },
     "databaseName": {
       "type": "derived",
@@ -116,15 +223,13 @@
             "docs/superpowers/**",
             "docs/claude/template-dev.md",
             "docs/architecture/**",
-            "scripts/sync-main.sh",
-            "scripts/claude-paths.sh",
-            "scripts/tests/sync-main.test.sh",
             "scripts/tests/template.test.sh",
             "CLAUDE.local.md",
             "**/CLAUDE.local.md",
             "README.md",
             ".impeccable/hook.cache.json",
-            "**/*.cache.json"
+            "**/*.cache.json",
+            "tests/CslaStarter.Architecture.Tests/TemplateRepositoryTests.cs"
           ]
         },
         {
@@ -138,7 +243,10 @@
             ".github/workflows/sync-main.yml",
             ".github/workflows/guard-main.yml",
             ".github/claude-only-paths.txt",
-            "scripts/check-no-claude-files.sh"
+            "scripts/check-no-claude-files.sh",
+            "scripts/sync-main.sh",
+            "scripts/claude-paths.sh",
+            "scripts/tests/sync-main.test.sh"
           ]
         }
       ]
@@ -209,6 +317,12 @@
       "identifier": "replace",
       "pattern": "[^A-Za-z0-9]+",
       "replacement": ""
+    },
+    "safeNamespace": {
+      "identifier": "safe_namespace"
+    },
+    "identity": {
+      "identifier": "identity"
     }
   }
 }

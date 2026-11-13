@@ -10,8 +10,10 @@ This file is about building the CSLA Starter template itself. The `dotnet new` t
 
 ## The template
 
-- **Files:** `.template.config/template.json` (`dotnet new csla-blazor`, `sourceName: CslaStarter`) and `template/CslaStarter.Templates.csproj`, which packs the repository as `content/`. Test locally with `bash scripts/tests/run.sh`; `TEMPLATE_BUILD=1` also builds a generated app, as CI does.
-- **Never in a generated app:** `docs/superpowers/`, this file, `docs/architecture/`, `.superpowers/`, `.remember/`, the template's own files, `scripts/sync-main.sh`, `claude-paths.sh` and their tests, lock files (the restore post-action writes fresh ones), and local caches (`*.cache.json`).
+- **Files:** `.template.config/template.json` (`dotnet new csla-blazor`; the `safeName` symbol replaces `CslaStarter` in names, paths and content) and `template/CslaStarter.Templates.csproj`, which packs the repository as `content/`. Test locally with `bash scripts/tests/run.sh`: it generates apps (including a hyphenated name), checks that every script a shipped workflow runs is there, and runs the generated app's script tests. `TEMPLATE_BUILD=1` also builds a generated app and runs its architecture tests, as CI does.
+- **Never in a generated app:** `docs/superpowers/`, this file, `docs/architecture/`, `.superpowers/`, `.remember/`, the template's own files (including `TemplateRepositoryTests.cs` and `template.test.sh`), lock files (the restore post-action writes fresh ones), and local caches (`*.cache.json`).
+- **Only with `--claude true`:** the guides and skills, and the `claude` → `main` sync: `sync-main.yml`, `guard-main.yml`, `sync-main.sh`, `claude-paths.sh`, `check-no-claude-files.sh` and their tests. Without it, the workflows and Dependabot target `main` (switch symbols in `template.json`).
+- **Names:** the app name's safe-namespace form (`acme-grants` becomes `acme_grants`) is used for files, projects and namespaces alike, so paths and references agree. The package drops the executable bit, so docs and workflows run scripts with `bash`.
 - **`--claude false` also drops** `.claude/`, every `CLAUDE.md`, `docs/claude/`, `.impeccable/`, `sync-main.yml`, `guard-main.yml`, `claude-only-paths.txt` and `check-no-claude-files.sh`.
 - **The root `CLAUDE.md`:** its Jira epic line becomes a placeholder and its pointer to this file disappears (constant symbols in `template.json`).
 - **`README.app.md`** becomes the app's `README.md`.

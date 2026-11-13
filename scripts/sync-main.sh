@@ -54,7 +54,7 @@ fi
 
 new_sha="$(git commit-tree "$tree" -p "$target_sha" -F "$work/message.txt")"
 
-if ! "$here/check-no-claude-files.sh" "$new_sha" >&2; then
+if ! bash "$here/check-no-claude-files.sh" "$new_sha" >&2; then
   echo "sync-main: Claude-only files survived filtering; nothing was synced." >&2
   exit 2
 fi

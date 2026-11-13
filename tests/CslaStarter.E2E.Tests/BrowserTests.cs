@@ -13,8 +13,10 @@ public sealed class BrowserTests(E2EEnvironment environment)
         var page = await environment.SignInAsync(E2EEnvironment.Admin);
         await Expect(page.Locator("table")).ToBeVisibleAsync();
 
+        // The sign-out POST redirects through the mock's end-session endpoint and back to "/": wait until it has left
+        // the page, or the next navigation cancels it.
         await page.EvaluateAsync("document.querySelector('form[data-csla-signout]').submit()");
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await page.WaitForURLAsync(url => !url.Contains("/projects", StringComparison.Ordinal));
         await page.GotoAsync("/projects");
 
         await Expect(page.Locator("input[name=username]")).ToBeVisibleAsync();
@@ -25,17 +27,13 @@ public sealed class BrowserTests(E2EEnvironment environment)
     {
         E2E.Require();
         var ada = await environment.SignInAsync(E2EEnvironment.Admin, "/projects/new");
-        await ada.Locator("gcds-input[name=Code] input").FillAsync("E2E-LIVE");
-        await ada.Locator("gcds-input[name=Name] input").FillAsync("Live project");
-        await ada.Locator("gcds-button[data-kind=Save]").ClickAsync();
-        await ada.WaitForURLAsync("**/projects/*-*");
-        var url = ada.Url;
+        await CreateProjectAsync(ada, "E2E-LIVE", "Live project");
 
-        var bea = await environment.SignInAsync(E2EEnvironment.Technical, new Uri(url).AbsolutePath);
+        var bea = await environment.SignInAsync(E2EEnvironment.Technical, new Uri(ada.Url).AbsolutePath);
         await Expect(ada.Locator("[data-csla-presence]")).ToContainTextAsync(E2EEnvironment.Technical);
 
         await ada.Locator("gcds-input[name=Name] input").FillAsync("Renamed live");
-        await ada.Locator("gcds-button[data-kind=Save]").ClickAsync();
+        await SaveAsync(ada);
 
         await Expect(bea.Locator("gcds-input[name=Name]")).ToHaveAttributeAsync("value", "Renamed live");
     }
@@ -45,10 +43,7 @@ public sealed class BrowserTests(E2EEnvironment environment)
     {
         E2E.Require();
         var page = await environment.SignInAsync(E2EEnvironment.Admin, "/projects/new");
-        await page.Locator("gcds-input[name=Code] input").FillAsync("E2E-LANG");
-        await page.Locator("gcds-input[name=Name] input").FillAsync("Bilingual");
-        await page.Locator("gcds-button[data-kind=Save]").ClickAsync();
-        await page.WaitForURLAsync("**/projects/*-*");
+        await CreateProjectAsync(page, "E2E-LANG", "Bilingual");
 
         await page.Locator("gcds-input[name=Name] input").FillAsync("Unsaved edit");
         await page.Locator("[data-csla-language]").ClickAsync();
@@ -58,16 +53,30 @@ public sealed class BrowserTests(E2EEnvironment environment)
         await Expect(page.Locator("gcds-input[name=Name]")).ToHaveAttributeAsync("value", "Unsaved edit");
     }
 
+    // Every sample page (src/CslaStarter.Web/CLAUDE.md), each scanned once its content has rendered over the circuit.
     [Theory]
     [InlineData("/projects")]
     [InlineData("/projects/new")]
+    [InlineData("a project")]
     [InlineData("/users")]
+    [InlineData("a user")]
     [InlineData("/profile")]
-    public async Task E2E_SamplePages_PassAxe(string path)
+    public async Task E2E_SamplePages_PassAxe(string target)
     {
         E2E.Require();
-        var page = await environment.SignInAsync(E2EEnvironment.Admin, path);
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var page = await environment.SignInAsync(E2EEnvironment.Admin, target switch
+        {
+            "a project" => "/projects/new",
+            "a user" => $"/users/{environment.TechnicalUserId}",
+            _ => target,
+        });
+        if (target == "a project")
+        {
+            await CreateProjectAsync(page, $"E2E-AXE-{Guid.NewGuid():N}"[..16], "Accessible project");
+        }
+
+        await Expect(page.Locator("main form, main table").First).ToBeVisibleAsync();
+        await Expect(page.Locator("[aria-busy=true]")).ToHaveCountAsync(0);
 
         var results = await page.RunAxe(new Deque.AxeCore.Commons.AxeRunOptions
         {
@@ -75,16 +84,34 @@ public sealed class BrowserTests(E2EEnvironment environment)
         });
 
         var serious = results.Violations.Where(v => v.Impact is "serious" or "critical").Select(v => $"{v.Id}: {v.Help}").ToList();
-        Assert.True(serious.Count == 0, $"{path}: " + string.Join("; ", serious));
+        Assert.True(serious.Count == 0, $"{target}: " + string.Join("; ", serious));
     }
 
     [Fact]
     public async Task E2E_SessionTimeout_WarnsThenSignsOut()
     {
         E2E.Require();
-        var page = await environment.SignInAsync(E2EEnvironment.Admin);
+        var page = await environment.SignInAsync(E2EEnvironment.Admin, "/projects", environment.ShortSessionUrl);
 
         await Expect(page.Locator("[data-csla-session]")).ToBeVisibleAsync(new() { Timeout = 60_000 });
         await page.WaitForURLAsync(url => !url.Contains("/projects", StringComparison.Ordinal), new() { Timeout = 60_000 });
+    }
+
+    // Fills a new project's code and name, saves it, and waits for the page to move to the saved project.
+    private static async Task CreateProjectAsync(IPage page, string code, string name)
+    {
+        await page.Locator("gcds-input[name=Code] input").FillAsync(code);
+        await page.Locator("gcds-input[name=Name] input").FillAsync(name);
+        await SaveAsync(page);
+        await page.WaitForURLAsync("**/projects/*-*");
+    }
+
+    // Save is disabled while a rule is still checking (the code's uniqueness). Playwright treats a custom element's
+    // disabled attribute as enabled, so wait for the attribute to go before clicking.
+    private static async Task SaveAsync(IPage page)
+    {
+        var save = page.Locator("gcds-button[data-kind=Save]:not([disabled])");
+        await Expect(save).ToBeVisibleAsync();
+        await save.ClickAsync();
     }
 }

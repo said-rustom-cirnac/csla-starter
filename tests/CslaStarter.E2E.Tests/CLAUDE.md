@@ -14,7 +14,9 @@ Then: `E2E=1 dotnet test --project tests/CslaStarter.E2E.Tests`. The `E2E` workf
 ## Rules
 
 - **Users:** the mock signs in whoever you type (the subject becomes the Entra object id); `E2EEnvironment` seeds `ada` (Admin) and `bea` (Technical) in the database first.
-- **Waiting:** wait with Playwright's auto-waiting assertions (`Expect(...)`), never fixed sleeps.
+- **Waiting:** wait with Playwright's auto-waiting assertions (`Expect(...)`), never fixed sleeps. Pages render over the circuit (no prerender), so wait for their content (`main form, main table`, no `[aria-busy=true]`), not for the network. Click Save through `SaveAsync`, which waits until it's enabled.
+- **Two app instances:** `BaseUrl` has the normal session limits; `ShortSessionUrl` (warning after 20 s, sign-out after 40 s) is for the timeout test only.
+- **GC Design System:** the components need its assets in a browser, so run `bash scripts/update-gcds.sh` (needs Node.js) before the first local run; the workflow does.
 - **Selectors:** select by the components' stable attributes (`gcds-input[name=Name]`, `gcds-button[data-kind=Save]`, `data-csla-*`), never by text, so the tests work in both languages.
 
 Guide: [testing](../../docs/claude/testing.md).
