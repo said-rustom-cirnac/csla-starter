@@ -10,6 +10,7 @@
   <data name="Error_NotFound" xml:space="preserve"><value>Cet enregistrement n'existe pas, ou vous n'y avez plus accès.</value></data>
   <data name="Error_Unexpected" xml:space="preserve"><value>Une erreur s'est produite. Si elle se reproduit, donnez cette référence au soutien : {0}</value></data>
   <data name="Toast_Saved" xml:space="preserve"><value>Enregistré.</value></data>
+  <data name="Field_Checking" xml:space="preserve"><value>Vérification…</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

@@ -1,0 +1,10 @@
+@typeparam T where T : class
+@inherits CslaBaseComponent<T>
+<form id="@ComponentId" novalidate @onsubmit="SubmitAsync">
+    @if (FormContext is not null && ChildContent is not null)
+    {
+        <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
+            @ChildContent(FormContext)
+        </CascadingValue>
+    }
+</form>

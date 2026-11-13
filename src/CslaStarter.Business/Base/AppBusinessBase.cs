@@ -10,7 +10,7 @@ namespace CslaStarter.Business.Base;
 /// change notifications and history, and rule lookups the components use for required markers and length limits.
 /// </summary>
 [Serializable]
-public abstract class AppBusinessBase<T> : BusinessBase<T>, IEntityIdentity
+public abstract class AppBusinessBase<T> : BusinessBase<T>, IEntityIdentity, IRuleHints
     where T : AppBusinessBase<T>
 {
     public static readonly PropertyInfo<DateTimeOffset> CreatedOnProperty = RegisterProperty<DateTimeOffset>(nameof(CreatedOn));

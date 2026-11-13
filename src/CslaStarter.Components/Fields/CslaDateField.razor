@@ -1,0 +1,14 @@
+@inherits CslaFieldBase<DateOnly?>
+@if (Info.Visible)
+{
+    <div data-changed="@IsChanged" data-highlighted="@IsHighlighted">
+        @if (Info.ReadOnly)
+        {
+            <p id="@FieldId" data-label="@LabelText">@Text</p>
+        }
+        else
+        {
+            <gcds-date-input id="@FieldId" name="@PropertyName" legend="@LabelText" format="full" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" validate-on="other" value="@Text" @ongcdschange="OnChange" @ongcdsblur="OnBlur"></gcds-date-input>
+        }
+    </div>
+}

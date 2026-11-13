@@ -1,0 +1,20 @@
+@typeparam TValue
+@inherits CslaFieldBase<TValue>
+@if (Info.Visible)
+{
+    <div data-changed="@IsChanged" data-highlighted="@IsHighlighted">
+        @if (Info.ReadOnly)
+        {
+            <p id="@FieldId" data-label="@LabelText">@SelectedText</p>
+        }
+        else
+        {
+            <gcds-select id="@FieldId" select-id="@InputId" name="@PropertyName" label="@LabelText" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" default-value="@Placeholder" validate-on="other" value="@Text" @ongcdschange="OnChange" @ongcdsblur="OnBlur">
+                @foreach (var option in Options)
+                {
+                    <option value="@FieldValue.ToText(option.Key)">@option.Value</option>
+                }
+            </gcds-select>
+        }
+    </div>
+}
