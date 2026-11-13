@@ -34,6 +34,19 @@
   <data name="Draft_Discard" xml:space="preserve"><value>Abandonner</value></data>
   <data name="Draft_Restored" xml:space="preserve"><value>Vos modifications non enregistrées ont été restaurées.</value></data>
   <data name="Table_Pagination" xml:space="preserve"><value>Pages</value></data>
+  <data name="History_Masked" xml:space="preserve"><value>(masqué)</value></data>
+  <data name="History_Inserted" xml:space="preserve"><value>Créé</value></data>
+  <data name="History_Updated" xml:space="preserve"><value>Modifié</value></data>
+  <data name="History_Deleted" xml:space="preserve"><value>Supprimé</value></data>
+  <data name="History_Empty" xml:space="preserve"><value>Aucune modification enregistrée.</value></data>
+  <data name="History_More" xml:space="preserve"><value>Afficher plus</value></data>
+  <data name="Field_History" xml:space="preserve"><value>Historique</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Fermer</value></data>
+  <data name="Confirm_Delete" xml:space="preserve"><value>Supprimer cet enregistrement? Cette action est irréversible.</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>Le garder</value></data>
+  <data name="Error_SummaryTitle" xml:space="preserve"><value>Corrigez ceci avant d'enregistrer</value></data>
+  <data name="Toast_Region" xml:space="preserve"><value>Notifications</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

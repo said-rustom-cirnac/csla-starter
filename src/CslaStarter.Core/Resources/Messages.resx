@@ -34,6 +34,19 @@
   <data name="Draft_Discard" xml:space="preserve"><value>Discard</value></data>
   <data name="Draft_Restored" xml:space="preserve"><value>Your unsaved changes were restored.</value></data>
   <data name="Table_Pagination" xml:space="preserve"><value>Pages</value></data>
+  <data name="History_Masked" xml:space="preserve"><value>(hidden)</value></data>
+  <data name="History_Inserted" xml:space="preserve"><value>Created</value></data>
+  <data name="History_Updated" xml:space="preserve"><value>Changed</value></data>
+  <data name="History_Deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="History_Empty" xml:space="preserve"><value>No changes recorded yet.</value></data>
+  <data name="History_More" xml:space="preserve"><value>Show more</value></data>
+  <data name="Field_History" xml:space="preserve"><value>History</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Confirm_Delete" xml:space="preserve"><value>Delete this record? This can't be undone.</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Delete</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>Keep it</value></data>
+  <data name="Error_SummaryTitle" xml:space="preserve"><value>Fix these before saving</value></data>
+  <data name="Toast_Region" xml:space="preserve"><value>Notifications</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>

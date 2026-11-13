@@ -3,9 +3,11 @@ using Bunit;
 using Csla.Testing;
 using CslaStarter.Business;
 using CslaStarter.Business.Tests;
+using CslaStarter.Business.Tests.Auditing;
 using CslaStarter.Business.Tests.Projects;
 using CslaStarter.Business.Tests.Users;
 using CslaStarter.Components;
+using CslaStarter.Core.Auditing;
 using CslaStarter.Core.Drafts;
 using CslaStarter.Core.Realtime;
 using CslaStarter.Core.Security;
@@ -37,7 +39,8 @@ public sealed class ComponentTestContext : BunitContext
                 .AddCslaStarterBusiness()
                 .AddSingleton<IProjectDal>(Projects)
                 .AddSingleton<ITypeDal>(Types)
-                .AddSingleton<IUserDal>(Users)));
+                .AddSingleton<IUserDal>(Users)
+                .AddSingleton<IAuditHistoryReader>(AuditReader)));
         _scope = Host.CreateScope();
 
         Services.AddCslaStarterComponents();
@@ -60,6 +63,8 @@ public sealed class ComponentTestContext : BunitContext
     public FakeTypeDal Types { get; } = new();
 
     public FakeUserDal Users { get; } = new();
+
+    public FakeAuditHistoryReader AuditReader { get; } = new();
 
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 11, 12, 10, 42, 0, TimeSpan.Zero));
 

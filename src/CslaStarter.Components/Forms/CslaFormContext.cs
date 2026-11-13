@@ -15,8 +15,11 @@ public sealed class CslaFormContext<T> : ICslaFormContext
     private readonly Dictionary<string, object?> _loaded = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _highlightedUntil = new(StringComparer.Ordinal);
 
-    internal CslaFormContext(string formId, AppViewModel<T> viewModel, TimeProvider time)
+    private readonly Action<object, string>? _openHistory;
+
+    internal CslaFormContext(string formId, AppViewModel<T> viewModel, TimeProvider time, Action<object, string>? openHistory = null)
     {
+        _openHistory = openHistory;
         _formId = formId;
         _time = time;
         ViewModel = viewModel;
@@ -29,6 +32,14 @@ public sealed class CslaFormContext<T> : ICslaFormContext
 
     /// <summary>A save was attempted: every field shows its errors.</summary>
     public bool Submitted { get; internal set; }
+
+    public int FailedSaves { get; internal set; }
+
+    public bool HistoryEnabled => _openHistory is not null;
+
+    public object? Root => ViewModel.Model;
+
+    public void OpenHistory(object model, string propertyName) => _openHistory?.Invoke(model, propertyName);
 
     public string FieldId(object model, string propertyName) =>
         ReferenceEquals(model, ViewModel.Model)

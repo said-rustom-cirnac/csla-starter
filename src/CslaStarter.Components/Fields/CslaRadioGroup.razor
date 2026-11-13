@@ -4,5 +4,6 @@
 {
     <div data-changed="@IsChanged" data-highlighted="@IsHighlighted">
         <gcds-radios id="@FieldId" name="@PropertyName" legend="@LabelText" options="@OptionsJson" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" disabled="@Info.ReadOnly" validate-on="other" @ongcdschange="OnChange" @ongcdsblur="OnBlur"></gcds-radios>
+        <CslaFieldHistoryButton Model="Model" Property="@PropertyName" Label="@LabelText" />
     </div>
 }

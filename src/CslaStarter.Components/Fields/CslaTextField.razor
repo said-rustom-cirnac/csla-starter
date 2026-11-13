@@ -3,5 +3,6 @@
 {
     <div data-changed="@IsChanged" data-highlighted="@IsHighlighted">
         <gcds-input id="@FieldId" input-id="@InputId" name="@PropertyName" type="@Type" label="@LabelText" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" readonly="@Info.ReadOnly" maxlength="@Info.MaxLength" autocomplete="@Autocomplete" validate-on="other" value="@Text" @ongcdsinput="OnInput" @ongcdsblur="OnBlur"></gcds-input>
+        <CslaFieldHistoryButton Model="Model" Property="@PropertyName" Label="@LabelText" />
     </div>
 }

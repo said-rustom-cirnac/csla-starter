@@ -18,4 +18,15 @@ public interface ICslaFormContext
     bool IsHighlighted(object model, string propertyName);
 
     void Touch(object model, string propertyName);
+
+    /// <summary>Fields show a history button that opens <c>CslaHistory</c> for their property.</summary>
+    bool HistoryEnabled { get; }
+
+    void OpenHistory(object model, string propertyName);
+
+    /// <summary>The object the form edits (children's errors are listed with it).</summary>
+    object? Root { get; }
+
+    /// <summary>A save was attempted; incremented on every attempt that found errors (the summary takes focus each time).</summary>
+    int FailedSaves { get; }
 }

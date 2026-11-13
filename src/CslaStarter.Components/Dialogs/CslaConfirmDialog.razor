@@ -1,0 +1,6 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<dialog open role="alertdialog" aria-describedby="@MessageId" data-csla-confirm>
+    <p id="@MessageId">@Message</p>
+    <gcds-button type="button" button-role="danger" data-action="confirm" @ongcdsclick="OnConfirm">@ConfirmText</gcds-button>
+    <gcds-button type="button" button-role="secondary" data-action="cancel" @ongcdsclick="OnCancel">@CancelText</gcds-button>
+</dialog>

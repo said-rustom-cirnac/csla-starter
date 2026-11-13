@@ -1,0 +1,9 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Allowed)
+{
+    @ChildContent
+}
+else
+{
+    @NotAuthorized
+}

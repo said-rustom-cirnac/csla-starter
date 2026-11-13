@@ -29,6 +29,7 @@
     <Compile Include="..\CslaStarter.Business.Tests\FakeTypeDal.cs" Link="Shared\FakeTypeDal.cs" />
     <Compile Include="..\CslaStarter.Business.Tests\Projects\FakeProjectDal.cs" Link="Shared\FakeProjectDal.cs" />
     <Compile Include="..\CslaStarter.Business.Tests\Users\FakeUserDal.cs" Link="Shared\FakeUserDal.cs" />
+    <Compile Include="..\CslaStarter.Business.Tests\Auditing\FakeAuditHistoryReader.cs" Link="Shared\FakeAuditHistoryReader.cs" />
   </ItemGroup>
 
 </Project>

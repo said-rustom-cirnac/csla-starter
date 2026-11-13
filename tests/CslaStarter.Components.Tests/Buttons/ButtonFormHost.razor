@@ -1,0 +1,18 @@
+@using CslaStarter.Business.Projects
+@using CslaStarter.Components.Buttons
+@using CslaStarter.Components.Fields
+@using CslaStarter.Components.Forms
+<CslaForm T="ProjectEdit" Load="Load" Deleted="() => DeletedCount++" FieldHistory="true" Context="form">
+    <CslaTextField For="() => form.Model.Code" />
+    <CslaTextField For="() => form.Model.Name" />
+    <CslaButton Kind="ButtonKind.Save" />
+    <CslaButton Kind="ButtonKind.Cancel" />
+    <CslaButton Kind="ButtonKind.Delete" />
+</CslaForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<Task<ProjectEdit>> Load { get; set; } = default!;
+
+    public int DeletedCount { get; private set; }
+}

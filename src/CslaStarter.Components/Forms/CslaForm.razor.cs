@@ -28,7 +28,7 @@ namespace CslaStarter.Components.Forms;
 /// </list>
 /// Errors show once a field is touched or a save is attempted; CSLA is the only validator (the form is <c>novalidate</c>).
 /// </summary>
-public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
+public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFormActions
     where T : class
 {
     private static readonly TimeSpan DraftAfter = TimeSpan.FromSeconds(2);
@@ -53,6 +53,14 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
     [Parameter]
     public EventCallback Closed { get; set; }
 
+    /// <summary>Raised after the object was deleted.</summary>
+    [Parameter]
+    public EventCallback Deleted { get; set; }
+
+    /// <summary>Fields get a history button showing the changes to their value.</summary>
+    [Parameter]
+    public bool FieldHistory { get; set; }
+
     public AppViewModel<T> ViewModel { get; private set; } = default!;
 
     public bool IsDirty => ViewModel?.IsDirty == true;
@@ -72,6 +80,17 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
     protected Draft? DraftOffer { get; private set; }
 
     protected bool DraftRecordChanged => DraftOffer is not null && ViewModel.Model is IVersioned { Version: var version } && DraftOffer.Version != version;
+
+    /// <summary>The field whose history is open, if any.</summary>
+    protected (string EntityType, string EntityKey, string Property)? History { get; private set; }
+
+    protected CslaFormState State => new(
+        IsBusy,
+        ViewModel.IsDirty,
+        ViewModel.IsSavable && !IsBusy && RemoteChange?.Kind != ChangeKind.Deleted,
+        ViewModel.CanDelete && ViewModel.Model is Csla.Core.ITrackStatus { IsNew: false },
+        ViewModel.CanCreate,
+        this);
 
     protected ChangeTopic? Topic => EntityType is { Length: > 0 } type && EntityKey is { Length: > 0 } key ? ChangeTopic.ForRecord(type, key) : null;
 
@@ -98,6 +117,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
         FormContext.Submitted = true;
         if (!ViewModel.IsSavable)
         {
+            FormContext.FailedSaves++;
             StateHasChanged();
             return false;
         }
@@ -121,6 +141,38 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
         }
 
         return saved;
+    }
+
+    /// <summary>Deletes the object. The caller asks for confirmation first (CslaButton Kind="Delete" does).</summary>
+    public async Task<bool> DeleteAsync()
+    {
+        if (ViewModel.Model is not Csla.Core.BusinessBase business || !ViewModel.CanDelete)
+        {
+            return false;
+        }
+
+        var deleted = await RunAsync("delete", async cancellationToken =>
+        {
+            var before = ViewModel.Exception;
+            business.Delete();
+            await ViewModel.SaveAsync(cancellationToken);
+            ThrowIfFailed(before);
+        });
+        if (deleted)
+        {
+            _autosave?.Cancel();
+            await DeleteDraftAsync();
+            IsClosed = true;
+            _presence?.Dispose();
+            await Deleted.InvokeAsync();
+        }
+        else if (ViewModel.Model is Csla.Core.ISupportUndo undo)
+        {
+            undo.CancelEdit();
+            undo.BeginEdit();
+        }
+
+        return deleted;
     }
 
     /// <summary>Undoes every change since the object was loaded or last saved.</summary>
@@ -157,7 +209,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
         {
             // Listen before the fields first render, so no change made after the load can slip past.
             StartLiveUpdates();
-            FormContext = new CslaFormContext<T>(ComponentId, ViewModel, Time);
+            FormContext = new CslaFormContext<T>(ComponentId, ViewModel, Time, FieldHistory ? OpenHistory : null);
             Baseline();
             _autosave = new DraftAutosave(Time, DraftAfter, () => InvokeAsync(SaveDraftAsync));
             _flushRegistration = FlushRegistry.Register(this);
@@ -193,6 +245,8 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
         await DeleteDraftAsync();
         await RefreshAsync(RemoteChange);
     }
+
+    protected void CloseHistory() => History = null;
 
     protected void KeepMine()
     {
@@ -258,6 +312,15 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher
     {
         DraftOffer = null;
         await DeleteDraftAsync();
+    }
+
+    private void OpenHistory(object model, string propertyName)
+    {
+        if (model is CslaStarter.Core.IEntityIdentity identity)
+        {
+            History = (identity.EntityType, identity.EntityKey, propertyName);
+            StateHasChanged();
+        }
     }
 
     private async Task OfferDraftAsync()

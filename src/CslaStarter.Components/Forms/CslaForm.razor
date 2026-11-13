@@ -23,11 +23,19 @@
             <CslaConflictDialog Differences="Conflict.Differences" BothChanged="Conflict.BothChanged" OnUseTheirs="UseTheirsAsync" OnApplyMine="ApplyMineAsync" />
         }
 
-        @if (ChildContent is not null)
+        @if (History is { } history)
         {
-            <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
-                @ChildContent(FormContext)
-            </CascadingValue>
+            <dialog open data-csla-field-history>
+                <CslaHistory EntityType="@history.EntityType" EntityKey="@history.EntityKey" Property="@history.Property" />
+                <gcds-button type="button" button-role="secondary" data-action="close-history" @ongcdsclick="CloseHistory">@Messages.Common_Close</gcds-button>
+            </dialog>
         }
+
+        <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
+            <CascadingValue TValue="CslaFormState" Value="State">
+                <CslaErrorSummary />
+                @ChildContent?.Invoke(FormContext)
+            </CascadingValue>
+        </CascadingValue>
     }
 </form>
