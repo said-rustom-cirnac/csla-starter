@@ -22,8 +22,7 @@
 | `CslaStarter.Business.Tests` | Business objects with `CslaTestHost` and fake DALs: every rule, role × permission, the save round trip, commands, `LocalizedDisplayName` |
 | `CslaStarter.Components.Tests` | bUnit: every `Csla*` component rendered over real business objects and fake DALs, with the real change hub and presence tracker; plus the pure helpers (diffs, merges, hints, debounce) |
 | `CslaStarter.Integration.Tests` | Real PostgreSQL 18 (Testcontainers): schema, roles and grants, audit capture and append-only tables, security events, Data Protection keys, sign-in and roles, bootstrap-admin, the web host (headers, CSP, culture, health), session timeout |
-
-A later phase adds `E2E.Tests` (Playwright with the mock Entra ID). Add it to this table when it's created.
+| `CslaStarter.E2E.Tests` | A real browser (Playwright Chromium) against the app on Kestrel with PostgreSQL and the mock Entra ID in containers: sign-in and sign-out, two browsers seeing live updates and presence, a language switch keeping edits, the session timeout, and an axe WCAG 2.1 AA scan of the sample pages. **Opt-in:** outside the solution, it runs with `E2E=1` (see its `CLAUDE.md`); the `E2E` workflow runs it on pushes to `claude` and nightly, apart from CI. |
 
 ## Business test helpers
 

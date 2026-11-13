@@ -35,3 +35,4 @@ jobs:
         run: bash scripts/tests/run.sh
         env:
           TEMPLATE_BUILD: '1'
+
