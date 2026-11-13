@@ -20,9 +20,10 @@
 |---|---|
 | `CslaStarter.Architecture.Tests` | Project reference graph, forbidden packages, razor file pairs, en-CA/fr-CA culture support, resource completeness, mock sign-in config, `CLAUDE.md` coverage and guide links |
 | `CslaStarter.Business.Tests` | Business objects with `CslaTestHost` and fake DALs: every rule, role × permission, the save round trip, commands, `LocalizedDisplayName` |
+| `CslaStarter.Components.Tests` | bUnit: every `Csla*` component rendered over real business objects and fake DALs, with the real change hub and presence tracker; plus the pure helpers (diffs, merges, hints, debounce) |
 | `CslaStarter.Integration.Tests` | Real PostgreSQL 18 (Testcontainers): schema, roles and grants, audit capture and append-only tables, security events, Data Protection keys, sign-in and roles, bootstrap-admin, the web host (headers, CSP, culture, health), session timeout |
 
-Later phases add `Components.Tests` (bUnit) and `E2E.Tests` (Playwright with the mock Entra ID). Add each one to this table when it's created.
+A later phase adds `E2E.Tests` (Playwright with the mock Entra ID). Add it to this table when it's created.
 
 ## Business test helpers
 

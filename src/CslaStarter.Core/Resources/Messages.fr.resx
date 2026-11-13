@@ -5,6 +5,11 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Common_Required" xml:space="preserve"><value>{0} est obligatoire.</value></data>
+  <data name="Error_AccessDenied" xml:space="preserve"><value>Vous n'avez pas la permission de faire cela.</value></data>
+  <data name="Error_Conflict" xml:space="preserve"><value>Quelqu'un d'autre a enregistré cet enregistrement après que vous l'avez ouvert.</value></data>
+  <data name="Error_NotFound" xml:space="preserve"><value>Cet enregistrement n'existe pas, ou vous n'y avez plus accès.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Une erreur s'est produite. Si elle se reproduit, donnez cette référence au soutien : {0}</value></data>
+  <data name="Toast_Saved" xml:space="preserve"><value>Enregistré.</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

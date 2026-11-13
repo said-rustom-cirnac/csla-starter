@@ -990,6 +990,7 @@
       "cslastarter.components": {
         "type": "Project",
         "dependencies": {
+          "Csla.Blazor": "[10.2.0, )",
           "CslaStarter.Business": "[1.0.0, )",
           "CslaStarter.Core": "[1.0.0, )"
         }

@@ -5,6 +5,11 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Common_Required" xml:space="preserve"><value>{0} is required.</value></data>
+  <data name="Error_AccessDenied" xml:space="preserve"><value>You don't have permission to do that.</value></data>
+  <data name="Error_Conflict" xml:space="preserve"><value>Someone else saved this record after you opened it.</value></data>
+  <data name="Error_NotFound" xml:space="preserve"><value>This record doesn't exist, or you no longer have access to it.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong. If it keeps happening, give this reference to support: {0}</value></data>
+  <data name="Toast_Saved" xml:space="preserve"><value>Saved.</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>
