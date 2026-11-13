@@ -14,6 +14,7 @@ using CslaStarter.Dal.Types;
 using CslaStarter.Dal.Users;
 using CslaStarter.Infrastructure.Realtime;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 
@@ -45,6 +46,7 @@ public sealed class ComponentTestContext : BunitContext
         Services.AddSingleton<IPresenceTracker>(Presence);
         Services.AddSingleton<IDraftStore>(Drafts);
         Services.AddSingleton<ISecurityEventLog>(SecurityEvents);
+        Services.AddSingleton<ILoggerFactory>(new LoggerFactory([new ListLoggerProvider(Logs)]));
         Services.AddFallbackServiceProvider(_scope.ServiceProvider);
         JSInterop.Mode = JSRuntimeMode.Loose;
     }
@@ -69,6 +71,9 @@ public sealed class ComponentTestContext : BunitContext
 
     public RecordingSecurityEventLog SecurityEvents { get; } = new();
 
+    /// <summary>Everything the components logged, for asserting on (or reading when a test fails).</summary>
+    public List<string> Logs { get; } = [];
+
     private PresenceTracker? _presence;
 
     protected override void Dispose(bool disposing)
@@ -81,6 +86,31 @@ public sealed class ComponentTestContext : BunitContext
         }
 
         base.Dispose(disposing);
+    }
+}
+
+public sealed class ListLoggerProvider(List<string> logs) : ILoggerProvider
+{
+    public ILogger CreateLogger(string categoryName) => new ListLogger(logs, categoryName);
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class ListLogger(List<string> logs, string category) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            lock (logs)
+            {
+                logs.Add($"{logLevel} {category}: {formatter(state, exception)} {exception}");
+            }
+        }
     }
 }
 

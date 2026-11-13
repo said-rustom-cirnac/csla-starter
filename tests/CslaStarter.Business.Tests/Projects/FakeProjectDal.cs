@@ -22,6 +22,8 @@ public sealed class FakeProjectDal : IProjectDal
 
     public uint? ClosedWithVersion { get; private set; }
 
+    public int Fetches { get; private set; }
+
     public ProjectSaveDto? LastSaved { get; private set; }
 
     public ProjectDto Add(Guid id, string code, int status = 2, decimal? budget = 1000m, IReadOnlyList<ProjectTaskDto>? tasks = null, params Guid[] members)
@@ -32,8 +34,11 @@ public sealed class FakeProjectDal : IProjectDal
         return project;
     }
 
-    public Task<ProjectDto> FetchAsync(Guid id, CancellationToken cancellationToken) =>
-        Projects.TryGetValue(id, out var project) ? Task.FromResult(project) : throw new NotFoundException("Project", id.ToString());
+    public Task<ProjectDto> FetchAsync(Guid id, CancellationToken cancellationToken)
+    {
+        Fetches++;
+        return Projects.TryGetValue(id, out var project) ? Task.FromResult(project) : throw new NotFoundException("Project", id.ToString());
+    }
 
     public Task<PagedResult<ProjectInfoDto>> FetchListAsync(ProjectListCriteria criteria, CancellationToken cancellationToken)
     {

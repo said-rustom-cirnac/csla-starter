@@ -58,13 +58,16 @@ public sealed class CslaFormContext<T> : ICslaFormContext
         }
     }
 
-    /// <summary>After a load, save, cancel or reload: the current values become the "loaded" ones and nothing is touched.</summary>
-    public void Snapshot()
+    /// <summary>
+    /// After a load, save, cancel or reload: the values of <paramref name="baseline"/> (default: the current object)
+    /// become the "loaded" ones, and nothing is touched.
+    /// </summary>
+    public void Snapshot(object? baseline = null)
     {
         _touched.Clear();
         _loaded.Clear();
         Submitted = false;
-        if (ViewModel.Model is not { } model)
+        if ((baseline ?? ViewModel.Model) is not { } model)
         {
             return;
         }

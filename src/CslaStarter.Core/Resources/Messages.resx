@@ -11,6 +11,23 @@
   <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong. If it keeps happening, give this reference to support: {0}</value></data>
   <data name="Toast_Saved" xml:space="preserve"><value>Saved.</value></data>
   <data name="Field_Checking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="Live_UpdatedBy" xml:space="preserve"><value>Updated by {0}.</value></data>
+  <data name="Live_ChangedBy" xml:space="preserve"><value>{0} saved changes to this record.</value></data>
+  <data name="Live_ChangedElsewhere" xml:space="preserve"><value>This record was changed elsewhere.</value></data>
+  <data name="Live_Deleted" xml:space="preserve"><value>This record was deleted.</value></data>
+  <data name="Live_Reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="Live_KeepMine" xml:space="preserve"><value>Keep mine</value></data>
+  <data name="Live_AccessLost" xml:space="preserve"><value>You no longer have access to this record, so it was closed.</value></data>
+  <data name="Presence_Editing" xml:space="preserve"><value>{0} is also editing this record.</value></data>
+  <data name="Presence_Viewing" xml:space="preserve"><value>{0} is also viewing this record.</value></data>
+  <data name="Conflict_Intro" xml:space="preserve"><value>Compare their version with yours, then choose which to keep.</value></data>
+  <data name="Conflict_Theirs" xml:space="preserve"><value>Theirs</value></data>
+  <data name="Conflict_Mine" xml:space="preserve"><value>Mine</value></data>
+  <data name="Conflict_UseTheirs" xml:space="preserve"><value>Use theirs</value></data>
+  <data name="Conflict_ApplyMine" xml:space="preserve"><value>Apply mine</value></data>
+  <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Keep theirs</value></data>
+  <data name="Conflict_Added" xml:space="preserve"><value>Added</value></data>
+  <data name="Conflict_Removed" xml:space="preserve"><value>Removed</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>

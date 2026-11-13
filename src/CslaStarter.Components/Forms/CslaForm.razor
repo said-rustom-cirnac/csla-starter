@@ -1,10 +1,28 @@
 @typeparam T where T : class
 @inherits CslaBaseComponent<T>
 <form id="@ComponentId" novalidate @onsubmit="SubmitAsync">
-    @if (FormContext is not null && ChildContent is not null)
+    @if (!IsClosed && FormContext is not null)
     {
-        <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
-            @ChildContent(FormContext)
-        </CascadingValue>
+        @if (Topic is { } topic)
+        {
+            <CslaPresenceIndicator Topic="topic" />
+        }
+
+        @if (RemoteChange is not null)
+        {
+            <CslaChangeBanner ChangedBy="@RemoteChange.ChangedByName" Deleted="@(RemoteChange.Kind == Core.Realtime.ChangeKind.Deleted)" OnReload="ReloadAsync" OnKeepMine="KeepMine" />
+        }
+
+        @if (Conflict is not null)
+        {
+            <CslaConflictDialog Differences="Conflict.Differences" BothChanged="Conflict.BothChanged" OnUseTheirs="UseTheirsAsync" OnApplyMine="ApplyMineAsync" />
+        }
+
+        @if (ChildContent is not null)
+        {
+            <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
+                @ChildContent(FormContext)
+            </CascadingValue>
+        }
     }
 </form>

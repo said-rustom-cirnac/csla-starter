@@ -1,0 +1,16 @@
+@using CslaStarter.Business.Projects
+@using CslaStarter.Components.Fields
+@using CslaStarter.Components.Forms
+<CslaForm T="ProjectEdit" Load="Load" Closed="OnClosed" Context="form">
+    <CslaTextField For="() => form.Model.Name" />
+    <CslaTextField For="() => form.Model.Description" />
+</CslaForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<Task<ProjectEdit>> Load { get; set; } = default!;
+
+    public int ClosedCount { get; private set; }
+
+    private void OnClosed() => ClosedCount++;
+}

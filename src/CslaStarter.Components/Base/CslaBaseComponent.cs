@@ -49,6 +49,9 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
     [Inject]
     protected ApplicationContext ApplicationContext { get; set; } = default!;
 
+    /// <summary>This circuit's id in change notices and presence.</summary>
+    protected string OriginId => Origin.Id;
+
     /// <summary>The entity type this component works on, for telemetry tags; null when it has none.</summary>
     protected virtual string? TelemetryEntityType => null;
 

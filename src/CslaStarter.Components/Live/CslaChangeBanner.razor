@@ -1,0 +1,8 @@
+<div role="status" data-csla-banner data-deleted="@Deleted">
+    <p>@Text</p>
+    @if (!Deleted)
+    {
+        <gcds-button type="button" button-role="secondary" data-action="reload" @ongcdsclick="OnReload">@Messages.Live_Reload</gcds-button>
+    }
+    <gcds-button type="button" button-role="secondary" data-action="keep" @ongcdsclick="OnKeepMine">@Messages.Live_KeepMine</gcds-button>
+</div>

@@ -11,6 +11,23 @@
   <data name="Error_Unexpected" xml:space="preserve"><value>Une erreur s'est produite. Si elle se reproduit, donnez cette référence au soutien : {0}</value></data>
   <data name="Toast_Saved" xml:space="preserve"><value>Enregistré.</value></data>
   <data name="Field_Checking" xml:space="preserve"><value>Vérification…</value></data>
+  <data name="Live_UpdatedBy" xml:space="preserve"><value>Mis à jour par {0}.</value></data>
+  <data name="Live_ChangedBy" xml:space="preserve"><value>{0} a enregistré des modifications à cet enregistrement.</value></data>
+  <data name="Live_ChangedElsewhere" xml:space="preserve"><value>Cet enregistrement a été modifié ailleurs.</value></data>
+  <data name="Live_Deleted" xml:space="preserve"><value>Cet enregistrement a été supprimé.</value></data>
+  <data name="Live_Reload" xml:space="preserve"><value>Recharger</value></data>
+  <data name="Live_KeepMine" xml:space="preserve"><value>Garder les miennes</value></data>
+  <data name="Live_AccessLost" xml:space="preserve"><value>Vous n'avez plus accès à cet enregistrement; il a donc été fermé.</value></data>
+  <data name="Presence_Editing" xml:space="preserve"><value>{0} modifie aussi cet enregistrement.</value></data>
+  <data name="Presence_Viewing" xml:space="preserve"><value>{0} consulte aussi cet enregistrement.</value></data>
+  <data name="Conflict_Intro" xml:space="preserve"><value>Comparez sa version avec la vôtre, puis choisissez laquelle garder.</value></data>
+  <data name="Conflict_Theirs" xml:space="preserve"><value>La sienne</value></data>
+  <data name="Conflict_Mine" xml:space="preserve"><value>La mienne</value></data>
+  <data name="Conflict_UseTheirs" xml:space="preserve"><value>Utiliser la sienne</value></data>
+  <data name="Conflict_ApplyMine" xml:space="preserve"><value>Appliquer les miennes</value></data>
+  <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Garder la sienne</value></data>
+  <data name="Conflict_Added" xml:space="preserve"><value>Ajouté</value></data>
+  <data name="Conflict_Removed" xml:space="preserve"><value>Supprimé</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

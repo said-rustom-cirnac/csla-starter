@@ -87,6 +87,16 @@ public sealed class BaseComponentTests : IDisposable
     }
 
     [Fact]
+    public async Task Base_OnResync_RunsOnTheRenderer()
+    {
+        var probe = _context.Render<Probe>();
+
+        await _context.Hub.RaiseResyncAsync();
+
+        probe.WaitForAssertion(() => Assert.Equal(1, probe.Instance.Resyncs));
+    }
+
+    [Fact]
     public void Base_ComponentId_IsStableAndUnique()
     {
         var first = _context.Render<Probe>();
@@ -105,6 +115,8 @@ public sealed class BaseComponentTests : IDisposable
 
         public int Received { get; private set; }
 
+        public int Resyncs { get; private set; }
+
         public bool Busy => IsBusy;
 
         public string Id => ComponentId;
@@ -113,7 +125,9 @@ public sealed class BaseComponentTests : IDisposable
 
         public Task<bool> Run(string operation, Func<CancellationToken, Task> work) => RunAsync(operation, work);
 
-        protected override void OnInitialized() =>
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
             Subscribe(ChangeTopic.ForRecord("Project", "p-1"), change =>
             {
                 Received++;
@@ -121,6 +135,12 @@ public sealed class BaseComponentTests : IDisposable
                 StateHasChanged();
                 return Task.CompletedTask;
             });
+            OnResync(() =>
+            {
+                Resyncs++;
+                return Task.CompletedTask;
+            });
+        }
 
         protected override void BuildRenderTree(RenderTreeBuilder builder)
         {
