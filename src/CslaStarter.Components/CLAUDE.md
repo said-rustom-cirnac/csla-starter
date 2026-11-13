@@ -14,7 +14,7 @@ The reusable `Csla*` component family. Every component inherits `CslaBaseCompone
 | `Buttons/`, `Dialogs/`, `Notifications/`, `Live/`, `History/`, `Tables/`, `Security/`, `Session/`, `Localization/` | the rest of the family |
 | `Drafts/` | autosave and the flush registry |
 | `Services/` | toasts, the live announcer, the circuit origin |
-| `Interop/` + `wwwroot/` | GCDS events, the JS initializer, shortcuts.js and session.js; `gcds/` (fetched by `scripts/update-gcds.sh`) |
+| `Interop/` + `wwwroot/` | GCDS events, the JS initializer, shortcuts.js and session.js; `gcds/` (written by `scripts/update-gcds.sh` and committed; never edit it by hand) |
 
 `AddCslaStarterComponents()` registers the per-circuit services.
 

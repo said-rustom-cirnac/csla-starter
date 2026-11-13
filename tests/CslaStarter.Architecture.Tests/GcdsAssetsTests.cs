@@ -1,7 +1,12 @@
+using System.Text.RegularExpressions;
+
 namespace CslaStarter.Architecture.Tests;
 
-/// <summary>The GC Design System is self-hosted at the version the spec pins, fetched by scripts/update-gcds.sh.</summary>
-public class GcdsAssetsTests
+/// <summary>
+/// The GC Design System is self-hosted at the version the spec pins. scripts/update-gcds.sh writes it and its output is
+/// committed: the app, the template and the E2E tests all use the committed copy.
+/// </summary>
+public partial class GcdsAssetsTests
 {
     private const string PinnedVersion = "1.7.0";
     private const string FontsVersion = "1.1.1";
@@ -32,13 +37,48 @@ public class GcdsAssetsTests
     }
 
     [Fact]
-    public void Assets_WhenPresent_MatchThePin()
+    public void Assets_MatchThePin()
     {
-        Assert.SkipUnless(Directory.Exists(Assets), "GCDS assets not fetched yet: run scripts/update-gcds.sh.");
-
-        Assert.Equal(PinnedVersion, File.ReadAllText(Path.Combine(Assets, "VERSION")).Trim());
+        Assert.Equal(PinnedVersion, File.ReadAllText(Path.Combine(Assets, "VERSION.txt")).Trim());
         Assert.True(File.Exists(Path.Combine(Assets, "loader", "index.js")), "the Stencil loader is missing");
         Assert.True(File.Exists(Path.Combine(Assets, "fonts.css")), "the self-hosted fonts are missing");
         Assert.DoesNotContain("fonts.googleapis.com", File.ReadAllText(Path.Combine(Assets, "dist", "gcds", "gcds.css")), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Assets_LoadOnlyLocalFilesThatExist()
+    {
+        var broken = new List<string>();
+        foreach (var css in Directory.EnumerateFiles(Assets, "*.css", SearchOption.AllDirectories))
+        {
+            foreach (Match match in CssUrl().Matches(File.ReadAllText(css)))
+            {
+                var url = match.Groups["url"].Value;
+                if (url.StartsWith("data:", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(css)!, url.Split('?', '#')[0]));
+                if (url.Contains("//", StringComparison.Ordinal) || !File.Exists(path))
+                {
+                    broken.Add($"{Path.GetRelativePath(Assets, css)}: {url}");
+                }
+            }
+        }
+
+        Assert.True(broken.Count == 0, "These stylesheet urls don't load a local file:\n" + string.Join('\n', broken));
+    }
+
+    [Fact]
+    public void Assets_ShipOnlyTheBuildsTheAppLoads()
+    {
+        string[] unused = ["cjs", "collection", "components", "types", "tests"];
+        Assert.DoesNotContain(unused, dir => Directory.Exists(Path.Combine(Assets, "dist", dir)));
+        Assert.Empty(Directory.EnumerateFiles(Assets, "*.d.ts", SearchOption.AllDirectories));
+        Assert.True(File.Exists(Path.Combine(Assets, "dist", "esm", "loader.js")), "the ESM build the loader imports is missing");
+    }
+
+    [GeneratedRegex("""url\(\s*["']?(?<url>[^"')]+)["']?\s*\)""")]
+    private static partial Regex CssUrl();
 }

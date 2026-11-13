@@ -52,7 +52,7 @@ The `Csla*` family in `CslaStarter.Components`: Blazor components bound to CSLA 
 
 ## GC Design System
 
-- **Assets:** self-hosted under `wwwroot/gcds`, fetched by `scripts/update-gcds.sh`: `@gcds-core/components` 1.7.0 and `@gcds-core/fonts` 1.1.1, integrity pinned in `scripts/gcds.integrity`. The script drops gcds.css's Google Fonts import (the CSP blocks it) and serves the fonts from `gcds/fonts.css`. Until it runs, GCDS elements stay inert and the browser console says so.
+- **Assets:** self-hosted and committed under `wwwroot/gcds`, written by `scripts/update-gcds.sh`: `@gcds-core/components` 1.7.0 and `@gcds-core/fonts` 1.1.1, integrity pinned in `scripts/gcds.integrity`. The script keeps only what the app loads (the loader, the ES module build and gcds.css). It drops gcds.css's Google Fonts import, points its icon font at the local copy instead of the design system's CDN, and fixes the placeholder paths in the fonts' stylesheets, which `gcds/fonts.css` links. `GcdsAssetsTests` fails if a stylesheet loads anything that isn't a local file. To move to a new version, change the pins in the script, run it, and commit what it writes.
 - **Under the CSP:** the JS initializer passes the page's `csp-nonce` to Stencil's `setNonce`, so its styles carry the nonce (`style-src` allows nonces, never `unsafe-inline`).
 - **Events** are registered as `gcdsinput`, `gcdschange`, `gcdsblur`, `gcdsfocus` and `gcdsclick` (names that differ from the browser's). `GcdsEventArgs.Value` carries `detail`.
 - **Traps:**

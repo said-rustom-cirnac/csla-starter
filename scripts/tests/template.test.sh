@@ -41,6 +41,13 @@ test_template_claude_true_keeps_guides_and_skills() {
   (cd "$app" && git init -q && bash scripts/tests/run.sh > /dev/null) || fail "the generated app's script tests fail"
 }
 
+# The GC Design System is vendored: the template copies it byte for byte, minified scripts and fonts included.
+test_template_copies_the_design_system_unchanged() {
+  generate
+  diff -r "$ROOT/src/CslaStarter.Components/wwwroot/gcds" "$app/src/Acme.Grants.Components/wwwroot/gcds" > /dev/null \
+    || fail "the generated app's wwwroot/gcds differs from the repository's"
+}
+
 # Every script a shipped workflow runs ships with it.
 test_template_workflows_find_their_scripts() {
   local variant missing
