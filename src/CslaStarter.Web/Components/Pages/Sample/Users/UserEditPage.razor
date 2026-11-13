@@ -1,0 +1,21 @@
+@page "/users/{Id:guid}"
+<PageTitle>@Labels.User_DisplayName</PageTitle>
+<CslaForm T="UserEdit" Load="Load" Closed="BackToList" FieldHistory="true" Context="form">
+    <h1>@form.Model.DisplayName</h1>
+    <CslaTextField For="() => form.Model.DisplayName" />
+    <CslaCheckbox For="() => form.Model.IsActive" />
+    <CslaSensitiveField For="() => form.Model.EmployeeNumber" />
+    <CslaSelect TValue="string" For="() => form.Model.PreferredLanguage" Options="@Languages" />
+
+    <h2>@Labels.User_Roles</h2>
+    @foreach (var role in Roles)
+    {
+        <label @key="role.Key">
+            <input type="checkbox" checked="@form.Model.Roles.Any(r => r.RoleTypeCode == role.Key)" disabled="@(!form.Model.CanWriteProperty(UserEdit.RolesProperty))" @onchange="e => Toggle(form.Model, role.Key, e)" />
+            @role.Value
+        </label>
+    }
+
+    <CslaButton Kind="ButtonKind.Save" />
+    <CslaButton Kind="ButtonKind.Cancel" />
+</CslaForm>

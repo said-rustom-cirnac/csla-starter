@@ -1,0 +1,9 @@
+@page "/profile"
+<PageTitle>@Labels.User_DisplayName</PageTitle>
+<CslaForm T="UserProfile" Load="Load" Context="form">
+    <h1>@form.Model.DisplayName</h1>
+    <CslaTextField For="() => form.Model.DisplayName" />
+    <CslaSelect TValue="string" For="() => form.Model.PreferredLanguage" Options="@Languages" />
+    <CslaButton Kind="ButtonKind.Save" />
+    <CslaButton Kind="ButtonKind.Cancel" />
+</CslaForm>

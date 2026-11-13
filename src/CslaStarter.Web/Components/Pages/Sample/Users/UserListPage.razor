@@ -1,0 +1,15 @@
+@page "/users"
+<PageTitle>@Labels.User_Roles</PageTitle>
+<h1>@Labels.User_Roles</h1>
+<CslaAuthorize Roles="@([UserRoleType.Admin, UserRoleType.Technical])">
+    <ChildContent>
+        <CslaTable TList="UserList" TItem="UserInfo" EntityType="User" Load="Load" RowSelected="Open">
+            <CslaTableColumn TItem="UserInfo" Property="@nameof(UserInfo.DisplayName)" />
+            <CslaTableColumn TItem="UserInfo" Property="@nameof(UserInfo.Email)" />
+            <CslaTableColumn TItem="UserInfo" Property="@nameof(UserInfo.IsActive)" />
+        </CslaTable>
+    </ChildContent>
+    <NotAuthorized>
+        <p>@Messages.AccessDenied_Body</p>
+    </NotAuthorized>
+</CslaAuthorize>

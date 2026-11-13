@@ -886,6 +886,19 @@
           "OpenTelemetry.Instrumentation.Runtime": "[1.21.0, )"
         }
       },
+      "cslastarter.web": {
+        "type": "Project",
+        "dependencies": {
+          "Csla.AspNetCore": "[10.2.0, )",
+          "Csla.Blazor": "[10.2.0, )",
+          "CslaStarter.Business": "[1.0.0, )",
+          "CslaStarter.Components": "[1.0.0, )",
+          "CslaStarter.Core": "[1.0.0, )",
+          "CslaStarter.Dal": "[1.0.0, )",
+          "CslaStarter.Data": "[1.0.0, )",
+          "CslaStarter.Infrastructure": "[1.0.0, )"
+        }
+      },
       "AspNetCore.HealthChecks.NpgSql": {
         "type": "CentralTransitive",
         "requested": "[9.0.0, )",
@@ -930,6 +943,15 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
           "Microsoft.Extensions.Options": "10.0.0",
           "System.ComponentModel.Annotations": "5.0.0"
+        }
+      },
+      "Csla.AspNetCore": {
+        "type": "CentralTransitive",
+        "requested": "[10.2.0, )",
+        "resolved": "10.2.0",
+        "contentHash": "tXT3wlFS6FYH/xRGKIuDFS4F99NQZ8g+DB+iPz5KN2/3ExterKjNpD27AXAnEk/bHk5/U4iHpD/YOZQ1CH9YZA==",
+        "dependencies": {
+          "Csla": "10.2.0"
         }
       },
       "Csla.Blazor": {

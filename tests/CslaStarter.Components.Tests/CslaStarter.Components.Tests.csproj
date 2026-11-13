@@ -21,6 +21,8 @@
     <ProjectReference Include="..\..\src\CslaStarter.Components\CslaStarter.Components.csproj" />
     <!-- The real hub and presence tracker (in-memory transport); no database. -->
     <ProjectReference Include="..\..\src\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
+    <!-- The sample pages, rendered with bUnit (prerendering is off, so HTTP tests only see the shell). -->
+    <ProjectReference Include="..\..\src\CslaStarter.Web\CslaStarter.Web.csproj" />
   </ItemGroup>
 
   <!-- The business tests' fakes and principals, shared rather than copied. -->
