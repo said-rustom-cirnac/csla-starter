@@ -5,6 +5,59 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Common_Required" xml:space="preserve"><value>{0} is required.</value></data>
+  <data name="Error_AccessDenied" xml:space="preserve"><value>You don't have permission to do that.</value></data>
+  <data name="Error_Conflict" xml:space="preserve"><value>Someone else saved this record after you opened it.</value></data>
+  <data name="Error_NotFound" xml:space="preserve"><value>This record doesn't exist, or you no longer have access to it.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Something went wrong. If it keeps happening, give this reference to support: {0}</value></data>
+  <data name="Toast_Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="Field_Checking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="Live_UpdatedBy" xml:space="preserve"><value>Updated by {0}.</value></data>
+  <data name="Live_ChangedBy" xml:space="preserve"><value>{0} saved changes to this record.</value></data>
+  <data name="Live_ChangedElsewhere" xml:space="preserve"><value>This record was changed elsewhere.</value></data>
+  <data name="Live_Deleted" xml:space="preserve"><value>This record was deleted.</value></data>
+  <data name="Live_Reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="Live_KeepMine" xml:space="preserve"><value>Keep mine</value></data>
+  <data name="Live_AccessLost" xml:space="preserve"><value>You no longer have access to this record, so it was closed.</value></data>
+  <data name="Presence_Editing" xml:space="preserve"><value>{0} is also editing this record.</value></data>
+  <data name="Presence_Viewing" xml:space="preserve"><value>{0} is also viewing this record.</value></data>
+  <data name="Conflict_Intro" xml:space="preserve"><value>Compare their version with yours, then choose which to keep.</value></data>
+  <data name="Conflict_Theirs" xml:space="preserve"><value>Theirs</value></data>
+  <data name="Conflict_Mine" xml:space="preserve"><value>Mine</value></data>
+  <data name="Conflict_UseTheirs" xml:space="preserve"><value>Use theirs</value></data>
+  <data name="Conflict_ApplyMine" xml:space="preserve"><value>Apply mine</value></data>
+  <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Keep theirs</value></data>
+  <data name="Conflict_Added" xml:space="preserve"><value>Added</value></data>
+  <data name="Conflict_Removed" xml:space="preserve"><value>Removed</value></data>
+  <data name="Draft_RestorePrompt" xml:space="preserve"><value>Restore your unsaved changes from {0}?</value></data>
+  <data name="Draft_RecordChanged" xml:space="preserve"><value>This record changed since then. Review it before saving.</value></data>
+  <data name="Draft_Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Draft_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Draft_Restored" xml:space="preserve"><value>Your unsaved changes were restored.</value></data>
+  <data name="Table_Pagination" xml:space="preserve"><value>Pages</value></data>
+  <data name="History_Title" xml:space="preserve"><value>Change history</value></data>
+  <data name="History_Masked" xml:space="preserve"><value>(hidden)</value></data>
+  <data name="History_Inserted" xml:space="preserve"><value>Created</value></data>
+  <data name="History_Updated" xml:space="preserve"><value>Changed</value></data>
+  <data name="History_Deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="History_Empty" xml:space="preserve"><value>No changes recorded yet.</value></data>
+  <data name="History_More" xml:space="preserve"><value>Show more</value></data>
+  <data name="Field_History" xml:space="preserve"><value>History</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Confirm_Delete" xml:space="preserve"><value>Delete this record? This can't be undone.</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Delete</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>Keep it</value></data>
+  <data name="Error_SummaryTitle" xml:space="preserve"><value>Fix these before saving</value></data>
+  <data name="Toast_Region" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Session_Warning" xml:space="preserve"><value>Your session will end in {0} minutes because of inactivity.</value></data>
+  <data name="Session_Stay" xml:space="preserve"><value>Stay signed in</value></data>
+  <data name="Leave_Confirm" xml:space="preserve"><value>Leave this page? Your unsaved changes will be lost.</value></data>
+  <data name="Leave_Yes" xml:space="preserve"><value>Leave</value></data>
+  <data name="Leave_No" xml:space="preserve"><value>Stay</value></data>
+  <data name="Sensitive_Reveal" xml:space="preserve"><value>Show</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+  <data name="Language_French" xml:space="preserve"><value>Français</value></data>
+  <data name="Cancel_Confirm" xml:space="preserve"><value>Discard your unsaved changes?</value></data>
+  <data name="Cancel_Yes" xml:space="preserve"><value>Discard</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Something went wrong. Reference number: {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this page. If you think you should, contact your administrator.</value></data>

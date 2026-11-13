@@ -5,6 +5,59 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Common_Required" xml:space="preserve"><value>{0} est obligatoire.</value></data>
+  <data name="Error_AccessDenied" xml:space="preserve"><value>Vous n'avez pas la permission de faire cela.</value></data>
+  <data name="Error_Conflict" xml:space="preserve"><value>Quelqu'un d'autre a enregistré cet enregistrement après que vous l'avez ouvert.</value></data>
+  <data name="Error_NotFound" xml:space="preserve"><value>Cet enregistrement n'existe pas, ou vous n'y avez plus accès.</value></data>
+  <data name="Error_Unexpected" xml:space="preserve"><value>Une erreur s'est produite. Si elle se reproduit, donnez cette référence au soutien : {0}</value></data>
+  <data name="Toast_Saved" xml:space="preserve"><value>Enregistré.</value></data>
+  <data name="Field_Checking" xml:space="preserve"><value>Vérification…</value></data>
+  <data name="Live_UpdatedBy" xml:space="preserve"><value>Mis à jour par {0}.</value></data>
+  <data name="Live_ChangedBy" xml:space="preserve"><value>{0} a enregistré des modifications à cet enregistrement.</value></data>
+  <data name="Live_ChangedElsewhere" xml:space="preserve"><value>Cet enregistrement a été modifié ailleurs.</value></data>
+  <data name="Live_Deleted" xml:space="preserve"><value>Cet enregistrement a été supprimé.</value></data>
+  <data name="Live_Reload" xml:space="preserve"><value>Recharger</value></data>
+  <data name="Live_KeepMine" xml:space="preserve"><value>Garder les miennes</value></data>
+  <data name="Live_AccessLost" xml:space="preserve"><value>Vous n'avez plus accès à cet enregistrement; il a donc été fermé.</value></data>
+  <data name="Presence_Editing" xml:space="preserve"><value>{0} modifie aussi cet enregistrement.</value></data>
+  <data name="Presence_Viewing" xml:space="preserve"><value>{0} consulte aussi cet enregistrement.</value></data>
+  <data name="Conflict_Intro" xml:space="preserve"><value>Comparez sa version avec la vôtre, puis choisissez laquelle garder.</value></data>
+  <data name="Conflict_Theirs" xml:space="preserve"><value>La sienne</value></data>
+  <data name="Conflict_Mine" xml:space="preserve"><value>La mienne</value></data>
+  <data name="Conflict_UseTheirs" xml:space="preserve"><value>Utiliser la sienne</value></data>
+  <data name="Conflict_ApplyMine" xml:space="preserve"><value>Appliquer les miennes</value></data>
+  <data name="Conflict_KeepTheirs" xml:space="preserve"><value>Garder la sienne</value></data>
+  <data name="Conflict_Added" xml:space="preserve"><value>Ajouté</value></data>
+  <data name="Conflict_Removed" xml:space="preserve"><value>Supprimé</value></data>
+  <data name="Draft_RestorePrompt" xml:space="preserve"><value>Restaurer vos modifications non enregistrées de {0}?</value></data>
+  <data name="Draft_RecordChanged" xml:space="preserve"><value>Cet enregistrement a changé depuis. Révisez-le avant d'enregistrer.</value></data>
+  <data name="Draft_Restore" xml:space="preserve"><value>Restaurer</value></data>
+  <data name="Draft_Discard" xml:space="preserve"><value>Abandonner</value></data>
+  <data name="Draft_Restored" xml:space="preserve"><value>Vos modifications non enregistrées ont été restaurées.</value></data>
+  <data name="Table_Pagination" xml:space="preserve"><value>Pages</value></data>
+  <data name="History_Title" xml:space="preserve"><value>Historique des modifications</value></data>
+  <data name="History_Masked" xml:space="preserve"><value>(masqué)</value></data>
+  <data name="History_Inserted" xml:space="preserve"><value>Créé</value></data>
+  <data name="History_Updated" xml:space="preserve"><value>Modifié</value></data>
+  <data name="History_Deleted" xml:space="preserve"><value>Supprimé</value></data>
+  <data name="History_Empty" xml:space="preserve"><value>Aucune modification enregistrée.</value></data>
+  <data name="History_More" xml:space="preserve"><value>Afficher plus</value></data>
+  <data name="Field_History" xml:space="preserve"><value>Historique</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Fermer</value></data>
+  <data name="Confirm_Delete" xml:space="preserve"><value>Supprimer cet enregistrement? Cette action est irréversible.</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>Le garder</value></data>
+  <data name="Error_SummaryTitle" xml:space="preserve"><value>Corrigez ceci avant d'enregistrer</value></data>
+  <data name="Toast_Region" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Session_Warning" xml:space="preserve"><value>Votre session prendra fin dans {0} minutes en raison de votre inactivité.</value></data>
+  <data name="Session_Stay" xml:space="preserve"><value>Rester connecté</value></data>
+  <data name="Leave_Confirm" xml:space="preserve"><value>Quitter cette page? Vos modifications non enregistrées seront perdues.</value></data>
+  <data name="Leave_Yes" xml:space="preserve"><value>Quitter</value></data>
+  <data name="Leave_No" xml:space="preserve"><value>Rester</value></data>
+  <data name="Sensitive_Reveal" xml:space="preserve"><value>Afficher</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+  <data name="Language_French" xml:space="preserve"><value>Français</value></data>
+  <data name="Cancel_Confirm" xml:space="preserve"><value>Abandonner vos modifications non enregistrées?</value></data>
+  <data name="Cancel_Yes" xml:space="preserve"><value>Abandonner</value></data>
   <data name="Error_Reference" xml:space="preserve"><value>Une erreur s'est produite. Numéro de référence : {0}</value></data>
   <data name="AccessDenied_Title" xml:space="preserve"><value>Accès refusé</value></data>
   <data name="AccessDenied_Body" xml:space="preserve"><value>Vous n'avez pas accès à cette page. Si vous pensez que c'est une erreur, communiquez avec votre administrateur.</value></data>

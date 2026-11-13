@@ -1,0 +1,5 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Form?.HistoryEnabled == true)
+{
+    <gcds-button type="button" button-role="secondary" size="small" data-action="history" aria-label="@AriaLabel" @ongcdsclick="Open">@Messages.Field_History</gcds-button>
+}

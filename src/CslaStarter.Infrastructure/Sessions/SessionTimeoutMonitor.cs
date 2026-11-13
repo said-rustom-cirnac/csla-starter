@@ -1,3 +1,4 @@
+using CslaStarter.Core.Sessions;
 using Microsoft.Extensions.Options;
 
 namespace CslaStarter.Infrastructure.Sessions;
@@ -7,7 +8,7 @@ namespace CslaStarter.Infrastructure.Sessions;
 /// and moves Active → Warning → Expired. Expired is final. <see cref="StateChanged"/> is raised on a timer thread:
 /// components must marshal to their renderer with InvokeAsync.
 /// </summary>
-public sealed class SessionTimeoutMonitor : IDisposable
+public sealed class SessionTimeoutMonitor : IDisposable, ISessionActivity
 {
     private static readonly TimeSpan CheckEvery = TimeSpan.FromSeconds(15);
 
@@ -34,6 +35,10 @@ public sealed class SessionTimeoutMonitor : IDisposable
     }
 
     public event Action<SessionState>? StateChanged;
+
+    public event Action<SessionPhase>? PhaseChanged;
+
+    public SessionPhase Phase => ToPhase(State);
 
     public SessionState State
     {
@@ -98,5 +103,13 @@ public sealed class SessionTimeoutMonitor : IDisposable
         }
 
         StateChanged?.Invoke(changedTo);
+        PhaseChanged?.Invoke(ToPhase(changedTo));
     }
+
+    private static SessionPhase ToPhase(SessionState state) => state switch
+    {
+        SessionState.Warning => SessionPhase.Warning,
+        SessionState.Expired => SessionPhase.Expired,
+        _ => SessionPhase.Active,
+    };
 }

@@ -9,7 +9,7 @@ namespace CslaStarter.Business.Base;
 /// sends it back, and the save fails if anyone changed any part of the aggregate since it was loaded.
 /// </summary>
 [Serializable]
-public abstract class AppRootBase<T> : AppBusinessBase<T>
+public abstract class AppRootBase<T> : AppBusinessBase<T>, IVersioned
     where T : AppRootBase<T>
 {
     public static readonly PropertyInfo<uint> VersionProperty = RegisterProperty<uint>(nameof(Version));

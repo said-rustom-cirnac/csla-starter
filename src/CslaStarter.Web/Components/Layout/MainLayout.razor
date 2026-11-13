@@ -1,6 +1,21 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-@Body
+<header>
+    <CslaLanguageToggle />
+    <nav>
+        <a href="projects">@Labels.Project_Tasks</a>
+        <a href="users">@Labels.User_Roles</a>
+        <a href="profile">@Labels.User_DisplayName</a>
+    </nav>
+</header>
+
+<main>
+    @Body
+</main>
+
+<CslaToastHost />
+<CslaLiveRegion />
+<CslaSessionTimeout />
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

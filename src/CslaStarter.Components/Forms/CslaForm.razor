@@ -1,0 +1,52 @@
+@typeparam T where T : class
+@inherits CslaBaseComponent<T>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" ConfirmExternalNavigation="@GuardsNavigation" />
+<form id="@ComponentId" novalidate @onsubmit="SubmitAsync" @ref="_formElement">
+    @if (PendingNavigation is not null)
+    {
+        <CslaConfirmDialog Message="@Messages.Leave_Confirm" ConfirmText="@Messages.Leave_Yes" CancelText="@Messages.Leave_No" OnConfirm="LeaveAsync" OnCancel="() => PendingNavigation = null" />
+    }
+
+    @if (ConfirmingCancel)
+    {
+        <CslaConfirmDialog Message="@Messages.Cancel_Confirm" ConfirmText="@Messages.Cancel_Yes" CancelText="@Messages.Leave_No" OnConfirm="ConfirmCancelAsync" OnCancel="() => ConfirmingCancel = false" />
+    }
+
+    @if (!IsClosed && FormContext is not null && ViewModel.Model is not null)
+    {
+        @if (Topic is { } topic)
+        {
+            <CslaPresenceIndicator Topic="topic" />
+        }
+
+        @if (RemoteChange is not null)
+        {
+            <CslaChangeBanner ChangedBy="@RemoteChange.ChangedByName" Deleted="@(RemoteChange.Kind == Core.Realtime.ChangeKind.Deleted)" OnReload="ReloadAsync" OnKeepMine="KeepMine" />
+        }
+
+        @if (DraftOffer is not null)
+        {
+            <CslaDraftPrompt SavedAt="DraftOffer.SavedAt" RecordChanged="@DraftRecordChanged" OnRestore="RestoreDraftAsync" OnDiscard="DiscardDraftAsync" />
+        }
+
+        @if (Conflict is not null)
+        {
+            <CslaConflictDialog Differences="Conflict.Differences" BothChanged="Conflict.BothChanged" OnUseTheirs="UseTheirsAsync" OnApplyMine="ApplyMineAsync" />
+        }
+
+        @if (History is { } history)
+        {
+            <CslaModal aria-label="@Messages.History_Title" OnCancel="CloseHistory" data-csla-field-history>
+                <CslaHistory EntityType="@history.EntityType" EntityKey="@history.EntityKey" Property="@history.Property" />
+                <gcds-button type="button" button-role="secondary" data-action="close-history" autofocus @ongcdsclick="CloseHistory">@Messages.Common_Close</gcds-button>
+            </CslaModal>
+        }
+
+        <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">
+            <CascadingValue TValue="CslaFormState" Value="State">
+                <CslaErrorSummary />
+                @ChildContent?.Invoke(FormContext)
+            </CascadingValue>
+        </CascadingValue>
+    }
+</form>

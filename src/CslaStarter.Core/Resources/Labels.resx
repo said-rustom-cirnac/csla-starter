@@ -30,6 +30,7 @@
   <data name="User_RoleType" xml:space="preserve"><value>Role</value></data>
   <data name="Project_Code" xml:space="preserve"><value>Code</value></data>
   <data name="Project_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Project_Close" xml:space="preserve"><value>Close project</value></data>
   <data name="Project_Description" xml:space="preserve"><value>Description</value></data>
   <data name="Project_Status" xml:space="preserve"><value>Status</value></data>
   <data name="Project_Budget" xml:space="preserve"><value>Budget</value></data>
@@ -45,4 +46,20 @@
   <data name="Task_SortOrder" xml:space="preserve"><value>Order</value></data>
   <data name="Member_User" xml:space="preserve"><value>User</value></data>
   <data name="Member_DisplayName" xml:space="preserve"><value>Name</value></data>
+  <data name="History_OccurredAt" xml:space="preserve"><value>When</value></data>
+  <data name="History_ChangedBy" xml:space="preserve"><value>Changed by</value></data>
+  <data name="History_Action" xml:space="preserve"><value>Change</value></data>
+  <data name="History_Record" xml:space="preserve"><value>Record</value></data>
+  <data name="History_Changes" xml:space="preserve"><value>Changes</value></data>
+  <data name="History_Field" xml:space="preserve"><value>Field</value></data>
+  <data name="History_OldValue" xml:space="preserve"><value>Before</value></data>
+  <data name="History_NewValue" xml:space="preserve"><value>After</value></data>
+  <data name="History_IsMasked" xml:space="preserve"><value>Hidden value</value></data>
+  <data name="Project_StatusCode" xml:space="preserve"><value>Status</value></data>
+  <data name="ProjectTask_Title" xml:space="preserve"><value>Task</value></data>
+  <data name="ProjectTask_IsDone" xml:space="preserve"><value>Done</value></data>
+  <data name="ProjectTask_DueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="ProjectTask_SortOrder" xml:space="preserve"><value>Order</value></data>
+  <data name="ProjectMember_UserId" xml:space="preserve"><value>Member</value></data>
+  <data name="UserRole_RoleTypeCode" xml:space="preserve"><value>Role</value></data>
 </root>

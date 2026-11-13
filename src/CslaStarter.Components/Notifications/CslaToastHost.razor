@@ -1,0 +1,9 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<div role="region" aria-label="@Messages.Toast_Region" data-csla-toasts>
+    @foreach (var toast in Toasts.Toasts)
+    {
+        <gcds-notice type="@NoticeType(toast.Kind)" notice-title-tag="h2" notice-title="@toast.Message" data-toast="@toast.Id">
+            <gcds-button type="button" button-role="secondary" size="small" data-action="dismiss" @ongcdsclick="() => Toasts.Dismiss(toast.Id)">@Messages.Common_Close</gcds-button>
+        </gcds-notice>
+    }
+</div>

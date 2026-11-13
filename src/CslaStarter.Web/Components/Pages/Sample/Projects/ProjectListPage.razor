@@ -1,0 +1,15 @@
+@page "/projects"
+<PageTitle>@Labels.Project_Tasks</PageTitle>
+<h1>@Labels.Project_Tasks</h1>
+<CslaAuthorize Action="Csla.Rules.AuthorizationActions.CreateObject" ObjectType="typeof(ProjectEdit)">
+    <CslaButton Kind="ButtonKind.New" OnClick="@(() => Navigation.NavigateTo("projects/new"))" />
+</CslaAuthorize>
+<CslaTable TList="ProjectList" TItem="ProjectInfo" EntityType="Project" Load="Load" InitialSort="Code" RowSelected="Open">
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Code)" Sortable="true" />
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Name)" Sortable="true" />
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.StatusCode)" SortKey="Status" Sortable="true">
+        <Template Context="project">@StatusName(project.StatusCode)</Template>
+    </CslaTableColumn>
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Budget)" />
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.OpenTaskCount)" />
+</CslaTable>

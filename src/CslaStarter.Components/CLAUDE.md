@@ -4,6 +4,20 @@ The reusable `Csla*` component family. Every component inherits `CslaBaseCompone
 
 **May reference:** Core, Business, Csla.Blazor (and the shared ASP.NET Core framework). Never Data or Infrastructure.
 
+## Layout
+
+| Folder | Holds |
+|---|---|
+| `Base/` | `CslaBaseComponent`, `CslaBaseComponent<T>` |
+| `Forms/` | `CslaForm`, `AppViewModel`, the form context and state, `FieldHints`, `FieldDiff`, `ConflictMerge` |
+| `Fields/` | the GCDS field components and `FieldValue` |
+| `Buttons/`, `Dialogs/`, `Notifications/`, `Live/`, `History/`, `Tables/`, `Security/`, `Session/`, `Localization/` | the rest of the family |
+| `Drafts/` | autosave and the flush registry |
+| `Services/` | toasts, the live announcer, the circuit origin |
+| `Interop/` + `wwwroot/` | GCDS events, the JS initializer, shortcuts.js and session.js; `gcds/` (fetched by `scripts/update-gcds.sh`) |
+
+`AddCslaStarterComponents()` registers the per-circuit services.
+
 ## Rules
 
 - Each component is `X.razor` (markup only) plus `X.razor.cs` (code). Tests enforce both halves.
@@ -19,4 +33,6 @@ The reusable `Csla*` component family. Every component inherits `CslaBaseCompone
 - Give every field host an `id`, so error-summary links can focus it.
 - Custom events (`gcdsinput`, `gcdschange`, `gcdsblur`, `gcdsfocus`, `gcdsclick`) are registered in the JS initializer. Their names differ from browser event names.
 
-Guides: [architecture](../../docs/claude/architecture.md), [conventions](../../docs/claude/conventions.md).
+- Pure logic (diffs, merges, hints, debounce) goes in plain classes, so it can be tested without rendering.
+
+Guides: [components](../../docs/claude/components.md), [architecture](../../docs/claude/architecture.md), [conventions](../../docs/claude/conventions.md).

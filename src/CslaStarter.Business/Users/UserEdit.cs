@@ -1,11 +1,13 @@
 using Csla;
 using Csla.Rules;
 using Csla.Rules.CommonRules;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
+using CslaStarter.Core.Security;
 using CslaStarter.Dal.Users;
 
 namespace CslaStarter.Business.Users;
@@ -15,6 +17,7 @@ namespace CslaStarter.Business.Users;
 /// Technical staff may view users, but not their employee number, and may not edit them.
 /// </summary>
 [Serializable]
+[HistoryOf("User")]
 public sealed class UserEdit : AppRootBase<UserEdit>
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));
@@ -61,6 +64,7 @@ public sealed class UserEdit : AppRootBase<UserEdit>
     }
 
     [LocalizedDisplayName(nameof(Labels.User_EmployeeNumber))]
+    [Sensitive(RevealRoles = new[] { UserRoleType.Admin })]
     public string? EmployeeNumber
     {
         get => GetProperty(EmployeeNumberProperty);

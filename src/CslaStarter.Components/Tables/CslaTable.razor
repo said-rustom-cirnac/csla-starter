@@ -1,0 +1,30 @@
+@typeparam TList where TList : class, IEnumerable<TItem>
+@typeparam TItem where TItem : class, CslaStarter.Core.IEntityIdentity
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<CascadingValue TValue="ITableColumns<TItem>" Value="this" IsFixed="true">@ChildContent</CascadingValue>
+<table id="@ComponentId" aria-busy="@(IsBusy ? "true" : "false")">
+    <thead>
+        <tr>
+            @foreach (var column in VisibleColumns)
+            {
+                <th scope="col" data-property="@column.Property" aria-sort="@AriaSort(column)">
+                    @if (column.Sortable)
+                    {
+                        <button type="button" @onclick="() => SortAsync(column)">@HeaderText(column)</button>
+                    }
+                    else
+                    {
+                        @HeaderText(column)
+                    }
+                </th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <CslaTableRow TItem="TItem" @key="item.EntityKey" Item="item" Columns="VisibleColumns" Selected="@(item.EntityKey == State.SelectedKey)" OnSelect="SelectAsync" />
+        }
+    </tbody>
+</table>
+<gcds-pagination display="list" label="@Messages.Table_Pagination" total-pages="@TotalPages" current-page="@State.Page" @ongcdsclick="OnPageAsync"></gcds-pagination>

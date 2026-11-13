@@ -1,0 +1,28 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<CslaModal LabelledBy="@TitleId" data-csla-conflict>
+    <h2 id="@TitleId">@Messages.Error_Conflict</h2>
+    <p>@Messages.Conflict_Intro</p>
+    <table>
+        <thead>
+            <tr><th scope="col"></th><th scope="col">@Messages.Conflict_Theirs</th><th scope="col">@Messages.Conflict_Mine</th><th scope="col"></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var difference in Differences)
+            {
+                <tr data-key="@difference.Key">
+                    <th scope="row">@difference.FriendlyName</th>
+                    <td>@Show(difference, difference.Theirs)</td>
+                    <td>@Show(difference, difference.Mine)</td>
+                    <td>
+                        @if (IsBothChanged(difference))
+                        {
+                            <gcds-checkboxes name="@("keep-" + difference.Key)" options="@KeepTheirsOption(difference)" @ongcdschange="e => ToggleKeepTheirs(difference, e)"></gcds-checkboxes>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <gcds-button type="button" button-role="secondary" data-action="use-theirs" @ongcdsclick="OnUseTheirs">@Messages.Conflict_UseTheirs</gcds-button>
+    <gcds-button type="button" data-action="apply-mine" @ongcdsclick="ApplyMineAsync">@Messages.Conflict_ApplyMine</gcds-button>
+</CslaModal>

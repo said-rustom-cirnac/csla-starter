@@ -1,0 +1,16 @@
+@using CslaStarter.Components.Fields
+@using CslaStarter.Components.Forms
+<CslaForm T="HintProbe" Load="Load" Context="form">
+    <CslaCheckbox For="() => form.Model.Active" />
+    <CslaCheckboxGroup TValue="int" For="() => form.Model.Tags" Options="@Tags" />
+    <CslaRadioGroup TValue="string" For="() => form.Model.Note" Options="@Notes" />
+</CslaForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<Task<HintProbe>> Load { get; set; } = default!;
+
+    private static readonly IReadOnlyList<KeyValuePair<int, string>> Tags = [new(1, "Red"), new(2, "Blue")];
+
+    private static readonly IReadOnlyList<KeyValuePair<string, string>> Notes = [new("A note", "A note"), new("Other", "Other")];
+}

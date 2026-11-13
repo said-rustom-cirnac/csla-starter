@@ -61,3 +61,6 @@ dotnet_diagnostic.CSLA0007.severity = none
 
 [tests/CslaStarter.Business.Tests/**.cs]
 dotnet_diagnostic.CSLA0007.severity = none
+
+[tests/CslaStarter.Components.Tests/**.cs]
+dotnet_diagnostic.CSLA0007.severity = none
