@@ -131,6 +131,7 @@
           "condition": "(!claude)",
           "exclude": [
             ".claude/**",
+            "**/.claude/**",
             "**/CLAUDE.md",
             "docs/claude/**",
             ".impeccable/**",
