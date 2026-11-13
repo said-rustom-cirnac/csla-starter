@@ -15,13 +15,16 @@ How open screens learn that a record changed, who else has it open, and how unsa
 **Publishing is automatic.**
 - One notice per aggregate root a save touched. A child change counts as `Updated` for its root, and a root's own insert or delete wins over that. The type and key are the same as the history's (`[AuditEntity]` name and primary key), so they match the business object's `EntityType` and `EntityKey`.
 - Rows marked `[AccessGrant(nameof(UserId), watched…)]` also send an `AccessChanged` notice keyed by that user's id when added, removed, or when a watched property changes. Today these are `UserRole`, `ProjectMemberRow` and `AppUser.IsActive`.
-- Notices go out after `SaveChanges` completes, or when the surrounding transaction commits. A failed save, a rollback or a transaction disposed without commit publishes nothing. Several saves in one transaction publish one notice per record.
+- Notices go out after `SaveChanges` completes, or when the surrounding transaction commits: EF's own (`BeginTransaction`) or an ambient `TransactionScope` (CSLA's `[Transactional(TransactionalTypes.TransactionScope)]`). A failed save, a rollback or a transaction disposed without commit publishes nothing. Several saves in one EF transaction publish one notice per record. (Rolling back to a savepoint is not tracked: the undone save is still announced, which is harmless for a hint.)
 - A publishing failure is logged and never fails the save.
 - Platform rows and `[AuditIgnore]` entities (drafts) are never announced.
 
 **Subscribing.**
 - `hub.Subscribe(topic, handler)` returns an `IDisposable`. Dispose it when the screen closes.
-- Handlers run concurrently and must return quickly: schedule the refresh, don't do it inline. A handler that throws is logged and doesn't stop the others.
+- Dispatch starts every handler and returns without waiting, so a slow screen never holds up a save or the backplane. Each handler runs inline until its first `await`: keep that part short and never block.
+- Handlers run on the thread the notice arrived on, **not** the circuit's renderer. Components hop with `InvokeAsync` (`CslaBaseComponent.Subscribe` does it for you).
+- A handler that throws is logged and doesn't stop the others.
+- **Type-topic notices name records the user may not see.** Use them only to re-query (lists go through the record-access filter); never show their key or changer.
 - Ignore your own echo by comparing `change.OriginId` with your circuit's id.
 - `hub.OnResync(handler)` runs after the backplane reconnects, because notices sent meanwhile are lost: lists refresh, editors compare their version.
 
@@ -31,8 +34,9 @@ How open screens learn that a record changed, who else has it open, and how unsa
 
 - `PublishAsync` dispatches to this instance's hub, then `NOTIFY app_entity_changes` on a pooled connection with a small JSON payload (`instance, type, key, kind, version, userId, userName, origin`, about 250 bytes).
 - A dedicated connection `LISTEN`s on `app_entity_changes` and `app_presence`, drops its own instance's echoes, and hands the rest to one dispatch loop (bounded at 10 000, oldest dropped).
-- It probes the connection after 30 s of silence. When the connection is lost it reconnects with backoff (0.5 s doubling to 30 s), then raises Resync.
-- `/health/ready` reports **Degraded** (still HTTP 200) while it isn't listening: the instance serves correct data, only live hints are missing.
+- It probes the connection after 30 s of silence, so a half-open connection is noticed within about a minute (30 s plus the probe's command timeout). When the connection is lost it reconnects with backoff (0.5 s doubling to 30 s), then raises Resync.
+- A malformed notice (any database role can NOTIFY) is ignored, and a failing dispatch never ends the loop.
+- `/health/ready` reports **Degraded** (still HTTP 200) while it isn't listening or dispatching: the instance serves correct data, only live hints are missing.
 
 ## Presence
 
@@ -45,7 +49,7 @@ How open screens learn that a record changed, who else has it open, and how unsa
 
 An `AccessChanged` notice for a user:
 - clears that user from `UserDirectory`'s cache on every instance;
-- makes that user's open circuits revalidate at once (`UserRevalidatingAuthenticationStateProvider`). A deactivated user, or one whose roles changed, is signed out of the circuit and signs in again with current roles;
+- makes that user's open circuits revalidate at once (`UserRevalidatingAuthenticationStateProvider`). A deactivated user is signed out; a role change updates the circuit's roles in place;
 - tells open screens to re-check access (plan 5): an editor whose record is now hidden closes with a message and its draft is discarded.
 
 ## Drafts
@@ -53,7 +57,7 @@ An `AccessChanged` notice for a user:
 | Piece | Where | What it does |
 |---|---|---|
 | `IDraftStore` / `DraftStore` | Core / Data | Save, get and delete the signed-in user's draft of one record |
-| `DraftCodec` | Business | A business object graph to bytes and back (CSLA's serializer: dirty and new flags survive) |
+| `DraftCodec` | Business | A business object graph to bytes and back (CSLA's serializer: dirty and new flags survive). `TryDeserialize` returns null for a payload saved before the class changed. |
 | `DraftCleanupService` | Infrastructure | Deletes expired drafts at startup and hourly |
 
 - Keyed by (user id, entity type, entity key) in the `draft` table. One draft per user and record; saving again replaces it.

@@ -41,4 +41,12 @@ public class DraftCodecTests
         restored.AddTask("After restoring");
         Assert.Equal(3, restored.Tasks.Count);
     }
+
+    [Fact]
+    public void DraftCodec_UnreadablePayload_IsNoDraft()
+    {
+        using var host = CslaTestHost.Create(o => o.AsPrincipal(TestPrincipals.Admin).ConfigureServices(s => s.AddCslaStarterBusiness()));
+
+        Assert.Null(DraftCodec.TryDeserialize<ProjectEdit>(host.ApplicationContext, [1, 2, 3, 4]));
+    }
 }

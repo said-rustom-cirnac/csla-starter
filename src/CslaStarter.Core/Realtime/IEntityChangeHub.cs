@@ -1,9 +1,11 @@
 namespace CslaStarter.Core.Realtime;
 
 /// <summary>
-/// This instance's subscriptions. Dispatch reaches only the subscribers of a change's record topic and type topic.
-/// Handlers run concurrently and must return quickly (schedule work, don't do it inline); one failing handler never
-/// stops the others. Delivery is at-most-once: after a backplane outage the hub raises Resync instead.
+/// This instance's subscriptions. Dispatch reaches only the subscribers of a change's record topic and type topic. It
+/// starts every handler and returns without waiting for them: each runs inline until its first await, so keep that part
+/// short and never block. One failing handler never stops the others. Handlers run on whatever thread the notice
+/// arrived on, not a circuit's renderer (components hop with InvokeAsync). Delivery is at-most-once: after a
+/// backplane outage the hub raises Resync instead.
 /// </summary>
 public interface IEntityChangeHub
 {

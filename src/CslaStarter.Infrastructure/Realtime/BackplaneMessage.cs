@@ -30,7 +30,10 @@ internal sealed record BackplaneMessage(string Instance, string Type, string Key
     {
         try
         {
-            return JsonSerializer.Deserialize<BackplaneMessage>(payload, Json) is { Instance.Length: > 0, Type.Length: > 0, Key.Length: > 0 } message ? message : null;
+            return JsonSerializer.Deserialize<BackplaneMessage>(payload, Json) is { } message
+                && !string.IsNullOrWhiteSpace(message.Instance) && !string.IsNullOrWhiteSpace(message.Type) && !string.IsNullOrWhiteSpace(message.Key)
+                ? message
+                : null;
         }
         catch (JsonException)
         {
@@ -60,7 +63,11 @@ internal sealed record PresenceWire(string Instance, PresenceAction Action, stri
     {
         try
         {
-            return JsonSerializer.Deserialize<PresenceWire>(payload, Json) is { Instance.Length: > 0, Type.Length: > 0, Circuit.Length: > 0 } wire ? wire : null;
+            return JsonSerializer.Deserialize<PresenceWire>(payload, Json) is { } wire
+                && !string.IsNullOrWhiteSpace(wire.Instance) && !string.IsNullOrWhiteSpace(wire.Type) && !string.IsNullOrWhiteSpace(wire.Circuit)
+                && (wire.Key is null || !string.IsNullOrWhiteSpace(wire.Key))
+                ? wire
+                : null;
         }
         catch (JsonException)
         {

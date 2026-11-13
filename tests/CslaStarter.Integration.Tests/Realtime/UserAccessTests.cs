@@ -71,29 +71,59 @@ public sealed class UserAccessTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UserAccess_Notice_RevalidatesTheCircuitAtOnce()
+    public async Task UserAccess_RoleGranted_RefreshesTheCircuitsRolesInPlace()
     {
         var hub = new EntityChangeHub(NullLogger<EntityChangeHub>.Instance);
         var userId = await _db.AddUserAsync("Ada", "oid-ada", true, 2);
-        await using var services = new ServiceCollection()
-            .AddSingleton<IUserDirectory>(Directory(hub))
-            .BuildServiceProvider();
-        using var provider = new UserRevalidatingAuthenticationStateProvider(NullLoggerFactory.Instance, services.GetRequiredService<IServiceScopeFactory>(), hub);
-        provider.SetAuthenticationState(Task.FromResult(new AuthenticationState(Principal(userId, 2))));
-        await Eventually.True(() => provider.IsWatchingAccess);
+        await using var services = Services(hub);
+        using var provider = await WatchingProviderAsync(services, hub, userId, 2);
 
         await hub.DispatchAsync(EntityChange.UserAccess(Guid.CreateVersion7(), null, "Admin", null));
-        Assert.True((await provider.GetAuthenticationStateAsync()).User.Identity?.IsAuthenticated);
+        await AddRoleAsync(userId, 1);
+        await hub.DispatchAsync(EntityChange.UserAccess(userId, null, "Admin", null));
+
+        await Eventually.True(() => provider.GetAuthenticationStateAsync().Result.User.IsInRole("1"));
+        var user = (await provider.GetAuthenticationStateAsync()).User;
+        Assert.True(user.Identity?.IsAuthenticated);
+        Assert.True(user.IsInRole("2"));
+        Assert.Equal("Ada", user.FindFirst("name")?.Value);
+    }
+
+    [Fact]
+    public async Task UserAccess_Deactivated_SignsTheCircuitOut()
+    {
+        var hub = new EntityChangeHub(NullLogger<EntityChangeHub>.Instance);
+        var userId = await _db.AddUserAsync("Ada", "oid-ada", true, 2);
+        await using var services = Services(hub);
+        using var provider = await WatchingProviderAsync(services, hub, userId, 2);
 
         await using (var context = _db.CreateContext())
         {
-            context.UserRoles.Add(new UserRole { UserId = userId, RoleTypeCode = 1 });
+            (await context.Users.SingleAsync(u => u.Id == userId, Ct)).IsActive = false;
             await context.SaveChangesAsync(Ct);
         }
 
         await hub.DispatchAsync(EntityChange.UserAccess(userId, null, "Admin", null));
 
         await Eventually.True(() => provider.GetAuthenticationStateAsync().Result.User.Identity?.IsAuthenticated != true);
+    }
+
+    private ServiceProvider Services(IEntityChangeHub hub) =>
+        new ServiceCollection().AddSingleton<IUserDirectory>(Directory(hub)).BuildServiceProvider();
+
+    private static async Task<UserRevalidatingAuthenticationStateProvider> WatchingProviderAsync(ServiceProvider services, IEntityChangeHub hub, Guid userId, params int[] roles)
+    {
+        var provider = new UserRevalidatingAuthenticationStateProvider(NullLoggerFactory.Instance, services.GetRequiredService<IServiceScopeFactory>(), hub);
+        provider.SetAuthenticationState(Task.FromResult(new AuthenticationState(Principal(userId, roles))));
+        await Eventually.True(() => provider.IsWatchingAccess);
+        return provider;
+    }
+
+    private async Task AddRoleAsync(Guid userId, int role)
+    {
+        await using var context = _db.CreateContext();
+        context.UserRoles.Add(new UserRole { UserId = userId, RoleTypeCode = role });
+        await context.SaveChangesAsync(Ct);
     }
 
     private PostgresChangeBackplane Backplane(EntityChangeHub hub) =>
@@ -106,10 +136,15 @@ public sealed class UserAccessTests(PostgresFixture postgres) : IAsyncLifetime
         new SecurityEventLog(_database, TimeProvider.System, NullLogger<SecurityEventLog>.Instance),
         hub);
 
+    // Shaped like the real thing: the Entra identity, plus the app identity the claims transformation adds.
     private static ClaimsPrincipal Principal(Guid userId, params int[] roles)
     {
-        var claims = new List<Claim> { new(AppClaimTypes.UserId, userId.ToString()) };
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r.ToString(CultureInfo.InvariantCulture))));
-        return new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
+        var app = new List<Claim> { new(AppClaimTypes.UserId, userId.ToString()) };
+        app.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r.ToString(CultureInfo.InvariantCulture))));
+        return new ClaimsPrincipal(
+        [
+            new ClaimsIdentity([new Claim("tid", "tenant-1"), new Claim("oid", "oid-ada"), new Claim("name", "Ada")], "Test"),
+            new ClaimsIdentity(app, RoleClaimsTransformation.AuthenticationType, ClaimTypes.Name, ClaimTypes.Role),
+        ]);
     }
 }

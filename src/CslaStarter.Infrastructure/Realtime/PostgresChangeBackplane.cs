@@ -31,6 +31,7 @@ public sealed partial class PostgresChangeBackplane(
         new BoundedChannelOptions(10_000) { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true });
 
     private volatile bool _listening;
+    private volatile bool _dispatching = true;
     private Func<string, PresenceMessage, Task>? _presenceReceived;
 
     /// <summary>Identifies this instance on the backplane.</summary>
@@ -39,12 +40,15 @@ public sealed partial class PostgresChangeBackplane(
     /// <summary>True while the listening connection is up; readiness reports Degraded otherwise.</summary>
     public bool IsListening => _listening;
 
+    /// <summary>True while received notices are being dispatched; readiness reports Degraded otherwise.</summary>
+    public bool IsDispatching => _dispatching;
+
     public async Task PublishAsync(IReadOnlyList<EntityChange> changes, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(changes);
         foreach (var change in changes)
         {
-            await hub.DispatchAsync(change).ConfigureAwait(false);
+            await DispatchSafelyAsync(change).ConfigureAwait(false);
         }
 
         var payloads = changes.Select(c => BackplaneMessage.Serialize(InstanceId, c)).Where(Fits).ToArray();
@@ -173,7 +177,7 @@ public sealed partial class PostgresChangeBackplane(
             {
                 if (item is EntityChange change)
                 {
-                    await hub.DispatchAsync(change).ConfigureAwait(false);
+                    await DispatchSafelyAsync(change).ConfigureAwait(false);
                 }
                 else if (item is PresenceWire presence && Volatile.Read(ref _presenceReceived) is { } received)
                 {
@@ -183,6 +187,25 @@ public sealed partial class PostgresChangeBackplane(
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
+        }
+        finally
+        {
+            _dispatching = false;
+        }
+    }
+
+    // One bad notice must never end delivery: the loop keeps going whatever a dispatch does.
+    private async Task DispatchSafelyAsync(EntityChange change)
+    {
+        try
+        {
+            await hub.DispatchAsync(change).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // See above.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            LogDispatchFailed(ex, change.EntityType);
         }
     }
 
@@ -219,6 +242,9 @@ public sealed partial class PostgresChangeBackplane(
 
     [LoggerMessage(EventId = 2103, Level = LogLevel.Warning, Message = "Applying a presence message from another instance failed.")]
     private partial void LogPresenceFailed(Exception exception);
+
+    [LoggerMessage(EventId = 2104, Level = LogLevel.Warning, Message = "Dispatching a {EntityType} change notice failed.")]
+    private partial void LogDispatchFailed(Exception exception, string entityType);
 
     private sealed class PresenceSubscription(PostgresChangeBackplane backplane, Func<string, PresenceMessage, Task> received) : IDisposable
     {

@@ -7,7 +7,8 @@ namespace CslaStarter.Infrastructure.Realtime;
 
 /// <summary>
 /// Copy-on-write subscription lists per topic, so dispatch reads one array without locking and touches only the
-/// subscribers of the change's two topics. One instance per process (singleton).
+/// subscribers of the change's two topics. Dispatch starts every handler and returns without waiting for them, so a
+/// slow screen never holds up a save or the backplane. One instance per process (singleton).
 /// </summary>
 public sealed partial class EntityChangeHub(ILogger<EntityChangeHub> logger) : IEntityChangeHub
 {
@@ -38,25 +39,34 @@ public sealed partial class EntityChangeHub(ILogger<EntityChangeHub> logger) : I
     public Task DispatchAsync(EntityChange change)
     {
         ArgumentNullException.ThrowIfNull(change);
+        if (string.IsNullOrWhiteSpace(change.EntityType) || string.IsNullOrWhiteSpace(change.EntityKey))
+        {
+            LogInvalidChange(change.EntityType ?? string.Empty);
+            return Task.CompletedTask;
+        }
+
         var record = _topics.TryGetValue(change.RecordTopic, out var r) ? r : [];
         var type = _topics.TryGetValue(change.TypeTopic, out var t) ? t : [];
-        return record.IsEmpty && type.IsEmpty ? Task.CompletedTask : InvokeAllAsync(record.AddRange(type), change, change.RecordTopic.ToString());
+        StartAll(record.AddRange(type), change, change.RecordTopic.ToString());
+        return Task.CompletedTask;
     }
 
-    public Task RaiseResyncAsync() => InvokeAllAsync(_resync, null, "resync");
-
-    private async Task InvokeAllAsync<T>(ImmutableArray<Subscription<T>> subscriptions, T value, string topic)
+    public Task RaiseResyncAsync()
     {
-        var running = new List<Task>(subscriptions.Length);
+        StartAll(_resync, null, "resync");
+        return Task.CompletedTask;
+    }
+
+    // Each handler runs until its first await here; the rest continues on its own, failures logged by InvokeAsync.
+    private void StartAll<T>(ImmutableArray<Subscription<T>> subscriptions, T value, string topic)
+    {
         foreach (var subscription in subscriptions)
         {
             if (!subscription.IsDisposed)
             {
-                running.Add(InvokeAsync(subscription, value, topic));
+                _ = InvokeAsync(subscription, value, topic);
             }
         }
-
-        await Task.WhenAll(running).ConfigureAwait(false);
     }
 
     private async Task InvokeAsync<T>(Subscription<T> subscription, T value, string topic)
@@ -95,6 +105,9 @@ public sealed partial class EntityChangeHub(ILogger<EntityChangeHub> logger) : I
 
     [LoggerMessage(EventId = 2000, Level = LogLevel.Warning, Message = "A change handler for {Topic} failed.")]
     private partial void LogHandlerFailed(Exception exception, string topic);
+
+    [LoggerMessage(EventId = 2001, Level = LogLevel.Warning, Message = "Ignored a change notice of type '{EntityType}' without a type or key.")]
+    private partial void LogInvalidChange(string entityType);
 
     private sealed class Subscription<T>(Func<T, Task> handler, Action<Subscription<T>> remove) : IDisposable
     {

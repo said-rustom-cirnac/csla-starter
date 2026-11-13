@@ -1,9 +1,12 @@
+using System.Transactions;
 using CslaStarter.Core.Realtime;
 using CslaStarter.Dal;
 using CslaStarter.Dal.Projects;
 using CslaStarter.Data.Dal;
 using CslaStarter.Data.Entities;
+using CslaStarter.Infrastructure.Realtime;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CslaStarter.Integration.Tests.Realtime;
 
@@ -216,6 +219,48 @@ public sealed class ChangePublishingTests(PostgresFixture postgres) : IAsyncLife
         await AddUserAsync("Ada");
 
         Assert.All(_notifier.Published, c => Assert.Equal((Admin.UserId, "Admin", "circuit-9"), (c.ChangedByUserId, c.ChangedByName, c.OriginId)));
+    }
+
+    [Fact]
+    public async Task Publish_SlowSubscriber_DoesNotDelaySave()
+    {
+        var hub = new EntityChangeHub(NullLogger<EntityChangeHub>.Instance);
+        var never = new TaskCompletionSource();
+        using var slow = hub.Subscribe(ChangeTopic.ForType("User"), async _ => await never.Task);
+        await using var context = _db.CreateContext(Admin, notifier: new InMemoryChangeNotifier(hub));
+        context.Users.Add(NewUser("Ada"));
+
+        await context.SaveChangesAsync(Ct).WaitAsync(TimeSpan.FromSeconds(5), Ct);
+    }
+
+    [Fact]
+    public async Task Publish_AmbientTransactionRolledBack_PublishesNothing()
+    {
+        using (new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            await using var context = Context();
+            context.Users.Add(NewUser("Ada"));
+            await context.SaveChangesAsync(Ct);
+            Assert.Empty(_notifier.Published);
+        }
+
+        await System.Threading.Tasks.Task.Delay(200, Ct);
+        Assert.Empty(_notifier.Published);
+    }
+
+    [Fact]
+    public async Task Publish_AmbientTransactionCommitted_PublishesAfterCommit()
+    {
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            await using var context = Context();
+            context.Users.Add(NewUser("Ada"));
+            await context.SaveChangesAsync(Ct);
+            Assert.Empty(_notifier.Published);
+            scope.Complete();
+        }
+
+        await Eventually.True(() => _notifier.Published.Any(c => c.EntityType == "User" && c.Kind == ChangeKind.Inserted));
     }
 
     [Fact]

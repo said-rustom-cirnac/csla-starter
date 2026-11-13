@@ -88,6 +88,31 @@ public sealed class EntityChangeHubTests
     }
 
     [Fact]
+    public async Task Hub_SlowHandler_DoesNotHoldUpDispatch()
+    {
+        var received = new List<EntityChange>();
+        var never = new TaskCompletionSource();
+        var topic = ChangeTopic.ForRecord("Project", "a");
+        using var slow = _hub.Subscribe(topic, async _ => await never.Task);
+        using var fast = _hub.Subscribe(topic, Record(received));
+
+        await _hub.DispatchAsync(Change("Project", "a")).WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+        Assert.Single(received);
+    }
+
+    [Fact]
+    public async Task Hub_InvalidChange_IsIgnored()
+    {
+        var received = new List<EntityChange>();
+        using var _ = _hub.Subscribe(ChangeTopic.ForType("Project"), Record(received));
+
+        await _hub.DispatchAsync(new EntityChange("Project", " ", ChangeKind.Updated, null, null, "x", null));
+
+        Assert.Empty(received);
+    }
+
+    [Fact]
     public async Task Hub_Resync_ReachesResyncHandlers()
     {
         var calls = 0;

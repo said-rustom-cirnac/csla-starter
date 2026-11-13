@@ -14,7 +14,7 @@ The template is built to a Protected B baseline (ITSG-33). Nothing below is opti
   2. Adds an identity carrying the app user id claim (`csla_starter:user_id`), the preferred language (`csla_starter:lang`), one `ClaimTypes.Role` claim per role code ("1" = Admin), and an inactive flag for deactivated users.
   3. Skips itself when the claims are already there (idempotent). Lookups are cached for 5 minutes; call `IUserDirectory.Invalidate(tid, oid)` after changing someone's roles.
 - **Default and fallback policy** (deny by default, and the base of every `[Authorize]`): the user must be signed in, resolved to an app user, and active. Endpoints opt out with `.AllowAnonymous()` (health, culture switch, static assets) or `[AllowAnonymous]` on a page. `Routes.razor` uses `AuthorizeRouteView`, so page-level `[Authorize]` attributes are enforced inside the circuit.
-- **Revalidation:** every 10 minutes, `UserRevalidatingAuthenticationStateProvider` reloads the user from the database (no cache). A deactivated user, or one whose roles changed, is signed out of the circuit; reloading the page signs them in with their current roles.
+- **Revalidation:** every 10 minutes, and at once on an access-changed notice for the user, `UserRevalidatingAuthenticationStateProvider` reloads the user from the database (no cache). A deactivated or deleted user is signed out of the circuit. When only the roles changed, the circuit's principal gets the current roles in place, so the user keeps their screen and unsaved work.
 
 ## The first Admin
 

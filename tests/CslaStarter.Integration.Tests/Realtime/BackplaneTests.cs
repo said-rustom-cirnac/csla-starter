@@ -82,6 +82,26 @@ public sealed class BackplaneTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Backplane_MalformedNotice_IsIgnored_AndDeliveryContinues()
+    {
+        var received = new List<EntityChange>();
+        using var _ = _b.Hub.Subscribe(Topic, Record(received));
+        await using (var connection = new NpgsqlConnection(_db.RuntimeConnectionString))
+        {
+            await connection.OpenAsync(Ct);
+            await using var notify = new NpgsqlCommand(
+                "SELECT pg_notify('app_entity_changes', '{\"instance\":\"x\",\"type\":\"Project\",\"key\":\" \",\"kind\":1,\"userName\":\"x\"}'), pg_notify('app_entity_changes', 'not json')",
+                connection);
+            await notify.ExecuteNonQueryAsync(Ct);
+        }
+
+        await _a.Backplane.PublishAsync([Change("Jane")], Ct);
+
+        await Eventually.True(() => received.Count == 1);
+        Assert.True(_b.Backplane.IsDispatching);
+    }
+
+    [Fact]
     public async Task Backplane_PayloadIsSmallAndHasNoFieldData()
     {
         await using var listener = new NpgsqlConnection(_db.RuntimeConnectionString);

@@ -9,7 +9,7 @@ namespace CslaStarter.Infrastructure.Realtime;
 public sealed class BackplaneHealthCheck(PostgresChangeBackplane backplane) : IHealthCheck
 {
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) =>
-        Task.FromResult(backplane.IsListening
+        Task.FromResult(backplane is { IsListening: true, IsDispatching: true }
             ? HealthCheckResult.Healthy()
-            : HealthCheckResult.Degraded("Not listening for change notices from other instances."));
+            : HealthCheckResult.Degraded("Not receiving change notices from other instances."));
 }

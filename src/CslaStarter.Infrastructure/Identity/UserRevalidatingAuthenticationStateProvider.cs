@@ -10,8 +10,9 @@ namespace CslaStarter.Infrastructure.Identity;
 
 /// <summary>
 /// Re-checks the circuit's user against the database (no cache) every 10 minutes, and at once when an access-changed
-/// notice names them. A deactivated user, or one whose roles changed, is signed out of the circuit; the next request
-/// signs them in again with their current roles.
+/// notice names them. A deactivated or deleted user is signed out of the circuit. When only the roles changed, the
+/// circuit's principal gets the current roles in place (what the next request's claims transformation would give), so
+/// the user keeps their screen and their unsaved work.
 /// </summary>
 public sealed partial class UserRevalidatingAuthenticationStateProvider : RevalidatingServerAuthenticationStateProvider
 {
@@ -50,14 +51,36 @@ public sealed partial class UserRevalidatingAuthenticationStateProvider : Revali
     protected override async Task<bool> ValidateAuthenticationStateAsync(AuthenticationState authenticationState, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(authenticationState);
-        if (EntraClaims.UserId(authenticationState.User) is not { } userId)
+        var current = await FreshAsync(authenticationState.User, cancellationToken).ConfigureAwait(false);
+        if (current is not { IsActive: true })
         {
             return false;
         }
 
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var current = await scope.ServiceProvider.GetRequiredService<IUserDirectory>().GetFreshAsync(userId, cancellationToken);
-        return current is not null && StillMatches(authenticationState.User, current);
+        if (!StillMatches(authenticationState.User, current))
+        {
+            SetAuthenticationState(Task.FromResult(new AuthenticationState(WithRoles(authenticationState.User, current.RoleCodes))));
+        }
+
+        return true;
+    }
+
+    /// <summary>The principal with the app identity's role claims replaced by <paramref name="roleCodes"/>; other identities untouched.</summary>
+    public static ClaimsPrincipal WithRoles(ClaimsPrincipal principal, IReadOnlySet<int> roleCodes)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+        ArgumentNullException.ThrowIfNull(roleCodes);
+        return new ClaimsPrincipal(principal.Identities.Select(identity =>
+        {
+            if (identity.AuthenticationType != RoleClaimsTransformation.AuthenticationType)
+            {
+                return identity.Clone();
+            }
+
+            var replaced = new ClaimsIdentity(identity.Claims.Where(c => c.Type != identity.RoleClaimType), identity.AuthenticationType, identity.NameClaimType, identity.RoleClaimType);
+            replaced.AddClaims(roleCodes.Order().Select(code => new Claim(identity.RoleClaimType, code.ToString(CultureInfo.InvariantCulture))));
+            return replaced;
+        }));
     }
 
     public static bool StillMatches(ClaimsPrincipal principal, DirectoryUser current)
@@ -106,6 +129,17 @@ public sealed partial class UserRevalidatingAuthenticationStateProvider : Revali
         {
             SetAuthenticationState(Task.FromResult(new AuthenticationState(SignedOut)));
         }
+    }
+
+    private async Task<DirectoryUser?> FreshAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    {
+        if (EntraClaims.UserId(principal) is not { } userId)
+        {
+            return null;
+        }
+
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<IUserDirectory>().GetFreshAsync(userId, cancellationToken).ConfigureAwait(false);
     }
 
     private void Replace(IDisposable? subscription)

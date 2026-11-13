@@ -17,8 +17,9 @@ namespace CslaStarter.Data.Realtime;
 /// <summary>
 /// Turns each save into one notice per aggregate root it touched (a child row counts as an update of its root), plus
 /// an access-changed notice for every user whose grants changed (<see cref="AccessGrantAttribute"/>), and publishes
-/// them after commit: as soon as SaveChanges completes, or when the surrounding transaction commits. A failed save or
-/// a rolled-back transaction publishes nothing, and a publishing failure never fails the save: notices are hints.
+/// them after commit: as soon as SaveChanges completes, or when the surrounding transaction (EF's, or an ambient
+/// System.Transactions scope) commits. A failed save or a rolled-back transaction publishes nothing, and a publishing
+/// failure never fails the save: notices are hints.
 /// </summary>
 public sealed partial class ChangePublishingInterceptor(
     IDataAccessContext access, ILogger<ChangePublishingInterceptor> logger, IEntityChangeNotifier? notifier = null)
@@ -138,6 +139,20 @@ public sealed partial class ChangePublishingInterceptor(
 
         _saving.Remove(context);
         var changes = touched.ToChanges(access);
+
+        // An ambient TransactionScope (CSLA's [Transactional(TransactionScope)]): EF sees no transaction of its own.
+        if (System.Transactions.Transaction.Current is { } ambient)
+        {
+            ambient.TransactionCompleted += (_, e) =>
+            {
+                if (e.Transaction?.TransactionInformation.Status == System.Transactions.TransactionStatus.Committed)
+                {
+                    _ = PublishAsync(changes);
+                }
+            };
+            return [];
+        }
+
         if (context.Database.CurrentTransaction is not { } transaction)
         {
             return changes;
