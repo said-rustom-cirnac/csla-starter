@@ -1,5 +1,5 @@
 @inherits CslaStarter.Components.Base.CslaBaseComponent
-<dialog open aria-labelledby="@TitleId" data-csla-conflict>
+<CslaModal LabelledBy="@TitleId" data-csla-conflict>
     <h2 id="@TitleId">@Messages.Error_Conflict</h2>
     <p>@Messages.Conflict_Intro</p>
     <table>
@@ -25,4 +25,4 @@
     </table>
     <gcds-button type="button" button-role="secondary" data-action="use-theirs" @ongcdsclick="OnUseTheirs">@Messages.Conflict_UseTheirs</gcds-button>
     <gcds-button type="button" data-action="apply-mine" @ongcdsclick="ApplyMineAsync">@Messages.Conflict_ApplyMine</gcds-button>
-</dialog>
+</CslaModal>

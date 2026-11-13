@@ -33,6 +33,7 @@ public sealed class ShortcutAndGuardTests : IDisposable
 
         await Input(host, "Escaped");
         await host.InvokeAsync(form.ShortcutCancel);
+        await host.InvokeAsync(() => host.Find("[data-csla-confirm] gcds-button[data-action=confirm]").TriggerEventAsync("ongcdsclick", new GcdsEventArgs()));
         host.WaitForAssertion(() => Assert.Equal("Saved by shortcut", host.Find("gcds-input[name=Name]").GetAttribute("value")));
     }
 

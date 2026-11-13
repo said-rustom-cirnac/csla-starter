@@ -18,7 +18,7 @@ public enum ButtonKind
     /// <summary>Starts a new object (<see cref="CslaButton.OnClick"/>); shown only to users who may create one.</summary>
     New,
 
-    /// <summary>Anything else (<see cref="CslaButton.OnClick"/>); disabled while the form is busy.</summary>
+    /// <summary>Anything else (<see cref="CslaButton.OnClick"/>); disabled while it or the form is busy.</summary>
     Custom,
 }
 
@@ -51,7 +51,7 @@ public partial class CslaButton
     {
         ButtonKind.Save => Form is not { CanSave: true },
         ButtonKind.Cancel => Form is not { IsDirty: true, IsBusy: false },
-        _ => Form?.IsBusy == true,
+        _ => IsBusy || Form?.IsBusy == true,
     };
 
     private string Role => Kind switch
@@ -97,7 +97,8 @@ public partial class CslaButton
                 Confirming = true;
                 break;
             default:
-                await OnClick.InvokeAsync();
+                // Through the base component: a failure is shown like any other, and the circuit lives on.
+                await RunAsync("click", _ => OnClick.InvokeAsync());
                 break;
         }
     }

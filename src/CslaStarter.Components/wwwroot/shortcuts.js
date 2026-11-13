@@ -5,7 +5,7 @@ export function attach(form, dotnet) {
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
             e.preventDefault();
             dotnet.invokeMethodAsync('ShortcutSave');
-        } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+        } else if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('dialog[open]')) {
             dotnet.invokeMethodAsync('ShortcutCancel');
         }
     };

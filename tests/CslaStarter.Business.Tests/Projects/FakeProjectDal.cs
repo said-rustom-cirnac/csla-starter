@@ -22,6 +22,9 @@ public sealed class FakeProjectDal : IProjectDal
 
     public uint? ClosedWithVersion { get; private set; }
 
+    /// <summary>When set, deletes throw it.</summary>
+    public Exception? DeleteFailure { get; set; }
+
     public int Fetches { get; private set; }
 
     public int ListFetches { get; private set; }
@@ -66,6 +69,11 @@ public sealed class FakeProjectDal : IProjectDal
 
     public Task DeleteAsync(Guid id, uint? version, CancellationToken cancellationToken)
     {
+        if (DeleteFailure is not null)
+        {
+            throw DeleteFailure;
+        }
+
         Projects.Remove(id);
         return Task.CompletedTask;
     }

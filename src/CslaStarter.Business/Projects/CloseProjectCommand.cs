@@ -1,4 +1,6 @@
 using Csla;
+using Csla.Rules;
+using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
 using CslaStarter.Core.Resources;
 using CslaStarter.Core.Security;
@@ -28,6 +30,11 @@ public sealed class CloseProjectCommand : CommandBase<CloseProjectCommand>
     }
 
     public string Message => Result == CloseProjectResult.Closed ? Messages.Project_Closed : Messages.Project_CloseWithOpenTasks;
+
+    // Who may close at all (CSLA authorizes running a command as EditObject); membership is checked when it runs.
+    [ObjectAuthorizationRules]
+    public static void AddObjectAuthorizationRules() =>
+        BusinessRules.AddRule(typeof(CloseProjectCommand), new HasRole(AuthorizationActions.EditObject, UserRoleType.Admin, UserRoleType.Technical));
 
     [Execute]
     private async Task Execute(Guid projectId, [Inject] IProjectDal dal, [Inject] ICurrentUser user)

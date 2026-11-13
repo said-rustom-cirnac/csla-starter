@@ -74,6 +74,25 @@ public sealed class SamplePageTests : IDisposable
         Assert.Empty(page.FindAll("table"));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ProjectEdit_CloseButton_OnlyForThoseWhoMayClose(bool client)
+    {
+        if (client)
+        {
+            Use(TestPrincipals.Client);
+        }
+
+        var id = Guid.CreateVersion7();
+        _context.Projects.Add(id, "P-1", members: TestPrincipals.ClientId);
+
+        var page = _context.Render<ProjectEditPage>(p => p.Add(e => e.Id, id));
+        page.WaitForElement("gcds-input[name=Name]");
+
+        Assert.Equal(client ? 0 : 1, page.FindAll("gcds-button[data-kind=Custom]").Count(b => b.TextContent.Trim() == Labels.Project_Close));
+    }
+
     private void Use(System.Security.Claims.ClaimsPrincipal user)
     {
         _context.Dispose();

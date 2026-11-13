@@ -1,4 +1,5 @@
 using Csla;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
@@ -8,6 +9,7 @@ namespace CslaStarter.Business.Projects;
 
 /// <summary>A user who belongs to a project (which is what lets a Client see it).</summary>
 [Serializable]
+[HistoryOf("ProjectMember")]
 public sealed class ProjectMember : AppBusinessBase<ProjectMember>
 {
     public static readonly PropertyInfo<Guid> UserIdProperty = RegisterProperty<Guid>(nameof(UserId));

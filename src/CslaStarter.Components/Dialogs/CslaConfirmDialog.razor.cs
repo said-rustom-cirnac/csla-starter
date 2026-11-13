@@ -2,10 +2,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace CslaStarter.Components.Dialogs;
 
-/// <summary>Asks before something that can't be undone (delete, leave with unsaved changes).</summary>
+/// <summary>Asks before something that can't be undone (delete, leave with unsaved changes). Cancel takes focus; Esc cancels.</summary>
 public partial class CslaConfirmDialog
 {
-    private const string MessageId = "csla-confirm-message";
 
     [Parameter, EditorRequired]
     public string Message { get; set; } = string.Empty;
@@ -21,4 +20,6 @@ public partial class CslaConfirmDialog
 
     [Parameter]
     public EventCallback OnCancel { get; set; }
+
+    private string MessageId => ComponentId + "-message";
 }

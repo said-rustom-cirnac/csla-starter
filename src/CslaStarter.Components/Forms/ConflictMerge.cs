@@ -72,7 +72,7 @@ public static class ConflictMerge
             }
 
             var theirValue = ObjectGraph.Read(theirs, property);
-            var difference = new FieldDifference(path, property.Name, property.FriendlyName, theirValue, myValue);
+            var difference = new FieldDifference(path, property.Name, property.FriendlyName, theirValue, myValue, FieldDiff.IsSensitive(theirs, property.Name));
             if (!Equals(theirValue, originalValue) && !Equals(theirValue, myValue))
             {
                 bothChanged.Add(difference);
@@ -85,7 +85,8 @@ public static class ConflictMerge
         }
     }
 
-    private static object Flatten(object mine)
+    /// <summary>A copy of <paramref name="mine"/> with every pending edit level applied (edit level 0).</summary>
+    public static object Flatten(object mine)
     {
         var context = ((IUseApplicationContext)mine).ApplicationContext;
         var copy = ObjectCloner.GetInstance(context).Clone(mine)!;

@@ -14,8 +14,6 @@ namespace CslaStarter.Components.Dialogs;
 /// </summary>
 public partial class CslaConflictDialog
 {
-    private static readonly string TitleId = "csla-conflict-title";
-
     private readonly HashSet<string> _keepTheirs = new(StringComparer.Ordinal);
 
     [Parameter, EditorRequired]
@@ -31,10 +29,13 @@ public partial class CslaConflictDialog
     [Parameter]
     public EventCallback<IReadOnlySet<string>> OnApplyMine { get; set; }
 
+    private string TitleId => ComponentId + "-title";
+
+    // A sensitive value is shown only through its field's Show button, which is logged.
     private static string? Show(FieldDifference difference, object? value) =>
-        difference.Property.Length == 0
-            ? value is true ? Messages.Conflict_Added : Messages.Conflict_Removed
-            : FieldValue.ToText(value);
+        difference.Property.Length == 0 ? value is true ? Messages.Conflict_Added : Messages.Conflict_Removed
+        : difference.IsSensitive ? string.IsNullOrEmpty(FieldValue.ToText(value)) ? string.Empty : FieldValue.MaskText
+        : FieldValue.ToText(value);
 
     private static string KeepTheirsOption(FieldDifference difference) =>
         JsonSerializer.Serialize(new[] { new { id = "keep-" + difference.Key, label = Messages.Conflict_KeepTheirs, value = "keep", @checked = false } });

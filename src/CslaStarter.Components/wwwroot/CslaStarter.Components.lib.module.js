@@ -31,4 +31,11 @@ export function afterWebStarted(blazor) {
     blazor.registerCustomEventType('gcdsblur', { browserEventName: 'gcdsBlur', createEventArgs: empty });
     blazor.registerCustomEventType('gcdsfocus', { browserEventName: 'gcdsFocus', createEventArgs: empty });
     blazor.registerCustomEventType('gcdsclick', { browserEventName: 'gcdsClick', createEventArgs: withValue });
+
+    // Space on a focused selectable row selects it (CslaTableRow) instead of scrolling the page.
+    document.addEventListener('keydown', e => {
+        if (e.key === ' ' && e.target instanceof Element && e.target.matches('tr[data-csla-selectable]')) {
+            e.preventDefault();
+        }
+    });
 }

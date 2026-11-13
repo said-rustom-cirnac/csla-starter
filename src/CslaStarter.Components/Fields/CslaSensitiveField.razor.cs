@@ -11,7 +11,6 @@ namespace CslaStarter.Components.Fields;
 /// </summary>
 public partial class CslaSensitiveField
 {
-    private const string MaskText = "••••••";
 
     protected bool Revealed { get; private set; }
 
@@ -19,7 +18,7 @@ public partial class CslaSensitiveField
 
     private bool CanReveal => Sensitive is { } sensitive && CurrentUser.HasAnyRole(sensitive.RevealRoles);
 
-    private string Mask => string.IsNullOrEmpty(Text) ? string.Empty : MaskText;
+    private string Mask => string.IsNullOrEmpty(Text) ? string.Empty : FieldValue.MaskText;
 
     private async Task RevealAsync()
     {

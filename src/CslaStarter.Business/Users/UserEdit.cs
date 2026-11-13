@@ -1,6 +1,7 @@
 using Csla;
 using Csla.Rules;
 using Csla.Rules.CommonRules;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Business.Rules;
 using CslaStarter.Business.Types;
@@ -16,6 +17,7 @@ namespace CslaStarter.Business.Users;
 /// Technical staff may view users, but not their employee number, and may not edit them.
 /// </summary>
 [Serializable]
+[HistoryOf("User")]
 public sealed class UserEdit : AppRootBase<UserEdit>
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));

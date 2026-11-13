@@ -20,7 +20,12 @@ public sealed class FakeAuditHistoryReader : IAuditHistoryReader
             throw new NotFoundException(query.EntityType, query.EntityKey);
         }
 
-        var matching = Entries.Where(e => query.Property is null || e.Changes.Any(c => c.Property == query.Property)).ToList();
+        // Like the real reader: hidden fields are left out, and so are entries with nothing else.
+        var hidden = query.HiddenFields ?? [];
+        var matching = Entries
+            .Select(e => e with { Changes = e.Changes.Where(c => !hidden.Contains($"{e.EntityType}.{c.Property}")).ToList() })
+            .Where(e => e.Changes.Count > 0 || Entries.Single(o => o.Id == e.Id).Changes.Count == 0)
+            .Where(e => query.Property is null || e.Changes.Any(c => c.Property == query.Property)).ToList();
         return Task.FromResult(new AuditPage(matching.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList(), matching.Count));
     }
 }

@@ -76,10 +76,14 @@ public sealed class FormLiveTests : IDisposable
     public async Task Form_OwnSave_IsIgnored()
     {
         var host = Render();
+        var form = host.FindComponent<CslaForm<ProjectEdit>>().Instance;
+        await Field(host, "Name").TriggerEventAsync("ongcdsinput", new GcdsEventArgs { Value = "Mine" });
+        Assert.True(await host.InvokeAsync(form.SaveAsync));
         var fetches = _context.Projects.Fetches;
         var origin = _context.Services.GetRequiredService<CircuitOrigin>().Id;
 
-        await _context.Hub.DispatchAsync(new EntityChange("Project", _projectId.ToString(), ChangeKind.Updated, 6, TestPrincipals.AdminId, "Me", origin));
+        // The echo of the form's own save carries the version the form already has.
+        await _context.Hub.DispatchAsync(new EntityChange("Project", _projectId.ToString(), ChangeKind.Updated, form.ViewModel.Model!.Version, TestPrincipals.AdminId, "Me", origin));
         await Task.Delay(100, Xunit.TestContext.Current.CancellationToken);
 
         Assert.Equal(fetches, _context.Projects.Fetches);

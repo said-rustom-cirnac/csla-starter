@@ -7,7 +7,12 @@
         <CslaConfirmDialog Message="@Messages.Leave_Confirm" ConfirmText="@Messages.Leave_Yes" CancelText="@Messages.Leave_No" OnConfirm="LeaveAsync" OnCancel="() => PendingNavigation = null" />
     }
 
-    @if (!IsClosed && FormContext is not null)
+    @if (ConfirmingCancel)
+    {
+        <CslaConfirmDialog Message="@Messages.Cancel_Confirm" ConfirmText="@Messages.Cancel_Yes" CancelText="@Messages.Leave_No" OnConfirm="ConfirmCancelAsync" OnCancel="() => ConfirmingCancel = false" />
+    }
+
+    @if (!IsClosed && FormContext is not null && ViewModel.Model is not null)
     {
         @if (Topic is { } topic)
         {
@@ -31,10 +36,10 @@
 
         @if (History is { } history)
         {
-            <dialog open data-csla-field-history>
+            <CslaModal aria-label="@Messages.History_Title" OnCancel="CloseHistory" data-csla-field-history>
                 <CslaHistory EntityType="@history.EntityType" EntityKey="@history.EntityKey" Property="@history.Property" />
-                <gcds-button type="button" button-role="secondary" data-action="close-history" @ongcdsclick="CloseHistory">@Messages.Common_Close</gcds-button>
-            </dialog>
+                <gcds-button type="button" button-role="secondary" data-action="close-history" autofocus @ongcdsclick="CloseHistory">@Messages.Common_Close</gcds-button>
+            </CslaModal>
         }
 
         <CascadingValue TValue="ICslaFormContext" Value="FormContext" IsFixed="true">

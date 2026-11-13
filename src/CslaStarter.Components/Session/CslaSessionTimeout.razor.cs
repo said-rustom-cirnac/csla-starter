@@ -14,14 +14,14 @@ namespace CslaStarter.Components.Session;
 /// </summary>
 public partial class CslaSessionTimeout
 {
-    private const string MessageId = "csla-session-message";
-
     private ElementReference _signOutForm;
     private IJSObjectReference? _module;
     private DotNetObjectReference<CslaSessionTimeout>? _self;
     private bool _signingOut;
 
     protected bool Warning { get; private set; }
+
+    protected string MessageId => ComponentId + "-message";
 
     protected string WarningText =>
         Messages.Session_Warning.Replace("{0}", Math.Max(1, (int)Math.Ceiling(Session.Remaining.TotalMinutes)).ToString(CultureInfo.CurrentCulture), StringComparison.Ordinal);

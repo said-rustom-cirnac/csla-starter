@@ -18,7 +18,7 @@ public sealed class ButtonTests : IDisposable
     public void Dispose() => _context.Dispose();
 
     [Fact]
-    public async Task Button_Save_DisabledUntilSavable_AndWhileBusy()
+    public async Task Button_Save_DisabledUntilDirty_AndWhileARuleRuns()
     {
         var host = Render();
         Assert.True(Button(host, "Save").HasAttribute("disabled"));
@@ -91,6 +91,26 @@ public sealed class ButtonTests : IDisposable
 
         host.WaitForAssertion(() => Assert.Contains("Old → New", host.Find("[data-csla-field-history]").TextContent, StringComparison.Ordinal));
         Assert.Equal(("Project", _projectId.ToString(), "Name"), (_context.AuditReader.LastQuery!.EntityType, _context.AuditReader.LastQuery.EntityKey, _context.AuditReader.LastQuery.Property));
+    }
+
+    [Fact]
+    public async Task Button_Custom_FailureShowsAnError_AndStaysUsable()
+    {
+        var clicks = 0;
+        var button = _context.Render<CslaStarter.Components.Buttons.CslaButton>(p => p
+            .Add(b => b.Label, "Do it")
+            .Add(b => b.OnClick, () =>
+            {
+                clicks++;
+                throw new InvalidOperationException("boom");
+            }));
+
+        await button.InvokeAsync(() => button.Find("gcds-button").TriggerEventAsync("ongcdsclick", new GcdsEventArgs()));
+        await button.InvokeAsync(() => button.Find("gcds-button").TriggerEventAsync("ongcdsclick", new GcdsEventArgs()));
+
+        Assert.Equal(2, clicks);
+        Assert.All(_context.Services.GetRequiredService<CslaStarter.Components.Services.IToastService>().Toasts, t => Assert.Equal(CslaStarter.Components.Services.ToastKind.Error, t.Kind));
+        Assert.Equal(2, _context.Services.GetRequiredService<CslaStarter.Components.Services.IToastService>().Toasts.Count);
     }
 
     private static AngleSharp.Dom.IElement Button(IRenderedComponent<ButtonFormHost> host, string kind) => host.Find($"gcds-button[data-kind={kind}]");

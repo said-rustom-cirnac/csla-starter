@@ -18,7 +18,7 @@ namespace CslaStarter.Components.Forms;
 
 /// <summary>
 /// Edits one business object: loads it through <see cref="Load"/>, cascades a <see cref="CslaFormContext{T}"/> to its
-/// fields, and saves or cancels (undo) through an <see cref="AppViewModel{T}"/>. It keeps the record live:
+/// fields, and saves, cancels and deletes through an <see cref="AppViewModel{T}"/>. It keeps the record live:
 /// <list type="bullet">
 /// <item>someone else's save refreshes a clean editor (changed fields highlighted, "Updated by Jane" announced) and
 /// shows a Reload / Keep mine banner on a dirty one;</item>
@@ -26,19 +26,27 @@ namespace CslaStarter.Components.Forms;
 /// <item>if the user loses access, it closes with a message and discards the draft;</item>
 /// <item>a save that loses the race opens the conflict dialog;</item>
 /// <item>presence says who else has the record open;</item>
-/// <item>while dirty, a draft is saved 2 seconds after the last edit, and offered back when the record is opened again.</item>
+/// <item>while dirty, a draft is saved 2 seconds after the last edit, and offered back when the record is opened
+/// again (merged onto the record as it is now).</item>
 /// </list>
-/// Errors show once a field is touched or a save is attempted; CSLA is the only validator (the form is <c>novalidate</c>).
+/// Saves, deletes and live updates run one at a time. Every model replacement goes through a copy flattened to edit
+/// level 0, so CSLA's undo always starts from what the user sees. CSLA is the only validator (the form is
+/// <c>novalidate</c>).
 /// </summary>
 public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFormActions
     where T : class
 {
+    private const string NewRecordKey = "new";
+
     private static readonly TimeSpan DraftAfter = TimeSpan.FromSeconds(2);
 
+    private readonly SemaphoreSlim _exclusive = new(1, 1);
     private T? _original;
+    private DraftKey? _draftKey;
     private ElementReference _formElement;
     private IJSObjectReference? _shortcuts;
     private DotNetObjectReference<CslaForm<T>>? _self;
+    private TaskCompletionSource? _rendered;
     private bool _leaving;
     private DraftAutosave? _autosave;
     private IDisposable? _flushRegistration;
@@ -90,17 +98,25 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     /// <summary>Where the user tried to go with unsaved changes, waiting for Leave or Stay.</summary>
     protected string? PendingNavigation { get; set; }
 
+    /// <summary>Esc with unsaved changes, waiting for Discard or Stay.</summary>
+    protected bool ConfirmingCancel { get; set; }
+
     /// <summary>Unsaved edits that would be lost: internal navigation asks first, the browser warns on unload.</summary>
     protected bool GuardsNavigation => !_leaving && !IsClosed && ViewModel?.IsDirty == true;
 
     /// <summary>The field whose history is open, if any.</summary>
     protected (string EntityType, string EntityKey, string Property)? History { get; private set; }
 
+    /// <summary>
+    /// Save is offered whenever there are edits the user may save and no rule is still running; an invalid object then
+    /// shows its errors.
+    /// </summary>
     protected CslaFormState State => new(
         IsBusy,
         ViewModel.IsDirty,
-        ViewModel.IsSavable && !IsBusy && RemoteChange?.Kind != ChangeKind.Deleted,
-        ViewModel.CanDelete && ViewModel.Model is Csla.Core.ITrackStatus { IsNew: false },
+        ViewModel.IsDirty && !IsBusy && ViewModel.Model is not INotifyBusy { IsBusy: true } && RemoteChange?.Kind != ChangeKind.Deleted
+            && (ViewModel.Model is ITrackStatus { IsNew: true } ? ViewModel.CanCreate : ViewModel.CanEdit),
+        ViewModel.CanDelete && ViewModel.Model is ITrackStatus { IsNew: false },
         ViewModel.CanCreate,
         this);
 
@@ -128,9 +144,18 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     [JSInvokable]
     public Task ShortcutSave() => SaveAsync();
 
-    /// <summary>Esc (from shortcuts.js; ignored while a dialog is open).</summary>
+    /// <summary>Esc (from shortcuts.js; ignored while a dialog is open): asks before discarding unsaved changes.</summary>
     [JSInvokable]
-    public Task ShortcutCancel() => ViewModel?.IsDirty == true ? CancelAsync() : Task.CompletedTask;
+    public Task ShortcutCancel()
+    {
+        if (ViewModel?.IsDirty == true)
+        {
+            ConfirmingCancel = true;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
 
     /// <summary>Saves when the object is savable; otherwise shows every error. Returns whether it saved.</summary>
     public async Task<bool> SaveAsync()
@@ -148,16 +173,17 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
             return false;
         }
 
-        var saved = await RunAsync("save", async cancellationToken =>
+        var saved = await ExclusiveAsync(() => RunAsync("save", async cancellationToken =>
         {
             var before = ViewModel.Exception;
             await ViewModel.SaveAsync(cancellationToken);
             ThrowIfFailed(before);
-        });
+        }));
         if (saved)
         {
             _autosave?.Cancel();
             await DeleteDraftAsync();
+            _draftKey = CurrentDraftKey();
             Baseline();
             RemoteChange = null;
             Toasts.Show(ToastKind.Success, Messages.Toast_Saved);
@@ -169,7 +195,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         return saved;
     }
 
-    /// <summary>Deletes the object. The caller asks for confirmation first (CslaButton Kind="Delete" does).</summary>
+    /// <summary>Deletes the object (CslaButton Kind="Delete" asks first). A failed delete leaves the object as it was.</summary>
     public async Task<bool> DeleteAsync()
     {
         if (ViewModel.Model is not Csla.Core.BusinessBase business || !ViewModel.CanDelete)
@@ -177,35 +203,41 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
             return false;
         }
 
-        var deleted = await RunAsync("delete", async cancellationToken =>
+        var before = Flatten(ViewModel.Model);
+        var deleted = await ExclusiveAsync(() => RunAsync("delete", async cancellationToken =>
         {
-            var before = ViewModel.Exception;
+            var failedBefore = ViewModel.Exception;
             business.Delete();
             await ViewModel.SaveAsync(cancellationToken);
-            ThrowIfFailed(before);
-        });
+            ThrowIfFailed(failedBefore);
+        }));
         if (deleted)
         {
             _autosave?.Cancel();
             await DeleteDraftAsync();
             IsClosed = true;
             _presence?.Dispose();
+            StateHasChanged();
             await Deleted.InvokeAsync();
         }
-        else if (ViewModel.Model is Csla.Core.ISupportUndo undo)
+        else
         {
-            undo.CancelEdit();
-            undo.BeginEdit();
+            await ReplaceModelAsync(before);
         }
 
         return deleted;
     }
 
-    /// <summary>Undoes every change since the object was loaded or last saved.</summary>
+    /// <summary>Puts back the object as it was loaded or last saved, and deletes the draft.</summary>
     public async Task CancelAsync()
     {
-        await ViewModel.CancelAsync();
+        ConfirmingCancel = false;
         _autosave?.Cancel();
+        if (_original is not null)
+        {
+            await ReplaceModelAsync(Flatten(_original));
+        }
+
         await DeleteDraftAsync();
         FormContext?.Snapshot();
         UpdatePresence();
@@ -213,14 +245,19 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     }
 
     /// <summary>
-    /// Writes the draft now when there are unsaved edits, before a language switch or a sign-out reloads the page; the
-    /// form then lets the page go without asking, since the draft keeps the edits.
+    /// Writes the draft now when there are unsaved edits, before a language switch or a sign-out reloads the page. The
+    /// form then lets the page go without asking (the draft keeps the edits): it re-renders, so the browser's
+    /// leave-page warning is off, before this returns.
     /// </summary>
     public async Task FlushDraftAsync()
     {
         _autosave?.Cancel();
         await SaveDraftAsync();
         _leaving = true;
+        var rendered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _rendered = rendered;
+        StateHasChanged();
+        await rendered.Task;
     }
 
     protected override async Task OnInitializedAsync()
@@ -235,16 +272,19 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
             await ViewModel.RefreshAsync(async () => await Load());
             ThrowIfFailed(before);
         });
-        if (loaded)
+        if (!loaded || IsDisposed)
         {
-            // Listen before the fields first render, so no change made after the load can slip past.
-            StartLiveUpdates();
-            FormContext = new CslaFormContext<T>(ComponentId, ViewModel, Time, FieldHistory ? OpenHistory : null);
-            Baseline();
-            _autosave = new DraftAutosave(Time, DraftAfter, () => InvokeAsync(SaveDraftAsync));
-            _flushRegistration = FlushRegistry.Register(this);
-            await OfferDraftAsync();
+            return;
         }
+
+        // Listen before the fields first render, so no change made after the load can slip past.
+        StartLiveUpdates();
+        FormContext = new CslaFormContext<T>(ComponentId, ViewModel, Time, FieldHistory ? OpenHistory : null);
+        Baseline();
+        _draftKey = CurrentDraftKey();
+        _autosave = new DraftAutosave(Time, DraftAfter, () => InvokeAsync(SaveDraftAsync));
+        _flushRegistration = FlushRegistry.Register(this);
+        await OfferDraftAsync();
     }
 
     protected override async Task OnErrorAsync(string operation, BusinessError failure)
@@ -252,6 +292,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         ArgumentNullException.ThrowIfNull(failure);
         if (failure.Kind == BusinessErrorKind.Conflict && operation == "save" && await OpenConflictAsync())
         {
+            Announcer.Announce(Messages.Error_Conflict, assertive: true);
             return;
         }
 
@@ -260,7 +301,8 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        Interlocked.Exchange(ref _rendered, null)?.TrySetResult();
+        if (firstRender && !IsDisposed)
         {
             _self = DotNetObjectReference.Create(this);
             _shortcuts = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/CslaStarter.Components/shortcuts.js");
@@ -273,6 +315,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         _presence?.Dispose();
         _autosave?.Dispose();
         _flushRegistration?.Dispose();
+        _rendered?.TrySetResult();
         if (_shortcuts is not null)
         {
             try
@@ -287,6 +330,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         }
 
         _self?.Dispose();
+        _exclusive.Dispose();
         await base.DisposeAsyncCore();
     }
 
@@ -314,6 +358,8 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         }
     }
 
+    protected Task ConfirmCancelAsync() => CancelAsync();
+
     protected async Task SubmitAsync() => await SaveAsync();
 
     /// <summary>Discards my edits and shows the record as it is now ("Reload" on the banner).</summary>
@@ -321,7 +367,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     {
         _autosave?.Cancel();
         await DeleteDraftAsync();
-        await RefreshAsync(RemoteChange);
+        await ExclusiveAsync(() => RefreshAsync(RemoteChange));
     }
 
     protected void CloseHistory() => History = null;
@@ -363,27 +409,41 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         FormContext!.Snapshot(server);
     }
 
+    /// <summary>
+    /// Restores the draft onto the record as it is now: what I changed in the draft (relative to what the draft started
+    /// from) is applied to a fresh copy, so changes others saved since are kept. A new record's draft is the record.
+    /// </summary>
     protected async Task RestoreDraftAsync()
     {
-        if (DraftOffer is null)
+        var offer = DraftOffer;
+        DraftOffer = null;
+        if (offer is null || DraftCodec.TryDeserialize<T>(ApplicationContext, offer.Payload) is not { } draft)
         {
+            await DeleteDraftAsync();
             return;
         }
 
-        var server = Clone(ViewModel.Model!);
-        if (DraftCodec.TryDeserialize<T>(ApplicationContext, DraftOffer.Payload) is { } restored)
+        if (draft is ITrackStatus { IsNew: true })
         {
-            await ReplaceModelAsync(restored);
-            _original = server;
-            FormContext!.Snapshot(server);
-            Announcer.Announce(Messages.Draft_Restored);
+            await ReplaceModelAsync(Flatten(draft));
         }
         else
         {
-            await DeleteDraftAsync();
+            if (await TryLoadAsync() is not { } fresh)
+            {
+                await CloseForLostAccessAsync();
+                return;
+            }
+
+            var server = Clone(fresh);
+            var draftStart = draft is IUndoableObject { EditLevel: > 0 } ? Undo(draft) : Clone(fresh);
+            var merged = (T)ConflictMerge.Apply(draftStart, draft, fresh).Merged;
+            await ReplaceModelAsync(merged);
+            _original = server;
+            FormContext!.Snapshot(server);
         }
 
-        DraftOffer = null;
+        Announcer.Announce(Messages.Draft_Restored);
     }
 
     protected async Task DiscardDraftAsync()
@@ -403,7 +463,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
 
     private async Task OfferDraftAsync()
     {
-        if (DraftKey() is not { } key || await Drafts.GetAsync(key, DisposalToken) is not { } draft)
+        if (_draftKey is not { } key || await Drafts.GetAsync(key, DisposalToken) is not { } draft)
         {
             return;
         }
@@ -420,7 +480,7 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
 
     private async Task SaveDraftAsync()
     {
-        if (IsClosed || !ViewModel.IsDirty || DraftKey() is not { } key)
+        if (IsClosed || !ViewModel.IsDirty || _draftKey is not { } key)
         {
             return;
         }
@@ -438,8 +498,11 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         }
     }
 
-    private DraftKey? DraftKey() =>
-        CurrentUser.UserId is { } me && EntityType is { Length: > 0 } type && EntityKey is { Length: > 0 } key ? new DraftKey(me, type, key) : null;
+    // A new record gets a fresh id on every load, so its draft is kept under "new" for the type.
+    private DraftKey? CurrentDraftKey() =>
+        CurrentUser.UserId is { } me && EntityType is { Length: > 0 } type && EntityKey is { Length: > 0 } key
+            ? new DraftKey(me, type, ViewModel.Model is ITrackStatus { IsNew: true } ? NewRecordKey : key)
+            : null;
 
     private void StartLiveUpdates()
     {
@@ -448,13 +511,14 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
             return;
         }
 
-        Subscribe(topic, OnRemoteChangeAsync);
+        // Own changes too (a command run from this page): the version check below skips the form's own saves.
+        Subscribe(topic, change => ExclusiveAsync(() => OnRemoteChangeAsync(change)), includeOwn: true);
         if (CurrentUser.UserId is { } me)
         {
-            Subscribe(ChangeTopic.ForRecord(EntityChange.UserAccessType, me.ToString()), _ => OnAccessChangedAsync());
+            Subscribe(ChangeTopic.ForRecord(EntityChange.UserAccessType, me.ToString()), _ => ExclusiveAsync(OnAccessChangedAsync));
         }
 
-        OnResync(OnResyncAsync);
+        OnResync(() => ExclusiveAsync(OnResyncAsync));
         UpdatePresence();
     }
 
@@ -488,7 +552,11 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         }
 
         var fresh = await TryLoadAsync();
-        if (fresh is IVersioned { Version: var theirs } && theirs != mine)
+        if (fresh is null)
+        {
+            await CloseForLostAccessAsync();
+        }
+        else if (fresh is IVersioned { Version: var theirs } && theirs != mine)
         {
             await OnRemoteChangeAsync(new EntityChange(EntityType!, EntityKey!, ChangeKind.Updated, theirs, null, string.Empty, null));
         }
@@ -504,33 +572,52 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         ViewModel.RefreshPermissions();
         if (await TryLoadAsync() is null)
         {
-            IsClosed = true;
-            _presence?.Dispose();
-            await DeleteDraftAsync();
-            Toasts.Show(ToastKind.Warning, Messages.Live_AccessLost);
-            Announcer.Announce(Messages.Live_AccessLost, assertive: true);
-            await Closed.InvokeAsync();
+            await CloseForLostAccessAsync();
         }
 
         StateHasChanged();
     }
 
-    private async Task RefreshAsync(EntityChange? cause)
+    private async Task CloseForLostAccessAsync()
     {
-        var old = ViewModel.Model!;
-        var refreshed = await RunAsync("refresh", async _ =>
-        {
-            var before = ViewModel.Exception;
-            await ViewModel.RefreshAsync(async () => await Load());
-            ThrowIfFailed(before);
-        });
-        if (!refreshed)
+        if (IsClosed)
         {
             return;
         }
 
+        IsClosed = true;
+        _presence?.Dispose();
+        _autosave?.Cancel();
+        await DeleteDraftAsync();
+        Toasts.Show(ToastKind.Warning, Messages.Live_AccessLost);
+        Announcer.Announce(Messages.Live_AccessLost, assertive: true);
+
+        // The record's values leave the page before the parent hears it closed.
+        StateHasChanged();
+        await Closed.InvokeAsync();
+    }
+
+    // Loads the record into a separate copy first: the form's model is only replaced once the load worked, and a record
+    // that disappeared (or became hidden) closes the form instead.
+    private async Task RefreshAsync(EntityChange? cause)
+    {
+        var old = ViewModel.Model!;
+        T? fresh = null;
+        var loaded = await RunAsync("refresh", async _ => fresh = await TryLoadAsync());
+        if (!loaded)
+        {
+            return;
+        }
+
+        if (fresh is null)
+        {
+            await CloseForLostAccessAsync();
+            return;
+        }
+
+        await ReplaceModelAsync(fresh);
         RemoteChange = null;
-        var changed = FieldDiff.Between(ViewModel.Model!, old).Where(d => d.Path.Length == 0).Select(d => d.Property).ToList();
+        var changed = FieldDiff.Between(fresh, old).Where(d => d.Path.Length == 0).Select(d => d.Property).ToList();
         Baseline();
         FormContext!.Highlight(changed);
         if (cause is { ChangedByName.Length: > 0 } && changed.Count > 0)
@@ -584,20 +671,57 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
         StateHasChanged();
     }
 
-    private Task DeleteDraftAsync() => DraftKey() is { } key ? Drafts.DeleteAsync(key, CancellationToken.None) : Task.CompletedTask;
+    private Task DeleteDraftAsync() => _draftKey is { } key ? Drafts.DeleteAsync(key, CancellationToken.None) : Task.CompletedTask;
 
-    // The object as the server has it: the baseline for "changed" markers and for merging after a conflict.
+    // The object as the server has it: the baseline for "changed" markers, Cancel, and merging after a conflict.
     private void Baseline()
     {
-        _original = ViewModel.Model is { } model ? Clone(model) : null;
+        _original = ViewModel.Model is { } model ? Flatten(model) : null;
         FormContext?.Snapshot();
     }
 
     private T Clone(T model) => (T)ObjectCloner.GetInstance(ApplicationContext).Clone(model)!;
 
+    private static T Flatten(T model) => (T)ConflictMerge.Flatten(model);
+
+    // A copy of the draft as it was before its edits: CSLA's undo stack, which the draft carries, rolled back.
+    private T Undo(T draft)
+    {
+        var copy = Clone(draft);
+        while (copy is IUndoableObject { EditLevel: > 0 } and ISupportUndo undo)
+        {
+            undo.CancelEdit();
+        }
+
+        return copy;
+    }
+
+    // Saves, deletes, refreshes and live updates one at a time: a notice can't land in the middle of a save.
+    private async Task<TResult> ExclusiveAsync<TResult>(Func<Task<TResult>> work)
+    {
+        await _exclusive.WaitAsync(DisposalToken);
+        try
+        {
+            return await work();
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                _exclusive.Release();
+            }
+        }
+    }
+
+    private async Task ExclusiveAsync(Func<Task> work) => await ExclusiveAsync(async () =>
+    {
+        await work();
+        return true;
+    });
+
     private void UpdatePresence()
     {
-        if (Topic is not { } topic || CurrentUser.UserId is not { } me || IsClosed)
+        if (Topic is not { } topic || CurrentUser.UserId is not { } me || IsClosed || IsDisposed)
         {
             return;
         }
@@ -616,6 +740,11 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     {
         _ = InvokeAsync(() =>
         {
+            if (IsDisposed)
+            {
+                return;
+            }
+
             if (ViewModel.IsDirty)
             {
                 _autosave?.Touch();
@@ -643,7 +772,13 @@ public partial class CslaForm<T> : CslaBaseComponent<T>, IDraftFlusher, ICslaFor
     }
 
     // Rule results and busy changes can arrive off the renderer (async rules finish on the thread pool).
-    private void RenderLater() => _ = InvokeAsync(StateHasChanged);
+    private void RenderLater() => _ = InvokeAsync(() =>
+    {
+        if (!IsDisposed)
+        {
+            StateHasChanged();
+        }
+    });
 
     [LoggerMessage(EventId = 4100, Level = LogLevel.Warning, Message = "Saving a draft failed; the edits are still in the form.")]
     private static partial void LogDraftFailed(ILogger logger, Exception exception);

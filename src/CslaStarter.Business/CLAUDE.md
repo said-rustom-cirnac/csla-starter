@@ -26,6 +26,7 @@ CSLA 10.2 business objects: validation, permissions and data portal operations. 
 - **Aggregate invariants** are checked on save too (member changes, closing), not only in helper methods.
 - **Aggregates save as one DTO round trip** and reload from the result. Children never call the DAL.
 - **Criteria are primitives**, not records or `CriteriaBase`.
+- **History:** mark the one type that guards an audited entity's history with `[HistoryOf("EntityType")]` (usually the editable root or child). `AuditHistory` asks it who may open the record and which fields they may read; an entity type with no guard has no readable history. Every `[AuditEntity]` needs one, enforced by tests.
 
 ## CSLA gotchas
 

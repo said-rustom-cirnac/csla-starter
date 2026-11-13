@@ -22,19 +22,26 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
     private static long _lastId;
 
     private readonly CancellationTokenSource _disposal = new();
+    private readonly CancellationToken _disposalToken;
     private readonly List<IDisposable> _subscriptions = [];
     private int _busy;
     private bool _disposed;
     private ILogger? _logger;
 
-    protected CslaBaseComponent() =>
+    protected CslaBaseComponent()
+    {
         ComponentId = "csla-" + Interlocked.Increment(ref _lastId).ToString(CultureInfo.InvariantCulture);
+        _disposalToken = _disposal.Token;
+    }
 
     /// <summary>Stable for the component's life; use it for DOM ids and aria links.</summary>
     protected string ComponentId { get; }
 
     /// <summary>Cancelled when the component is disposed (the user navigated away).</summary>
-    protected CancellationToken DisposalToken => _disposal.Token;
+    protected CancellationToken DisposalToken => _disposalToken;
+
+    /// <summary>True once the component was disposed (check after every await before touching shared state).</summary>
+    protected bool IsDisposed => _disposed;
 
     protected bool IsBusy => Volatile.Read(ref _busy) > 0;
 
@@ -196,8 +203,15 @@ public abstract partial class CslaBaseComponent : ComponentBase, IAsyncDisposabl
     protected Task WriteSecurityEventAsync(SecurityEventKind kind, string detail) =>
         SecurityEvents.WriteAsync(new SecurityEvent(kind, CurrentUser.UserId, CurrentUser.DisplayName, detail, Activity.Current?.TraceId.ToString()), CancellationToken.None);
 
+    // A subscription made after disposal (an await finished late) ends at once instead of leaking.
     private IDisposable Track(IDisposable subscription)
     {
+        if (_disposed)
+        {
+            subscription.Dispose();
+            return subscription;
+        }
+
         _subscriptions.Add(subscription);
         return subscription;
     }

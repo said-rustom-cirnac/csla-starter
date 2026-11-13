@@ -1,11 +1,14 @@
+using System.Reflection;
+using CslaStarter.Core.Security;
+
 namespace CslaStarter.Components.Forms;
 
 /// <summary>
 /// One value that differs between two copies of an object. <see cref="Path"/> is "" for the root and
 /// "Tasks[&lt;key&gt;]" for a child; a child present in only one copy has an empty <see cref="Property"/> and
-/// true/false in <see cref="Theirs"/> and <see cref="Mine"/>.
+/// true/false in <see cref="Theirs"/> and <see cref="Mine"/>. <see cref="IsSensitive"/> values are never shown.
 /// </summary>
-public sealed record FieldDifference(string Path, string Property, string FriendlyName, object? Theirs, object? Mine)
+public sealed record FieldDifference(string Path, string Property, string FriendlyName, object? Theirs, object? Mine, bool IsSensitive = false)
 {
     public string Key => $"{Path}.{Property}";
 }
@@ -48,8 +51,11 @@ public static class FieldDiff
             var myValue = ObjectGraph.Read(mine, property);
             if (!Equals(theirValue, myValue))
             {
-                differences.Add(new FieldDifference(path, property.Name, property.FriendlyName, theirValue, myValue));
+                differences.Add(new FieldDifference(path, property.Name, property.FriendlyName, theirValue, myValue, IsSensitive(theirs, property.Name)));
             }
         }
     }
+
+    public static bool IsSensitive(object owner, string propertyName) =>
+        owner.GetType().GetProperty(propertyName)?.GetCustomAttribute<SensitiveAttribute>() is not null;
 }

@@ -8,6 +8,9 @@ namespace CslaStarter.Components.Fields;
 /// </summary>
 public static class FieldValue
 {
+    /// <summary>What a <see cref="CslaStarter.Core.Security.SensitiveAttribute"/> value shows instead of itself.</summary>
+    public const string MaskText = "••••••";
+
     public static string? ToText(object? value) => value switch
     {
         null => null,

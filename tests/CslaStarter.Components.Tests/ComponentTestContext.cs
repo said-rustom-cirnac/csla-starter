@@ -60,6 +60,8 @@ public sealed class ComponentTestContext : BunitContext
         SessionModule.Mode = JSRuntimeMode.Loose;
         ShortcutsModule = JSInterop.SetupModule("./_content/CslaStarter.Components/shortcuts.js");
         ShortcutsModule.Mode = JSRuntimeMode.Loose;
+        DialogModule = JSInterop.SetupModule("./_content/CslaStarter.Components/dialog.js");
+        DialogModule.Mode = JSRuntimeMode.Loose;
     }
 
     private readonly IServiceScope _scope;
@@ -79,6 +81,9 @@ public sealed class ComponentTestContext : BunitContext
     public BunitJSModuleInterop SessionModule { get; }
 
     public BunitJSModuleInterop ShortcutsModule { get; }
+
+
+    public BunitJSModuleInterop DialogModule { get; }
 
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 11, 12, 10, 42, 0, TimeSpan.Zero));
 

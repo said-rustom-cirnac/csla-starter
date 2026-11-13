@@ -5,6 +5,7 @@ using CslaStarter.Business.Tests;
 using CslaStarter.Components.Interop;
 using CslaStarter.Components.Tables;
 using CslaStarter.Core.Realtime;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CslaStarter.Components.Tests.Tables;
@@ -65,7 +66,7 @@ public sealed class TableTests : IDisposable
 
         host.WaitForAssertion(() => Assert.Equal(fetches + 1, _context.Projects.ListFetches));
         Assert.True(_context.Projects.LastListCriteria!.Descending);
-        Assert.Equal("true", host.Find($"tbody tr[data-key='{selected}']").GetAttribute("aria-selected"));
+        Assert.Equal("true", host.Find($"tbody tr[data-key='{selected}']").GetAttribute("aria-current"));
     }
 
     [Fact]
@@ -93,6 +94,26 @@ public sealed class TableTests : IDisposable
         await host.InvokeAsync(() => host.Find("gcds-pagination").TriggerEventAsync("ongcdsclick", new GcdsEventArgs { Value = "2" }));
 
         host.WaitForAssertion(() => Assert.Equal(2, _context.Projects.LastListCriteria!.Page));
+    }
+
+    [Theory]
+    [InlineData("Enter")]
+    [InlineData(" ")]
+    public async Task Table_Row_IsATabStop_AndTheKeyboardSelectsIt(string key)
+    {
+        var first = Guid.CreateVersion7();
+        _context.Projects.Add(first, "P-1");
+        var host = Render();
+        var row = host.Find($"tbody tr[data-key='{first}']");
+        Assert.Equal("0", row.GetAttribute("tabindex"));
+        Assert.Null(row.GetAttribute("aria-selected"));
+
+        await host.InvokeAsync(() => host.Find($"tbody tr[data-key='{first}']").TriggerEventAsync("onkeydown", new KeyboardEventArgs { Key = "a" }));
+        Assert.Null(host.Instance.Selected);
+        await host.InvokeAsync(() => host.Find($"tbody tr[data-key='{first}']").TriggerEventAsync("onkeydown", new KeyboardEventArgs { Key = key }));
+
+        Assert.Equal(first, host.Instance.Selected?.Id);
+        Assert.Equal("true", host.Find($"tbody tr[data-key='{first}']").GetAttribute("aria-current"));
     }
 
     [Fact]

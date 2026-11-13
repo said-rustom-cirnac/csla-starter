@@ -35,7 +35,9 @@
     <CslaButton Kind="ButtonKind.Delete" />
     @if (!form.Model.IsNew)
     {
-        <CslaButton Kind="ButtonKind.Custom" Label="@Messages.Project_Closed" OnClick="() => CloseAsync(form.Model)" />
+        <CslaAuthorize Action="Csla.Rules.AuthorizationActions.EditObject" ObjectType="typeof(CloseProjectCommand)">
+            <CslaButton Kind="ButtonKind.Custom" Label="@Labels.Project_Close" OnClick="() => CloseAsync(form.Model)" />
+        </CslaAuthorize>
         <CslaHistory EntityType="Project" EntityKey="@form.Model.EntityKey" />
     }
 </CslaForm>
