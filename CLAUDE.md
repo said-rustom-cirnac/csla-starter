@@ -77,6 +77,10 @@ Branches, pull requests, the `claude` → `main` sync and Jira tracking are in [
 - [Components](docs/claude/components.md): the `Csla*` family, the base contract, forms, tables, GCDS interop, testing with bUnit.
 - Recipes: [add a feature](docs/claude/recipes/add-a-feature.md), [add a page](docs/claude/recipes/add-a-page.md), [add a `*Type`](docs/claude/recipes/add-a-type.md), [remove the Projects sample](docs/claude/recipes/remove-sample.md).
 
+## Skills
+
+`.claude/skills/`: `new-business-object`, `new-type` and `new-component`. Each one walks through the matching recipe and ends with `dotnet test`.
+
 Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`.
 
 ## Keeping docs current
