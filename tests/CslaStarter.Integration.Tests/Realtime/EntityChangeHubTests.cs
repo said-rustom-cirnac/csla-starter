@@ -141,4 +141,14 @@ public sealed class RealtimeSetupTests
         Assert.Same(provider.GetRequiredService<IEntityChangeHub>(), provider.GetRequiredService<IEntityChangeHub>());
         Assert.IsType<InMemoryChangeNotifier>(provider.GetRequiredService<IEntityChangeNotifier>());
     }
+
+    [Fact]
+    public void Setup_UnknownBackplane_FailsAtStartup()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Realtime:Backplane"] = "Redis" })
+            .Build();
+
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddCslaStarterRealtime(configuration));
+    }
 }
