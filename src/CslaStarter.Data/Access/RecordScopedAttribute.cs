@@ -13,3 +13,16 @@ public sealed class RecordScopedAttribute : Attribute;
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class BypassRecordAccessAttribute : Attribute;
+
+/// <summary>
+/// Adding or removing this row changes what the user in <see cref="UserIdProperty"/> may see or do, and so does changing
+/// one of <see cref="WatchedProperties"/>. After commit that user gets an access-changed notice: their open screens
+/// re-check access and their revalidation runs at once.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class AccessGrantAttribute(string userIdProperty, params string[] watchedProperties) : Attribute
+{
+    public string UserIdProperty { get; } = userIdProperty;
+
+    public IReadOnlyList<string> WatchedProperties { get; } = watchedProperties;
+}
