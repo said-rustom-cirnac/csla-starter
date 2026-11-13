@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Packs the repository (from the claude branch) as the `dotnet new csla-blazor` template. What a generated app
+    leaves out is decided by ../.template.config/template.json; this project only skips build output.
+  -->
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>CslaStarter.Templates</PackageId>
+    <Version>0.1.0</Version>
+    <Title>CSLA Starter templates</Title>
+    <Authors>CSLA Starter</Authors>
+    <Description>dotnet new csla-blazor: Blazor Server, CSLA 10.2, EF Core on PostgreSQL, Entra ID, GC Design System.</Description>
+    <PackageTags>dotnet-new;templates;csla;blazor;postgresql</PackageTags>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <NoWarn>$(NoWarn);NU5128;NU5110;NU5111</NoWarn>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\**\*"
+             Exclude="..\.git\**;..\**\bin\**;..\**\obj\**;..\**\TestResults\**;..\**\node_modules\**;..\.superpowers\**;..\.remember\**;..\template\**"
+             PackagePath="content\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

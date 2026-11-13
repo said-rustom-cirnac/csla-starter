@@ -1,0 +1,10 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Others.Count > 0)
+{
+    <p role="status" data-csla-presence>
+        @foreach (var other in Others)
+        {
+            <span>@Describe(other)</span>
+        }
+    </p>
+}

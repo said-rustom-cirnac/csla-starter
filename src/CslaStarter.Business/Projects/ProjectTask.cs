@@ -1,5 +1,6 @@
 using Csla;
 using Csla.Rules.CommonRules;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
@@ -9,6 +10,7 @@ namespace CslaStarter.Business.Projects;
 
 /// <summary>One task of a project.</summary>
 [Serializable]
+[HistoryOf("ProjectTask")]
 public sealed class ProjectTask : AppBusinessBase<ProjectTask>
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));

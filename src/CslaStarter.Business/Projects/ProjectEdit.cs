@@ -1,6 +1,7 @@
 using Csla;
 using Csla.Rules;
 using Csla.Rules.CommonRules;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Business.Projects.Rules;
 using CslaStarter.Business.Rules;
@@ -17,6 +18,7 @@ namespace CslaStarter.Business.Projects;
 /// access) and cannot edit; Technical staff edit but cannot change the budget; Admins do everything.
 /// </summary>
 [Serializable]
+[HistoryOf("Project")]
 public sealed class ProjectEdit : AppRootBase<ProjectEdit>
 {
     public static readonly PropertyInfo<Guid> IdProperty = RegisterProperty<Guid>(nameof(Id));

@@ -1,4 +1,5 @@
 using Csla;
+using CslaStarter.Business.Auditing;
 using CslaStarter.Business.Base;
 using CslaStarter.Core.Localization;
 using CslaStarter.Core.Resources;
@@ -7,6 +8,7 @@ namespace CslaStarter.Business.Users;
 
 /// <summary>One role a user holds (a UserRoleType code).</summary>
 [Serializable]
+[HistoryOf("UserRole")]
 public sealed class UserRoleAssignment : AppBusinessBase<UserRoleAssignment>
 {
     public static readonly PropertyInfo<int> RoleTypeCodeProperty = RegisterProperty<int>(nameof(RoleTypeCode));

@@ -5,6 +5,9 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Csla.Blazor" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CslaStarter.Core\CslaStarter.Core.csproj" />
     <ProjectReference Include="..\CslaStarter.Business\CslaStarter.Business.csproj" />
   </ItemGroup>

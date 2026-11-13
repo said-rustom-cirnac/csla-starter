@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="bunit" />
+    <PackageReference Include="Csla.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CslaStarter.Components\CslaStarter.Components.csproj" />
+    <!-- The real hub and presence tracker (in-memory transport); no database. -->
+    <ProjectReference Include="..\..\src\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
+    <!-- The sample pages, rendered with bUnit (prerendering is off, so HTTP tests only see the shell). -->
+    <ProjectReference Include="..\..\src\CslaStarter.Web\CslaStarter.Web.csproj" />
+  </ItemGroup>
+
+  <!-- The business tests' fakes and principals, shared rather than copied. -->
+  <ItemGroup>
+    <Compile Include="..\CslaStarter.Business.Tests\TestPrincipals.cs" Link="Shared\TestPrincipals.cs" />
+    <Compile Include="..\CslaStarter.Business.Tests\FakeTypeDal.cs" Link="Shared\FakeTypeDal.cs" />
+    <Compile Include="..\CslaStarter.Business.Tests\Projects\FakeProjectDal.cs" Link="Shared\FakeProjectDal.cs" />
+    <Compile Include="..\CslaStarter.Business.Tests\Users\FakeUserDal.cs" Link="Shared\FakeUserDal.cs" />
+    <Compile Include="..\CslaStarter.Business.Tests\Auditing\FakeAuditHistoryReader.cs" Link="Shared\FakeAuditHistoryReader.cs" />
+  </ItemGroup>
+
+</Project>

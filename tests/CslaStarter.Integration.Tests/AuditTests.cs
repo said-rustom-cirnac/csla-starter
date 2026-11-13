@@ -1,3 +1,4 @@
+using System.Reflection;
 using CslaStarter.Core.Auditing;
 using CslaStarter.Data;
 using CslaStarter.Data.Auditing;
@@ -252,6 +253,35 @@ public sealed class AuditTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal("Email", Assert.Single(all.Entries[0].Changes).Property);
         Assert.Equal(2, displayName.TotalCount);
         Assert.All(displayName.Entries, e => Assert.Equal("DisplayName", Assert.Single(e.Changes).Property));
+    }
+
+    [Fact]
+    public async Task AuditHistoryReader_LeavesOutHiddenFields_AndEntriesWithNothingElse()
+    {
+        var id = await InsertUserAsync("Ada", employeeNumber: "E-1");
+        foreach (var change in new Action<AppUser>[] { u => u.EmployeeNumber = "E-2", u => u.DisplayName = "Ada L." })
+        {
+            _time.Advance(TimeSpan.FromMinutes(1));
+            await using var context = Context();
+            change(await context.Users.SingleAsync(u => u.Id == id, Ct));
+            await context.SaveChangesAsync(Ct);
+        }
+
+        await using var readerContext = Context();
+        var page = await new AuditHistoryReader(readerContext).GetAsync(new AuditQuery("User", id.ToString(), HiddenFields: ["User.EmployeeNumber"]), Ct);
+
+        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(2, page.Entries.Count);
+        Assert.DoesNotContain(page.Entries.SelectMany(e => e.Changes), c => c.Property == "EmployeeNumber");
+    }
+
+    [Fact]
+    public void EveryAuditedEntity_HasABusinessTypeThatGuardsItsHistory()
+    {
+        var audited = typeof(AppDbContext).Assembly.GetTypes()
+            .Select(t => t.GetCustomAttribute<AuditEntityAttribute>()?.Name).OfType<string>().Order(StringComparer.Ordinal);
+
+        Assert.Equal(audited, CslaStarter.Business.Auditing.AuditedTypes.EntityTypes.Order(StringComparer.Ordinal));
     }
 
     private AppDbContext Context() => _db.CreateContext(FakeDataAccessContext.Tester, _time);

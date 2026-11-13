@@ -9,7 +9,7 @@ public static class SecurityHeaders
 {
     public const string ContentSecurityPolicy =
         "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'nonce-{nonce}'; " +
-        "style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; " +
+        "style-src 'self' 'nonce-{nonce}'; img-src 'self' data:; font-src 'self'; connect-src 'self'; " +
         "form-action 'self' https://login.microsoftonline.com; upgrade-insecure-requests";
 
     public static IServiceCollection AddCslaStarterSecurityHeaders(this IServiceCollection services)

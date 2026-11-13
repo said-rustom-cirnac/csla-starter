@@ -1,0 +1,26 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+<section data-csla-history aria-busy="@(IsBusy ? "true" : "false")">
+    @if (Entries.Count == 0 && !IsBusy)
+    {
+        <p>@Messages.History_Empty</p>
+    }
+    <ol>
+        @foreach (var entry in Entries)
+        {
+            <li data-id="@entry.Id">
+                <p><time datetime="@entry.OccurredAt.ToString("O")">@entry.OccurredAt.ToLocalTime().ToString("g")</time> · @entry.ChangedBy · @ActionText(entry.Action)</p>
+                <dl>
+                    @foreach (var change in entry.Changes)
+                    {
+                        <dt>@change.FieldName</dt>
+                        <dd>@ChangeText(change)</dd>
+                    }
+                </dl>
+            </li>
+        }
+    </ol>
+    @if (Entries.Count < TotalCount)
+    {
+        <gcds-button type="button" button-role="secondary" data-action="more" @ongcdsclick="LoadMoreAsync">@Messages.History_More</gcds-button>
+    }
+</section>

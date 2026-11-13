@@ -1,0 +1,43 @@
+@page "/projects/new"
+@page "/projects/{Id:guid}"
+<PageTitle>@Labels.Project_Name</PageTitle>
+<CslaForm T="ProjectEdit" Load="Load" Saved="OnSaved" Deleted="BackToList" Closed="BackToList" FieldHistory="true" Context="form">
+    <h1>@form.Model.Code</h1>
+    <CslaTextField For="() => form.Model.Code" />
+    <CslaTextField For="() => form.Model.Name" />
+    <CslaTextArea For="() => form.Model.Description" />
+    <CslaSelect TValue="int" For="() => form.Model.StatusCode" Options="@StatusOptions(form.Model)" />
+    <CslaNumberField TValue="decimal?" For="() => form.Model.Budget" />
+    <CslaDateField For="() => form.Model.StartDate" />
+    <CslaDateField For="() => form.Model.EndDate" />
+
+    <h2>@Labels.Project_Tasks</h2>
+    @foreach (var task in form.Model.Tasks)
+    {
+        <fieldset @key="task.Id">
+            <CslaTextField For="() => task.Title" />
+            <CslaCheckbox For="() => task.IsDone" />
+            <CslaDateField For="() => task.DueDate" />
+        </fieldset>
+    }
+    <CslaButton Kind="ButtonKind.Custom" Label="@Labels.Common_New" OnClick="() => form.Model.AddTask(string.Empty)" />
+
+    <h2>@Labels.Project_Members</h2>
+    <ul>
+        @foreach (var member in form.Model.Members)
+        {
+            <li @key="member.UserId">@member.DisplayName</li>
+        }
+    </ul>
+
+    <CslaButton Kind="ButtonKind.Save" />
+    <CslaButton Kind="ButtonKind.Cancel" />
+    <CslaButton Kind="ButtonKind.Delete" />
+    @if (!form.Model.IsNew)
+    {
+        <CslaAuthorize Action="Csla.Rules.AuthorizationActions.EditObject" ObjectType="typeof(CloseProjectCommand)">
+            <CslaButton Kind="ButtonKind.Custom" Label="@Labels.Project_Close" OnClick="() => CloseAsync(form.Model)" />
+        </CslaAuthorize>
+        <CslaHistory EntityType="Project" EntityKey="@form.Model.EntityKey" />
+    }
+</CslaForm>

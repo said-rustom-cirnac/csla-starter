@@ -1,0 +1,12 @@
+@using CslaStarter.Business.Users
+@using CslaStarter.Components.Fields
+@using CslaStarter.Components.Forms
+<CslaForm T="UserEdit" Load="Load" Context="form">
+    <CslaTextField For="() => form.Model.DisplayName" />
+    <CslaSensitiveField For="() => form.Model.EmployeeNumber" />
+</CslaForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<Task<UserEdit>> Load { get; set; } = default!;
+}

@@ -1,6 +1,7 @@
 using Csla;
 using Csla.Rules;
 using Csla.Serialization.Mobile;
+using CslaStarter.Business.Base;
 using CslaStarter.Business.Rules;
 using CslaStarter.Dal.Projects;
 
@@ -12,7 +13,7 @@ namespace CslaStarter.Business.Projects;
 /// <c>sortBy</c> is "Code", "Name" or "Status".
 /// </summary>
 [Serializable]
-public sealed class ProjectList : ReadOnlyListBase<ProjectList, ProjectInfo>
+public sealed class ProjectList : ReadOnlyListBase<ProjectList, ProjectInfo>, IPagedList
 {
     private int _totalCount;
 

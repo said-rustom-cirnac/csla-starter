@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace CslaStarter.Data.Auditing;
 
 /// <summary>
-/// Reads one record's history (its own rows and its children's), newest first. The history of a
-/// <see cref="RecordScopedAttribute"/> record the user can't see is "not found", like the record itself.
+/// Reads one record's history (its own rows and its children's), newest first, without the fields the query hides. The
+/// history of a <see cref="RecordScopedAttribute"/> record the user can't see is "not found", like the record itself.
 /// </summary>
 public sealed class AuditHistoryReader(AppDbContext db) : IAuditHistoryReader
 {
@@ -26,6 +26,12 @@ public sealed class AuditHistoryReader(AppDbContext db) : IAuditHistoryReader
         var events = db.AuditEvents.AsNoTracking().Where(e =>
             (e.EntityType == query.EntityType && e.EntityKey == query.EntityKey)
             || (e.RootType == query.EntityType && e.RootKey == query.EntityKey));
+        var hidden = query.HiddenFields?.ToList() ?? [];
+        if (hidden.Count > 0)
+        {
+            events = events.Where(e => !e.Changes.Any() || e.Changes.Any(c => !hidden.Contains(e.EntityType + "." + c.Property)));
+        }
+
         if (query.Property is not null)
         {
             events = events.Where(e => e.Changes.Any(c => c.Property == query.Property));
@@ -38,7 +44,9 @@ public sealed class AuditHistoryReader(AppDbContext db) : IAuditHistoryReader
             .Select(e => new
             {
                 Event = e,
-                Changes = e.Changes.Where(c => query.Property == null || c.Property == query.Property).OrderBy(c => c.Id).ToList(),
+                Changes = e.Changes
+                    .Where(c => (query.Property == null || c.Property == query.Property) && !hidden.Contains(e.EntityType + "." + c.Property))
+                    .OrderBy(c => c.Id).ToList(),
             })
             .ToListAsync(cancellationToken);
 

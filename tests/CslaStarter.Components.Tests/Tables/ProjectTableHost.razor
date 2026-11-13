@@ -1,0 +1,14 @@
+@using CslaStarter.Business.Projects
+@using CslaStarter.Components.Tables
+<CslaTable TList="ProjectList" TItem="ProjectInfo" EntityType="Project" Load="Load" InitialSort="Code" RowSelected="row => Selected = row">
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Code)" Sortable="true" />
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Name)" Sortable="true" />
+    <CslaTableColumn TItem="ProjectInfo" Property="@nameof(ProjectInfo.Budget)" />
+</CslaTable>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<TableState, Task<ProjectList>> Load { get; set; } = default!;
+
+    public ProjectInfo? Selected { get; private set; }
+}

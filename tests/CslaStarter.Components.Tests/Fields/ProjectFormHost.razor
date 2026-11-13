@@ -1,0 +1,19 @@
+@using CslaStarter.Business.Projects
+@using CslaStarter.Business.Types
+@using CslaStarter.Components.Fields
+@using CslaStarter.Components.Forms
+<CslaForm T="ProjectEdit" Load="Load" Context="form">
+    <CslaTextField For="() => form.Model.Code" />
+    <CslaTextArea For="() => form.Model.Description" />
+    <CslaNumberField TValue="decimal?" For="() => form.Model.Budget" />
+    <CslaDateField For="() => form.Model.StartDate" />
+    <CslaSelect TValue="int" For="() => form.Model.StatusCode" Options="@Statuses" />
+</CslaForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public Func<Task<ProjectEdit>> Load { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<KeyValuePair<int, string>> Statuses { get; set; } = [];
+}

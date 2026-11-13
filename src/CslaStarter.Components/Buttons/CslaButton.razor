@@ -1,0 +1,9 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Visible)
+{
+    <gcds-button type="button" button-role="@Role" disabled="@Disabled" data-kind="@Kind" @ongcdsclick="ClickAsync">@Text</gcds-button>
+}
+@if (Confirming)
+{
+    <CslaConfirmDialog Message="@Messages.Confirm_Delete" ConfirmText="@Messages.Confirm_Yes" CancelText="@Messages.Confirm_No" OnConfirm="ConfirmDeleteAsync" OnCancel="() => Confirming = false" />
+}

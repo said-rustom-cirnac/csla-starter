@@ -1,0 +1,11 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Warning)
+{
+    <CslaModal Role="alertdialog" DescribedBy="@MessageId" OnCancel="StaySignedIn" data-csla-session>
+        <p id="@MessageId">@WarningText</p>
+        <gcds-button type="button" data-action="stay" autofocus @ongcdsclick="StaySignedIn">@Messages.Session_Stay</gcds-button>
+    </CslaModal>
+}
+<form method="post" action="/account/signout" @ref="_signOutForm" data-csla-signout hidden>
+    <AntiforgeryToken />
+</form>

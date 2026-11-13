@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
+  #if (claude)
   # Cancel superseded pull request runs only; every push to claude must finish so Sync main sees it.
+  #endif
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -31,5 +33,19 @@ jobs:
         run: dotnet build -c Release --no-restore
       - name: Test
         run: dotnet test -c Release --no-build
-      - name: Script tests
+      - name: Coverage (Business and Components keep at least 80% of lines)
+        run: |
+          for project in Business Components; do
+            dotnet test -c Release --no-build --project "tests/CslaStarter.$project.Tests" \
+              --coverage --coverage-output-format cobertura --coverage-output "$project.cobertura.xml" --results-directory TestResults/coverage
+          done
+          bash scripts/check-coverage.sh 80 CslaStarter.Business TestResults/coverage/Business.cobertura.xml CslaStarter.Components TestResults/coverage/Components.cobertura.xml
+      - name: End-to-end tests compile (outside the solution; the E2E workflow runs them)
+        run: |
+          dotnet build tests/CslaStarter.E2E.Tests -c Release
+          dotnet format tests/CslaStarter.E2E.Tests/CslaStarter.E2E.Tests.csproj --verify-no-changes --no-restore
+      - name: Script tests (template packing included; a generated app is built)
         run: bash scripts/tests/run.sh
+        env:
+          TEMPLATE_BUILD: '1'
+

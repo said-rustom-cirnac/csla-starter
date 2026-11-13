@@ -1,0 +1,9 @@
+@typeparam TValue
+@inherits CslaFieldBase<List<TValue>>
+@if (Info.Visible)
+{
+    <div data-changed="@IsChanged" data-highlighted="@IsHighlighted">
+        <gcds-checkboxes id="@FieldId" name="@PropertyName" legend="@LabelText" options="@OptionsJson" hint="@Info.Hint" error-message="@Info.Error" required="@Info.Required" disabled="@Info.ReadOnly" validate-on="other" @ongcdschange="OnChange" @ongcdsblur="OnBlur"></gcds-checkboxes>
+        <CslaFieldHistoryButton Model="Model" Property="@PropertyName" Label="@LabelText" />
+    </div>
+}

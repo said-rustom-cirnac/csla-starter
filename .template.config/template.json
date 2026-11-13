@@ -1,0 +1,328 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "CSLA Starter",
+  "classifications": [
+    "Web",
+    "Blazor",
+    "CSLA",
+    "Solution"
+  ],
+  "identity": "CslaStarter.Template",
+  "name": "CSLA Starter: Blazor Server, CSLA 10, PostgreSQL",
+  "description": "A secured, bilingual Government of Canada line-of-business app: Blazor Server, CSLA 10.2, EF Core on PostgreSQL, Entra ID, live updates and the GC Design System.",
+  "shortName": "csla-blazor",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "claude": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include the Claude guides, skills and CLAUDE.md files (and the claude-to-main branch workflows)."
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip the restore that creates the package lock files."
+    },
+    "safeName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "safeNamespace",
+      "replaces": "CslaStarter",
+      "fileRename": "CslaStarter",
+      "description": "Project, namespace and file names: Acme.Grants (acme-grants becomes acme_grants, so paths and references agree)."
+    },
+    "titleName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity",
+      "replaces": "CSLA Starter",
+      "description": "The app's title in its guides."
+    },
+    "jiraEpic": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "(set this to your project's epic)"
+      },
+      "replaces": "DEV-37 (CSLA-starter)"
+    },
+    "templateDevPointer": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": ""
+      },
+      "replaces": "Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`."
+    },
+    "commitExample": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "for example `ABC-123`"
+      },
+      "replaces": "for example `DEV-38`"
+    },
+    "dependabotPrefix": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "prefix: deps"
+      },
+      "replaces": "prefix: DEV-38",
+      "description": "Set this to your Jira key."
+    },
+    "pullRequestTargets": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "[claude, main]",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "[claude, main]"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "[main]"
+          }
+        ]
+      }
+    },
+    "workBranchList": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "[claude]",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "[claude]"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "[main]"
+          }
+        ]
+      }
+    },
+    "dependabotBranch": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "target-branch: claude",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "target-branch: claude"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "target-branch: main"
+          }
+        ]
+      }
+    },
+    "releaseBranch": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "origin/claude",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(claude)",
+            "value": "origin/claude"
+          },
+          {
+            "condition": "(!claude)",
+            "value": "origin/main"
+          }
+        ]
+      }
+    },
+    "databaseName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerSnake",
+      "replaces": "cslastarter",
+      "description": "Database names and identifiers: acme_grants."
+    },
+    "snakeName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerSnake",
+      "replaces": "csla_starter",
+      "description": "Claim type prefixes: acme_grants."
+    },
+    "kebabName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerKebab",
+      "replaces": "csla-starter",
+      "description": "Compose project and OIDC client ids: acme-grants."
+    },
+    "environmentName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "upperSnake",
+      "replaces": "CSLASTARTER",
+      "description": "Environment variables: ACME_GRANTS."
+    },
+    "identifierName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "toIdentifier",
+      "replaces": "CslaStarter",
+      "onlyIf": [
+        {
+          "after": "Add"
+        },
+        {
+          "after": "Use"
+        },
+        {
+          "after": "Map"
+        }
+      ],
+      "description": "Inside identifiers (AddCslaStarterData): AddAcmeGrantsData."
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "rename": {
+            "README.app.md": "README.md"
+          }
+        },
+        {
+          "exclude": [
+            ".git/**",
+            "**/bin/**",
+            "**/obj/**",
+            "**/TestResults/**",
+            "**/node_modules/**",
+            "**/packages.lock.json",
+            ".superpowers/**",
+            ".remember/**",
+            ".template.config/**",
+            "template/**",
+            "docs/superpowers/**",
+            "docs/claude/template-dev.md",
+            "docs/architecture/**",
+            "scripts/tests/template.test.sh",
+            "CLAUDE.local.md",
+            "**/CLAUDE.local.md",
+            "README.md",
+            ".impeccable/hook.cache.json",
+            "**/*.cache.json",
+            "tests/CslaStarter.Architecture.Tests/TemplateRepositoryTests.cs"
+          ]
+        },
+        {
+          "condition": "(!claude)",
+          "exclude": [
+            ".claude/**",
+            "**/.claude/**",
+            "**/CLAUDE.md",
+            "docs/claude/**",
+            ".impeccable/**",
+            ".github/workflows/sync-main.yml",
+            ".github/workflows/guard-main.yml",
+            ".github/claude-only-paths.txt",
+            "scripts/check-no-claude-files.sh",
+            "scripts/sync-main.sh",
+            "scripts/claude-paths.sh",
+            "scripts/tests/sync-main.test.sh"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "CslaStarter.slnx"
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "description": "Restore packages (creates the lock files CI checks).",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ],
+  "forms": {
+    "lowerInvariant": {
+      "identifier": "lowerCaseInvariant"
+    },
+    "upperInvariant": {
+      "identifier": "upperCaseInvariant"
+    },
+    "toUnderscore": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "_"
+    },
+    "toDash": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "-"
+    },
+    "toUpperUnderscore": {
+      "identifier": "replace",
+      "pattern": "[^A-Z0-9]+",
+      "replacement": "_"
+    },
+    "lowerSnake": {
+      "identifier": "chain",
+      "steps": [
+        "lowerInvariant",
+        "toUnderscore"
+      ]
+    },
+    "lowerKebab": {
+      "identifier": "chain",
+      "steps": [
+        "lowerInvariant",
+        "toDash"
+      ]
+    },
+    "upperSnake": {
+      "identifier": "chain",
+      "steps": [
+        "upperInvariant",
+        "toUpperUnderscore"
+      ]
+    },
+    "toIdentifier": {
+      "identifier": "replace",
+      "pattern": "[^A-Za-z0-9]+",
+      "replacement": ""
+    },
+    "safeNamespace": {
+      "identifier": "safe_namespace"
+    },
+    "identity": {
+      "identifier": "identity"
+    }
+  }
+}

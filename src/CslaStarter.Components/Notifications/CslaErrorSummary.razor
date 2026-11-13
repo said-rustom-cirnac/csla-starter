@@ -1,0 +1,7 @@
+@inherits CslaStarter.Components.Base.CslaBaseComponent
+@if (Errors.Count > 0)
+{
+    <div tabindex="-1" @ref="_summary">
+        <gcds-error-summary heading="@Messages.Error_SummaryTitle" error-links="@ErrorLinks" listen="false"></gcds-error-summary>
+    </div>
+}
