@@ -1,3 +1,4 @@
+using CslaStarter.Domain.Platform;
 using CslaStarter.Domain.Platform.Users;
 
 namespace CslaStarter.Domain.Tests.Users;
@@ -65,6 +66,27 @@ public sealed class UserEditTests : IDisposable
     }
 
     [Fact]
+    public async Task Save_AfterSigningOut_IsRefused_And_StagesNothing()
+    {
+        var user = await _portal.FetchAsync<UserEdit>(Id);
+        user.DisplayName = "Ada L.";
+        _portal.SignOut();
+        await Assert.ThrowsAsync<Csla.Security.SecurityException>(() => user.SaveAsync());
+        Assert.Empty(_portal.Dal.Staged); Assert.Equal(0, _portal.Work.Commits);
+    }
+
+    [Fact]
     public async Task Fetch_SignedOut_IsRefused() =>
         await Assert.ThrowsAsync<Csla.Security.SecurityException>(() => _portal.SignedOut().FetchAsync<UserEdit>(Id));
+
+    [Fact]
+    public async Task Fetch_UnknownId_ThrowsDataPortalException_CarryingNotFound()
+    {
+        var unknown = Guid.CreateVersion7();
+        var ex = await Assert.ThrowsAsync<Csla.DataPortalException>(() => _portal.FetchAsync<UserEdit>(unknown));
+        var call = Assert.IsType<Csla.Reflection.CallMethodException>(ex.InnerException);
+        Assert.IsType<NotFoundException>(call.InnerException);
+        Assert.Same(call.InnerException, ex.BusinessException);
+        Assert.Equal($"User {unknown} was not found.", ex.BusinessExceptionMessage);
+    }
 }

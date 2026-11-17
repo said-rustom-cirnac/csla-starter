@@ -33,4 +33,44 @@ public class CurrentUserTests
         Assert.Null(user.UserId);
         Assert.Equal("", user.DisplayName);
     }
+
+    [Fact]
+    public void Unauthenticated_WithTheAppClaims_HasNoIdOrName()
+    {
+        var identity = new ClaimsIdentity(
+            [new Claim(AppClaimTypes.UserId, AdaId.ToString()), new Claim(AppClaimTypes.DisplayName, "Ada")]);
+        using var host = CslaTestHost.Create(t => t.AsPrincipal(new ClaimsPrincipal(identity)));
+
+        var user = new CslaCurrentUser(host.ApplicationContext);
+
+        Assert.False(user.IsSignedIn);
+        Assert.Null(user.UserId);
+        Assert.Equal("", user.DisplayName);
+    }
+
+    [Fact]
+    public void SignedIn_WithoutTheAppClaims_HasNoIdAndAnEmptyName()
+    {
+        using var host = CslaTestHost.Create(t => t.AsPrincipal(new ClaimsPrincipal(new ClaimsIdentity([], "Test"))));
+
+        var user = new CslaCurrentUser(host.ApplicationContext);
+
+        Assert.True(user.IsSignedIn);
+        Assert.Null(user.UserId);
+        Assert.Equal("", user.DisplayName);
+    }
+
+    [Fact]
+    public void SignedIn_WithAMalformedUserId_HasNoId()
+    {
+        var identity = new ClaimsIdentity(
+            [new Claim(AppClaimTypes.UserId, "not-a-guid"), new Claim(AppClaimTypes.DisplayName, "Ada")], "Test");
+        using var host = CslaTestHost.Create(t => t.AsPrincipal(new ClaimsPrincipal(identity)));
+
+        var user = new CslaCurrentUser(host.ApplicationContext);
+
+        Assert.True(user.IsSignedIn);
+        Assert.Null(user.UserId);
+        Assert.Equal("Ada", user.DisplayName);
+    }
 }

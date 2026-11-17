@@ -48,6 +48,9 @@ internal sealed class TestPortal : IDisposable
     /// <summary>A portal of its own with an anonymous user; disposed with this one.</summary>
     public TestPortal SignedOut() => _signedOut ??= new TestPortal(new ClaimsPrincipal(new ClaimsIdentity()));
 
+    /// <summary>Signs this portal's user out, so objects it has already fetched now act for an anonymous user.</summary>
+    public void SignOut() => _host.ApplicationContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+
     public void Dispose()
     {
         _signedOut?.Dispose();
