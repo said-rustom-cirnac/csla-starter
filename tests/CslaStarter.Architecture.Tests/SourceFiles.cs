@@ -11,6 +11,16 @@ public static class SourceFiles
         Directory.EnumerateFiles(folder, "*.cs", SearchOption.AllDirectories)
             .Where(path => !IsBuildOutput(path));
 
+    /// <summary>
+    /// Every .cs and .razor file under <paramref name="folder"/>, skipping build output and EF migrations.
+    /// Folders are judged relative to <paramref name="folder"/>, so any root works, not only the repository.
+    /// </summary>
+    public static IEnumerable<string> HandWritten(string folder) =>
+        Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".cs", StringComparison.Ordinal) || path.EndsWith(".razor", StringComparison.Ordinal))
+            .Where(path => !Path.GetRelativePath(folder, path).Split(Path.DirectorySeparatorChar)
+                .Intersect(["bin", "obj", "Migrations"]).Any());
+
     private static bool IsBuildOutput(string path)
     {
         var segments = RepoPaths.Relative(path).Split('/');
