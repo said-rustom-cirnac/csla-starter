@@ -1,17 +1,9 @@
-using CslaStarter.Domain.Platform.Texts;
+using CslaStarter.Domain.Platform.Rules;
 
-namespace CslaStarter.Domain.Tests.Texts;
+namespace CslaStarter.Domain.Tests.Rules;
 
 public class RuleAttributeTests
 {
-    [Fact]
-    public void Label_FollowsTheCulture()
-    {
-        var label = new LabelAttribute("Display name");
-        using (Culture.Use("en-CA")) Assert.Equal("Display name", label.DisplayName);
-        using (Culture.Use("fr-CA")) Assert.Equal("fr-Display name", label.DisplayName);
-    }
-
     [Fact]
     public void RequiredField_Message_ComesFromErrorMessageType()
     { using var _ = Culture.Use("en-CA"); Assert.Equal("Display name is required.", new RequiredFieldAttribute().FormatErrorMessage("Display name")); }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using CslaStarter.Domain.Platform.Texts;
 
-namespace CslaStarter.Domain.Platform.Texts;
+namespace CslaStarter.Domain.Platform.Rules;
 
 /// <summary>Limits a string's length; the message comes from <see cref="ErrorMessageType.MaxLength"/>.</summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]

@@ -1,6 +1,6 @@
 # CslaStarter.Domain.Tests
 
-Unit tests for `CslaStarter.Domain`: the text entry point, the default translator, the rule attributes and, later, business objects and their rules.
+Unit tests for `CslaStarter.Domain`. The folders mirror `src/CslaStarter.Domain/Platform/`: `Texts/` tests the text entry point, the default translator and `[Label]`; `Rules/` tests the rule attributes.
 
 - References only `CslaStarter.Domain`; no database, no web host.
 - Tests never call `Text.Use`: it is process-wide and tests run in parallel. They rely on the default `SourceTextTranslator`.
