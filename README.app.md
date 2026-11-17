@@ -1,21 +1,23 @@
 # CslaStarter
 
-A secure, bilingual line-of-business web application: .NET 10, Blazor Server, CSLA 10.2, EF Core on PostgreSQL, Entra ID sign-in, property- and record-level permissions, a full audit trail with change history, live updates between users, and English and French throughout, on a Protected B security baseline. Generated from the CSLA Starter template.
+A line-of-business web application for the Government of Canada: .NET 10, Blazor Server, CSLA 10.2 and EF Core on PostgreSQL. Generated with `dotnet new csla-blazor`.
+
+## Structure
+
+- `src/CslaStarter.Domain`: CSLA business objects with their rules and permissions, and the DAL contracts and DTOs.
+- `src/CslaStarter.Data`: EF Core and PostgreSQL, and the DAL implementations.
+- `src/CslaStarter.Web`: the host, the components and pages, and the GC Design System in `wwwroot/gcds`.
+- `tests/CslaStarter.Architecture.Tests`: checks of the project boundaries and conventions.
+
+Each project has `Platform/` (the starter's code, the same in every app) and `Features/` (your app's own code). See `docs/handbook/architecture.md`.
 
 ## First steps
 
-1. **Local database and mock Entra ID:** `docker compose up -d` (PostgreSQL 18 and mock-oauth2-server), then apply the migrations:
-   `CSLASTARTER_DESIGN_CONNECTION="<Owner connection string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data`
-2. **GC Design System assets:** they ship in the component library (`wwwroot/gcds`). To move to a new version, change the pins in `scripts/update-gcds.sh`, run `bash scripts/update-gcds.sh` (needs Node.js), and commit what it writes, including `scripts/gcds.integrity`.
-3. **Run:** `dotnet run --project src/CslaStarter.Web`. Sign in through the mock Entra ID, then make yourself the first administrator:
-   `dotnet src/CslaStarter.Web/bin/Debug/net10.0/CslaStarter.Web.dll bootstrap-admin --tenant <tid> --object-id <oid>`
-4. **Tests:** `dotnet test` (Docker needed for the integration tests). The end-to-end tests run with `E2E=1` once Playwright's browsers are installed (see `tests/CslaStarter.E2E.Tests`).
-5. **Lock files:** `dotnet new` restored the packages and wrote `packages.lock.json` files. Commit them: CI restores in locked mode.
+1. **Build and test:** `dotnet build -c Release`, then `dotnet test`. The other commands are in `docs/handbook/getting-started.md`.
+2. **Run:** `dotnet run --project src/CslaStarter.Web`.
+3. **GC Design System assets:** they ship in the web project (`src/CslaStarter.Web/wwwroot/gcds`). To move to a new version, change the pins in `scripts/update-gcds.sh`, run `bash scripts/update-gcds.sh` (needs Node.js), and commit what it writes, including `scripts/gcds.integrity`.
+4. **Lock files:** `dotnet new` restored the packages and wrote `packages.lock.json` files. Commit them: CI restores in locked mode.
 
 ## Branches
 
-If the app keeps the Claude workflow (`--claude`, the default), work goes to the `claude` branch through pull requests, and the `sync-main` workflow mirrors it to `main` without the Claude-only files. The first sync is manual, because the workflow only starts from `main`: follow "First sync" in `docs/claude/workflow.md`.
-
-## Sample feature
-
-Projects (with tasks and members) demonstrate every pattern. Remove them with `docs/claude/recipes/remove-sample.md` once you have features of your own.
+If the app keeps the Claude workflow (`--claude`, the default), work goes to the `claude` branch through pull requests, and the `sync-main` workflow mirrors it to `main` without the Claude-only files. The first sync is manual, because the workflow only starts from `main`: follow the first-snapshot steps under "Sync to main" in `docs/claude/workflow.md`.

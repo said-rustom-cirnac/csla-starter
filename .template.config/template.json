@@ -21,7 +21,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "true",
-      "description": "Include the Claude guides, skills and CLAUDE.md files (and the claude-to-main branch workflows)."
+      "description": "Include the Claude guides and CLAUDE.md files (and the claude-to-main branch workflows)."
     },
     "skipRestore": {
       "type": "parameter",
@@ -59,6 +59,15 @@
         "value": ""
       },
       "replaces": "Working on the template itself rather than an app made from it? Read `docs/claude/template-dev.md`."
+    },
+    "specPointer": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": ""
+      },
+      "replaces": "The design spec, [2026-11-17-csla-starter-rebuild-design.md](docs/superpowers/specs/2026-11-17-csla-starter-rebuild-design.md), is the source of truth until the handbook is complete.",
+      "description": "Generated apps leave out docs/superpowers, so the root CLAUDE.md drops its pointer to the design spec."
     },
     "commitExample": {
       "type": "generated",

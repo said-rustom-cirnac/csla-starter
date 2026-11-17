@@ -11,6 +11,13 @@ public static class SourceFiles
         Directory.EnumerateFiles(folder, "*.cs", SearchOption.AllDirectories)
             .Where(path => !IsBuildOutput(path));
 
+    /// <summary>Files matching <paramref name="pattern"/> under a folder of the repository, skipping build output.</summary>
+    /// <param name="repoFolder">The folder relative to the repository root, for example "src".</param>
+    /// <param name="pattern">A file name pattern, for example "*.razor".</param>
+    public static IEnumerable<string> Under(string repoFolder, string pattern) =>
+        Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, repoFolder), pattern, SearchOption.AllDirectories)
+            .Where(path => !IsBuildOutput(path));
+
     /// <summary>
     /// Every .cs and .razor file under <paramref name="folder"/>, skipping build output and EF migrations.
     /// Folders are judged relative to <paramref name="folder"/>, so any root works, not only the repository.
