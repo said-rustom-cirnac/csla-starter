@@ -1,6 +1,6 @@
 # Getting started
 
-The starter is being rebuilt, one slice at a time. Today the solution builds and its architecture tests run. There are no pages and no sign-in yet.
+The starter is being rebuilt, one slice at a time. Today the solution builds, and its architecture tests and domain unit tests run. There are no pages and no sign-in yet.
 
 ## Prerequisites
 
