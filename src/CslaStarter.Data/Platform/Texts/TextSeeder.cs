@@ -15,11 +15,12 @@ public sealed class TextSeeder(IDbContextFactory<AppDbContext> contexts)
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public async Task SeedAsync(CancellationToken ct)
-    {
-        var translations = Read<TranslationSeed>(TranslationsResource);
-        var messages = Read<ErrorMessageSeed>(ErrorMessagesResource);
+    public Task SeedAsync(CancellationToken ct) =>
+        SeedAsync(Read<TranslationSeed>(TranslationsResource), Read<ErrorMessageSeed>(ErrorMessagesResource), ct);
 
+    /// <summary>Seeds the given rows instead of the shipped files. Tests use it: the shipped translations file may be empty.</summary>
+    internal async Task SeedAsync(IReadOnlyList<TranslationSeed> translations, IReadOnlyList<ErrorMessageSeed> messages, CancellationToken ct)
+    {
         var sources = translations.Select(t => t.Source).ToArray();
         var translationsEn = translations.Select(t => t.En).ToArray();
         var translationsFr = translations.Select(t => t.Fr).ToArray();
@@ -53,7 +54,9 @@ public sealed class TextSeeder(IDbContextFactory<AppDbContext> contexts)
         return JsonSerializer.Deserialize<List<T>>(stream, JsonOptions) ?? [];
     }
 
-    private sealed record TranslationSeed(string Source, string En, string Fr);
+    /// <summary>A row of <c>Seed/translations.json</c>.</summary>
+    internal sealed record TranslationSeed(string Source, string En, string Fr);
 
-    private sealed record ErrorMessageSeed(int Code, string En, string Fr);
+    /// <summary>A row of <c>Seed/error-messages.json</c>.</summary>
+    internal sealed record ErrorMessageSeed(int Code, string En, string Fr);
 }

@@ -17,4 +17,8 @@
     <EmbeddedResource Include="Seed\error-messages.json" LogicalName="error-messages.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CslaStarter.Integration.Tests" />
+  </ItemGroup>
+
 </Project>

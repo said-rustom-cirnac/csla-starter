@@ -41,4 +41,45 @@ public sealed class UserDirectoryTests(PostgresFixture postgres) : IAsyncLifetim
         var users = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => _directory.EnsureAsync("t1", "o3", "Cy", Ct)));
         Assert.Single(users.Select(u => u.Id).Distinct());
     }
+
+    // Entra allows display names of up to 256 characters; the column holds 200.
+    [Fact]
+    public async Task LongName_SignsIn_StoredAsItsFirst200Characters()
+    {
+        var name = string.Concat(Enumerable.Range(0, 256).Select(i => (char)('a' + (i % 26))));
+        var user = await _directory.EnsureAsync("t1", "o4", name, Ct);
+        Assert.Equal(name[..200], user.DisplayName);
+        Assert.Equal(name[..200], await StoredNameAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task LongName_IsNeverCutInsideACharacter()
+    {
+        var name = new string('a', 199) + "😀" + "bbb"; // the emoji is two UTF-16 units, the 200th and 201st
+        var user = await _directory.EnsureAsync("t1", "o5", name, Ct);
+        Assert.Equal(new string('a', 199), await StoredNameAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task Name_WithSurroundingSpaces_IsStoredTrimmed()
+    {
+        var user = await _directory.EnsureAsync("t1", "o6", "  Dee  ", Ct);
+        Assert.Equal("Dee", await StoredNameAsync(user.Id));
+    }
+
+    [Theory]
+    [InlineData("tenantId")]
+    [InlineData("objectId")]
+    public async Task OverlongKey_Throws_NamingTheArgument(string argument)
+    {
+        var tooLong = new string('x', 101);
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => argument == "tenantId"
+            ? _directory.EnsureAsync(tooLong, "o7", "Eve", Ct)
+            : _directory.EnsureAsync("t1", tooLong, "Eve", Ct));
+        Assert.Equal(argument, error.ParamName);
+        Assert.Equal(0, await _db.CountAsync("app_user"));
+    }
+
+    private Task<string?> StoredNameAsync(Guid id) =>
+        _db.ScalarAsync<string>("select display_name from app_user where id = @id", id);
 }

@@ -18,7 +18,7 @@ The starter is being rebuilt: features arrive slice by slice, and only what the 
 | Script tests (sync, guard, coverage check, template) | `bash scripts/tests/run.sh` |
 | Format check, as CI runs it | `dotnet format --verify-no-changes` |
 | Local PostgreSQL + mock Entra ID | `docker compose up -d` |
-| Apply migrations locally | `CSLASTARTER_DESIGN_CONNECTION="<Owner string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |
+| Apply migrations to the local compose database (role `app_owner`, database `cslastarter`; passwords in `docker-compose.yml`, see [getting started](docs/handbook/getting-started.md#the-local-database)) | `CSLASTARTER_DESIGN_CONNECTION="Host=localhost;Database=cslastarter;Username=app_owner;Password=owner-dev-only" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |
 | Regenerate the one migration, `Initial`, after a model change (no database needed) | `rm -r src/CslaStarter.Data/Migrations && CSLASTARTER_DESIGN_CONNECTION="Host=localhost;Database=cslastarter" dotnet ef migrations add Initial -p src/CslaStarter.Data -s src/CslaStarter.Data` |
 | Run the app | `dotnet run --project src/CslaStarter.Web` |
 | After adding or changing a package | `dotnet restore --force-evaluate`, then commit the changed `packages.lock.json` files |
@@ -39,6 +39,8 @@ Each project has `Platform/` (starter-owned, the same in every app) and `Feature
 - [CslaStarter.Data](src/CslaStarter.Data/CLAUDE.md): EF Core, PostgreSQL and the DAL implementations.
 - [CslaStarter.Web](src/CslaStarter.Web/CLAUDE.md): the host, the component kit, the pages and the design system.
 - [CslaStarter.Architecture.Tests](tests/CslaStarter.Architecture.Tests/CLAUDE.md): boundary, convention and documentation checks.
+- [CslaStarter.Domain.Tests](tests/CslaStarter.Domain.Tests/CLAUDE.md): business objects and rules against fake DALs.
+- [CslaStarter.Integration.Tests](tests/CslaStarter.Integration.Tests/CLAUDE.md): the `Data` code against a real PostgreSQL in Docker.
 
 ## Golden rules
 

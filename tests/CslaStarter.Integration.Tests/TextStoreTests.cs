@@ -25,10 +25,31 @@ public sealed class TextStoreTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task Seeder_InsertsMissingRows_And_NeverOverwrites()
     {
         await _seeder.SeedAsync(Ct);
-        await _db.ExecuteAsync("update error_message_type set fr_desc = 'Modifié' where code = 1");
+        await _db.ExecuteAsync("update error_message_type set en_desc = 'Edited', fr_desc = 'Modifié' where code = 1");
+        await _db.ExecuteAsync("delete from error_message_type where code = 2");
         await _seeder.SeedAsync(Ct);
-        var required = (await _text.GetErrorMessagesAsync(Ct)).Single(m => m.Code == ErrorMessageType.Required);
-        Assert.Equal("{0} is required.", required.EnDesc); Assert.Equal("Modifié", required.FrDesc);
+
+        var messages = await _text.GetErrorMessagesAsync(Ct);
+        var required = messages.Single(m => m.Code == ErrorMessageType.Required);
+        Assert.Equal(("Edited", "Modifié"), (required.EnDesc, required.FrDesc));
+        var maxLength = messages.Single(m => m.Code == ErrorMessageType.MaxLength);
+        Assert.Equal(("{0} must be {1} characters or fewer.", "Le champ {0} ne doit pas dépasser {1} caractères.", true),
+            (maxLength.EnDesc, maxLength.FrDesc, maxLength.IsActive));
+    }
+
+    // The shipped translations.json is empty, so this seeds its own rows through the seeder's internal overload.
+    [Fact]
+    public async Task Seeder_InsertsTranslationRows_And_KeepsAnEditedOne()
+    {
+        await _db.ExecuteAsync("insert into translation_type (source_string, en_desc, fr_desc, is_active) values ('Save', 'Save now', 'Sauvegarder', true)");
+
+        await _seeder.SeedAsync([new("Save", "Save", "Enregistrer"), new("Cancel", "Cancel", "Annuler")], [], Ct);
+
+        var rows = await _text.GetTranslationsAsync(Ct);
+        var save = rows.Single(t => t.SourceString == "Save");
+        Assert.Equal(("Save now", "Sauvegarder"), (save.EnDesc, save.FrDesc));
+        var cancel = rows.Single(t => t.SourceString == "Cancel");
+        Assert.Equal(("Cancel", "Annuler", true), (cancel.EnDesc, cancel.FrDesc, cancel.IsActive));
     }
 
     [Fact]
