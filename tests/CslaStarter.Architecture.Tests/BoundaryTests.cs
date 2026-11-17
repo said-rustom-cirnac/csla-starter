@@ -48,9 +48,11 @@ public sealed class BoundaryTests
         typeof(DomainAssembly).Assembly.GetReferencedAssemblies(),
         a => a.Name!.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) || a.Name.StartsWith("Npgsql", StringComparison.Ordinal) || a.Name.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
 
+    // "Csla" and "Csla.*" only: Data references CslaStarter.Domain, whose name also starts with "Csla".
     [Fact]
     public void Data_DoesNotReferenceCsla() => Assert.DoesNotContain(
-        typeof(DataAssembly).Assembly.GetReferencedAssemblies(), a => a.Name!.StartsWith("Csla", StringComparison.Ordinal));
+        typeof(DataAssembly).Assembly.GetReferencedAssemblies(),
+        a => a.Name is "Csla" || a.Name!.StartsWith("Csla.", StringComparison.Ordinal));
 
     private static IReadOnlyList<string> Violation(string path, string line)
     {

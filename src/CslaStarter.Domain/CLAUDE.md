@@ -7,8 +7,8 @@ The CSLA business objects with their rules and permissions, the DAL contracts an
 - `Platform/`: the base classes `AppRootBusinessBase<T>` (an aggregate root, with `Version` and `LoadVersion`), `AppReadOnlyBase<T>` and `AppReadOnlyListBase<TList, TItem>`; the contracts `IUnitOfWork`, `IStagedRow` and `ICurrentUser`; the DAL exceptions `NotFoundException` and `ConcurrencyException` (`DalExceptions.cs`).
 - `Platform/Security/`: `AppClaimTypes` (the claims added at sign-in) and `CslaCurrentUser`, the `ICurrentUser` read from CSLA's `ApplicationContext.Principal`. The claims count only on an authenticated principal; a missing or malformed claim reads as `UserId == null` or `DisplayName == ""`, never as an exception.
 - `Platform/Rules/`: the rule attributes `[RequiredField]` and `[MaxLengthOf(n)]`, and the authorization rule `IsSignedIn`. New rule attributes and rule classes go here.
-- `Platform/Texts/`: the text entry point `Text` (`Text.T("…")`, `Text.Error(ErrorMessageType.…)`), the `ITranslator` contract and its default `SourceTextTranslator`, the seed-file fallback for error messages, the `ErrorMessageType` codes, and `[Label("…")]`.
-- `Platform/Users/`: `UserEdit`, `UserList` with its rows `UserInfo`, the DAL contract `IUserDal` and `UserDto`. Any signed-in user may list users and fetch and edit one; roles arrive in slice 2.
+- `Platform/Texts/`: the text entry point `Text` (`Text.T("…")`, `Text.Error(ErrorMessageType.…)`), the `ITranslator` contract and its default `SourceTextTranslator`, the seed-file fallback for error messages, the `ErrorMessageType` codes, and `[Label("…")]`; the text store contract `ITextDal` with `TranslationDto` and `ErrorMessageDto` (`TextDtos.cs`), implemented in `Data`.
+- `Platform/Users/`: `UserEdit`, `UserList` with its rows `UserInfo`, the DAL contract `IUserDal` and `UserDto`, and the sign-in directory contract `IUserDirectory` with its result `SignedInUser`, implemented in `Data`. Any signed-in user may list users and fetch and edit one; roles arrive in slice 2.
 - `Features/` is still empty.
 
 ## Patterns to copy

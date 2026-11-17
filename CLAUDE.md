@@ -19,6 +19,7 @@ The starter is being rebuilt: features arrive slice by slice, and only what the 
 | Format check, as CI runs it | `dotnet format --verify-no-changes` |
 | Local PostgreSQL + mock Entra ID | `docker compose up -d` |
 | Apply migrations locally | `CSLASTARTER_DESIGN_CONNECTION="<Owner string>" dotnet ef database update -p src/CslaStarter.Data -s src/CslaStarter.Data` |
+| Regenerate the one migration, `Initial`, after a model change (no database needed) | `rm -r src/CslaStarter.Data/Migrations && CSLASTARTER_DESIGN_CONNECTION="Host=localhost;Database=cslastarter" dotnet ef migrations add Initial -p src/CslaStarter.Data -s src/CslaStarter.Data` |
 | Run the app | `dotnet run --project src/CslaStarter.Web` |
 | After adding or changing a package | `dotnet restore --force-evaluate`, then commit the changed `packages.lock.json` files |
 

@@ -10,7 +10,7 @@ The solution has three projects under `src/`.
 | `CslaStarter.Data` | EF Core and PostgreSQL: entities, the unit of work, audit, and the DAL implementations. | `Domain` |
 | `CslaStarter.Web` | The host, the `Csla*` component kit, the pages, and the vendored GC Design System in `wwwroot/gcds`. | `Domain` and `Data` |
 
-The code arrives slice by slice. Today `Domain` holds the text entry point, the rule attributes, the base classes and the Users business objects, tested against fake DALs. `Data` is still empty, and `Web` answers only a liveness check at `/health/live`. The design system files are in place; no page uses them yet.
+The code arrives slice by slice. Today `Domain` holds the text entry point, the rule attributes, the base classes and the Users business objects, tested against fake DALs. `Data` holds the EF Core model for users and for the translation and error-message text, with its one migration, the user and text DALs, the sign-in directory that creates a user's account at first sign-in, and the seeder that inserts the shipped text; they are tested against a real PostgreSQL. The unit of work is not built yet, so nothing saves a user. `Web` answers only a liveness check at `/health/live` and does not use `Data` yet. The design system files are in place; no page uses them yet.
 
 ## Platform and Features
 
@@ -33,7 +33,7 @@ Each project has two top-level folders:
 
 ## Tests
 
-Tests live under `tests/`. Today there are two test projects: `CslaStarter.Architecture.Tests` (boundaries, conventions, documentation) and `CslaStarter.Domain.Tests` (business objects and rules, with fake DALs). Each other test project is added with the first code it tests.
+Tests live under `tests/`. Today there are three test projects: `CslaStarter.Architecture.Tests` (boundaries, conventions, documentation), `CslaStarter.Integration.Tests` (the `Data` code against a real PostgreSQL that Testcontainers starts in Docker) and `CslaStarter.Domain.Tests` (business objects and rules, with fake DALs). Each other test project is added with the first code it tests.
 
 ## Build settings
 
