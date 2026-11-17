@@ -27,6 +27,14 @@
 - Test first, for every behaviour: watch the test fail for the right reason, then make it pass. [§15]
 - Never commit to `main` or `claude`. All work stays on `DEV-39-starter-rebuild`. [§16]
 
+## Standing documentation step (added 2026-11-17, spec §16.1)
+
+From Task 6 on, every task ends with this step before its commit, and its review checks it:
+
+- Update the `CLAUDE.md` of each project the task changed, and any handbook page or guide the change makes false or incomplete. A new test project brings its own `CLAUDE.md`.
+- Say only what is true at that commit. Name real files as the pattern to copy.
+- List the documentation changes in the task report, or state that none was needed and why.
+
 ## Rulings made while planning
 
 Each is my call, within what the spec leaves to the builder. Change any of them before execution starts.
@@ -820,7 +828,7 @@ public async Task Page_PassesAxe(string path, string culture)
 - Modify: `scripts/check-coverage.sh`, `scripts/tests/coverage.test.sh`, `.github/workflows/ci.yml`, `docs/handbook/architecture.md`, `docs/handbook/getting-started.md`, the project `CLAUDE.md` files
 
 **Interfaces:**
-- Produces: `scripts/check-coverage.sh <minimum> <assembly>[:<path prefix>] <report> …`. With a path prefix, only classes whose file is under it count.
+- Produces: `scripts/check-coverage.sh <minimum> <assembly>[:<path fragment>] <report> …`. With a path fragment, only classes whose file path contains it count.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -849,6 +857,52 @@ public async Task Page_PassesAxe(string path, string culture)
 - [ ] **Step 7: Slice 1 demonstration.** Report with a screenshot of the edit page in each language, the audit row, the axe result, and the test counts per project.
 
 ---
+
+### Task 15: Claude guidance that a new session can rely on (spec §16.1)
+
+**Files:**
+- Modify: `CLAUDE.md`; the `CLAUDE.md` of all three `src` projects and all five test projects; `tests/CslaStarter.Architecture.Tests/ClaudeDocsTests.cs`; `scripts/check-coverage.sh`, `scripts/tests/coverage.test.sh`, `.github/workflows/ci.yml`; `.template.config/template.json` and `scripts/tests/template.test.sh` if a new path needs shipping or excluding
+- Create: `docs/claude/working-agreement.md`, `docs/claude/business-rules.md`, `docs/claude/jobs.md`
+- Create: `docs/handbook/recipes/add-a-field.md`, `add-a-translation.md`, `add-an-error-message.md`, `add-a-rule.md`
+- Create: `.claude/skills/docs-check/SKILL.md`
+- Create: `tests/CslaStarter.Architecture.Tests/RuleConventionTests.cs`, `DocFacts.cs`
+
+**Interfaces:**
+- Consumes: everything slice 1 built. Rule classes and rule attributes already live in `src/CslaStarter.Domain/Platform/Rules/` (moved there in Task 6).
+- Produces:
+  - Required sections in every project `CLAUDE.md`, in this order: `## What lives here`, `## Patterns to copy`, `## Never`, `## Tests`, `## Pitfalls`. The root has `## Start here` (what to read first, the commands that prove the tree is healthy) and `## Which file for which job` (a table: job → file).
+  - `DocFacts.Extract(string markdown)`: the repository paths, `dotnet`/`bash` commands, project names and backticked type names a file states. A type name counts when it is backticked and PascalCase and the file marks it with a trailing `(type)` or sits in a `Patterns to copy` section.
+  - `check-coverage.sh --branches …` also requires the branch rate to meet the minimum.
+- The business rules guide holds the question checklist of spec §16.1 word for word, the outcome-table format, and one worked example taken from a real rule in the repository.
+- Recipes describe only what exists at this commit (a field on an existing object; a translation; an error message; a rule attribute and a rule class). Later slices add the recipes for a permission, a type, a feature and a page with the code that makes them true.
+
+- [ ] **Step 1: Bring the open questions to Said in one message** before writing the rules guide: anything about how rules should be asked about, worded or tested that the spec does not settle. Record the answers in the guide. If there are none, say so in the report.
+- [ ] **Step 2: Write the failing tests.**
+
+```csharp
+[Fact] public void EveryProject_HasAClaudeFile_WithTheRequiredSections() =>
+    Assert.Empty(ClaudeFiles.Projects().SelectMany(f => ClaudeFiles.MissingSections(f, "What lives here", "Patterns to copy", "Never", "Tests", "Pitfalls")));
+[Fact] public void Root_HasStartHere_And_TheJobTable() =>
+    Assert.Empty(ClaudeFiles.MissingSections(ClaudeFiles.Root, "Start here", "Which file for which job"));
+[Fact] public void RootIndex_ReachesEveryProjectFile_And_EveryGuide() =>
+    Assert.Empty(ClaudeFiles.All().Except(ClaudeFiles.ReachableFrom(ClaudeFiles.Root)));
+[Fact] public void EveryPathNamed_Exists() => Assert.Empty(DocFacts.InDocs().Paths.Where(p => !RepoPaths.Exists(p)));
+[Fact] public void EveryCommandNamed_PointsAtARealProjectOrScript() => Assert.Empty(DocFacts.InDocs().Commands.Where(c => !c.TargetExists));
+[Fact] public void EveryTypeNamed_ExistsInSource() => Assert.Empty(DocFacts.InDocs().Types.Where(t => !SourceTypes.Exists(t)));
+[Fact] public void DocFacts_FindsAPath_ACommand_AndAType_InASample() { /* a fixed markdown sample in, the three facts out */ }
+[Fact] public void DocFacts_ReportsAMissingPath_InASample() { /* the checker itself is seen to fail */ }
+
+[Fact] public void EveryRule_LivesInARulesFolder() => Assert.Empty(RuleTypes.InDomain().Where(t => !t.Namespace!.EndsWith(".Rules")));
+[Fact] public void EveryRule_HasATestClass() => Assert.Empty(RuleTypes.InDomain().Where(t => !DomainTests.HasClass(t.Name + "Tests")));
+[Fact] public void EveryRuleTestFile_StartsWithItsOutcomeTable() => Assert.Empty(RuleTypes.InDomain().Where(t => !DomainTests.HasOutcomeTable(t.Name + "Tests")));
+```
+
+  `RuleTypes.InDomain()` is every type in the `Domain` assembly that derives from a CSLA rule base, implements a CSLA rule interface, or derives from `ValidationAttribute`. In `scripts/tests/coverage.test.sh`: `test_coverage_branches_flag_checks_the_branch_rate` (a class at 100% lines and 50% branches fails with `--branches`, passes without).
+- [ ] **Step 3: Run.** Expected: FAIL. Sections missing, guides unreachable, no outcome tables, unknown `--branches`.
+- [ ] **Step 4: Write the files and close the gaps.** Add the outcome table and any missing outcome test to each existing rule's test file until `check-coverage.sh --branches 100 CslaStarter.Domain:/Rules/ <report>` passes; add that gate to `ci.yml`. Write the `docs-check` skill: it takes the current diff, finds the Claude files and handbook pages that cover each changed path, and reports every statement the change made false or left missing.
+- [ ] **Step 5: Prove it with a fresh reader.** Dispatch one agent that has only the repository (no plan, no spec, no conversation) with the job "add a required `Title` field, 100 characters at most, to `UserEdit`, with its French label, and prove it works". It must finish from the Claude files alone. Its questions and wrong turns are defects in the files: fix them, discard its code, and repeat once.
+- [ ] **Step 6: Run the whole suite and the script tests.** Expected: all green.
+- [ ] **Step 7: Commit** `DEV-39 Add the Claude guidance system and its checks`, push, read CI once.
 
 ## Carried into slice 2 (not done here, on purpose)
 

@@ -50,6 +50,7 @@ The result is a `dotnet new` template for Government of Canada line-of-business 
 | R20 | System-use notice | A tab of the Administration page switches a sign-in notice on or off and edits its text in both languages (§8.8) | Said |
 | R23 | Who can sign in | Anyone in the Entra tenant. A first sign-in creates the account with no roles; what a user sees is decided only by roles and record-level access (§8.1) | Said |
 | R24 | Account expiration | An optional expiration date on a user, set by an Admin; after it, sign-in is refused (§8.1) | Said |
+| R25 | Claude guidance | A `CLAUDE.md` at the root and in every project, guides the root points to, a question checklist and full outcome tests for custom rules, all validated by tests after every task (§16.1) | Said |
 | R22 | Administration page | One page to manage everything about users, translations, error messages and the system-use notice, one tab each, with room for an app's own options. Admins only by default. (§12) | Said |
 | R21 | Declined controls | No view logging, no column encryption, no automatic deactivation of unused accounts (§18) | Said |
 
@@ -689,9 +690,38 @@ The Claude skills call the same templates and then fill in the specifics.
 - **What is kept from the repository** **(Claude's call)**: the plumbing that is proven and unrelated to the CSLA design: workflows, the `claude` → `main` sync and guard, the coverage and design-system scripts with their tests, database role scripts, docker-compose and the mock configuration, the vendored design system, build settings, and the template project. Each is adapted to the new project names.
 - **What is rewritten:** everything under `src/` and `tests/`, written test-first against this design. Proven code from the first build (security headers, audit capture, claims transformation, design-system interop) may be ported when a new test covers it.
 - **Handbook (new):** `docs/handbook/`, for a human, shipped to `main` and to generated apps: getting started, architecture, business objects, data, security, components, live updates, testing, operations, recipes (field, type, feature, page, remove the sample), and short decision records that say why.
-- **Claude files** shrink to pointers into the handbook plus Claude-only material (workflow, skills). One source of truth.
+- **Claude guidance (Said, 2026-11-17):** see §16.1. Recipes are still written once, in the handbook, so a human and Claude follow the same steps.
 - The interactive architecture page in `docs/architecture/` is updated to match at the end.
 - Jira: Story DEV-39 under epic DEV-37. Commits start with `DEV-39`. The branch is `DEV-39-starter-rebuild`.
+
+### 16.1 Claude guidance (Said)
+
+A new Claude session must be able to start in this repository, or in an app made from it, and work reliably without being told how.
+
+**Files:**
+
+- **Root `CLAUDE.md`** is the entry point: what this is, the commands, the project map, the golden rules, how to start a session, and an index that says which file to read for which job.
+- **One `CLAUDE.md` in every project,** `src` and `tests`. It holds what Claude needs to work in that project: what lives there, each pattern with a real file to copy from, what must never be done there, how to test, and the known pitfalls.
+- **Guides in `docs/claude/`,** reached from the root index:
+  - the working agreement: test first, the commands that prove a change, the definition of done, when to stop and ask;
+  - the business rules guide (below);
+  - a job index that points at the handbook recipe for each job: add a field, a rule, a permission, a type, a feature, a page, a translation, an error message.
+- Claude files never restate a recipe. They add only what is specific to Claude **(Claude's call)**.
+
+**Custom business rules get special care:**
+
+- Before writing a rule, Claude asks the developer until every item of a fixed checklist is answered: what triggers the rule; which properties it reads and which it affects; error, warning or information; the message in English and French; whether it needs data from the database; whether it applies to new records, existing ones or both; what happens for empty, null and boundary values; how it meets permissions; and at least one example that passes and one that fails. Claude does not guess an answer.
+- The agreed outcomes are written as a table at the top of the rule's test file, and there is one test for each row.
+- Enforced by tests: every rule class and rule attribute lives in a `Rules` folder and has a test class; line and branch coverage of everything in a `Rules` folder must be 100%.
+
+**Kept current, checked after every task:**
+
+- **Tests validate the files:** every project has a `CLAUDE.md` with the required sections; every link resolves; every repository path, command, project and type that a Claude file or handbook page names exists; the root index reaches every guide.
+- **The definition of done** in the working agreement includes updating the files a change affects.
+- **A `docs-check` skill** compares a change with the files that cover the changed code and reports anything now false or missing.
+- **Every task in every plan ends with a documentation step,** and the task's review checks it.
+
+All of this ships with `--claude true`, so a generated app has the same system from its first commit.
 
 ## 17. Delivery: slices
 
