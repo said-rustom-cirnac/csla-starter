@@ -18,15 +18,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- The host brings Data and Domain with it. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\CslaStarter.Business\CslaStarter.Business.csproj" />
-    <ProjectReference Include="..\..\src\CslaStarter.Data\CslaStarter.Data.csproj" />
-    <ProjectReference Include="..\..\src\CslaStarter.Infrastructure\CslaStarter.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\CslaStarter.Web\CslaStarter.Web.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\deploy\sql\create-roles.sql" Link="sql\create-roles.sql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

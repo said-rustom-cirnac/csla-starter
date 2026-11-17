@@ -25,16 +25,19 @@ generate() {
 absent() { [[ ! -e "$app/$1" ]] || fail "$1 should not be in the generated app"; }
 present() { [[ -e "$app/$1" ]] || fail "$1 should be in the generated app"; }
 
-test_template_claude_true_keeps_guides_and_skills() {
+test_template_claude_true_keeps_the_guides() {
   generate
+  # The handbook is for people: it ships everywhere, main included.
+  present docs/handbook/architecture.md
   # On main there are no guides to keep (the release packs the template from claude), but the app must still work.
   if [[ -e "$ROOT/CLAUDE.md" ]]; then
     present CLAUDE.md
-    present docs/claude/architecture.md
+    present docs/claude/workflow.md
     present .claude/settings.json
-    present src/Acme.Grants.Business/CLAUDE.md
+    present src/Acme.Grants.Domain/CLAUDE.md
     grep -q "Jira project epic: (set this to your project's epic)" "$app/CLAUDE.md" || fail "the epic line was not replaced"
     ! grep -q "template-dev" "$app/CLAUDE.md" || fail "the template-dev pointer leaked"
+    ! grep -q "docs/superpowers" "$app/CLAUDE.md" || fail "the design spec pointer leaked"
   fi
   local leaked
   leaked="$(grep -rnE --exclude-dir=bin --exclude-dir=obj "DEV-3[78]|\bSaid\b|[Pp]lan [0-9]|CSLA Starter" "$app" || true)"
@@ -47,7 +50,7 @@ test_template_claude_true_keeps_guides_and_skills() {
 # The GC Design System is vendored: the template copies it byte for byte, minified scripts and fonts included.
 test_template_copies_the_design_system_unchanged() {
   generate
-  diff -r "$ROOT/src/CslaStarter.Components/wwwroot/gcds" "$app/src/Acme.Grants.Components/wwwroot/gcds" > /dev/null \
+  diff -r "$ROOT/src/CslaStarter.Web/wwwroot/gcds" "$app/src/Acme.Grants.Web/wwwroot/gcds" > /dev/null \
     || fail "the generated app's wwwroot/gcds differs from the repository's"
 }
 
@@ -66,7 +69,7 @@ test_template_claude_true_works_from_the_main_snapshot() {
       [[ -z "${strip[$path]:-}" && -e "$path" ]] && printf '%s\0' "$path"
     done | tar --null -T - -cf -) | tar -C "$snapshot" -xf -
   [[ ! -e "$snapshot/CLAUDE.md" && -e "$snapshot/.template.config/template.json" ]] || fail "the snapshot is not main's shape"
-  ROOT="$snapshot" test_template_claude_true_keeps_guides_and_skills
+  ROOT="$snapshot" test_template_claude_true_keeps_the_guides
 }
 
 # Every script a shipped workflow runs ships with it.
@@ -123,6 +126,7 @@ test_template_claude_false_leaves_no_claude_paths() {
   absent scripts/claude-paths.sh
   absent scripts/tests/sync-main.test.sh
   present src/Acme.Grants.Web/Program.cs
+  present docs/handbook/architecture.md
   if [[ "${TEMPLATE_BUILD:-0}" == 1 ]]; then
     (cd "$app" && dotnet build Acme.Grants.slnx --nologo -v q) || fail "the generated app does not build"
     (cd "$app" && dotnet test --project tests/Acme.Grants.Architecture.Tests --no-build) || fail "the generated app's architecture tests fail"
@@ -145,7 +149,7 @@ test_template_renames_everything() {
   local left
   left="$(grep -rliE --exclude-dir=bin --exclude-dir=obj "cslastarter|csla-starter|csla_starter" "$app" || true)"
   [[ -z "$left" ]] || fail "the template name is still in: $left"
-  grep -q "Database=acme_grants;" "$app/src/Acme.Grants.Web/appsettings.Development.json" || fail "database names must be identifiers"
+  grep -q "CREATE DATABASE acme_grants " "$app/deploy/docker/initdb/10-create-roles.sh" || fail "database names must be identifiers"
   present Acme.Grants.slnx
-  present src/Acme.Grants.Business/Acme.Grants.Business.csproj
+  present src/Acme.Grants.Domain/Acme.Grants.Domain.csproj
 }

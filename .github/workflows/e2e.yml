@@ -2,11 +2,8 @@ name: E2E
 
 # Real browser, mock Entra ID and axe scan. Its own workflow, so a failure never blocks CI or the sync to main.
 # The project is outside the solution (Playwright's package is large) and is built here.
+# It runs by hand only until the end-to-end tests are rebuilt.
 on:
-  push:
-    branches: [claude]
-  schedule:
-    - cron: '0 7 * * *'
   workflow_dispatch:
 
 permissions:

@@ -15,9 +15,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <!-- Reflection-based conventions read the business assembly; no other src project is referenced. -->
+  <!-- Reflection-based conventions read the three src assemblies. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\CslaStarter.Business\CslaStarter.Business.csproj" />
+    <ProjectReference Include="..\..\src\CslaStarter.Domain\CslaStarter.Domain.csproj" />
+    <ProjectReference Include="..\..\src\CslaStarter.Data\CslaStarter.Data.csproj" />
+    <ProjectReference Include="..\..\src\CslaStarter.Web\CslaStarter.Web.csproj" />
   </ItemGroup>
 
 </Project>

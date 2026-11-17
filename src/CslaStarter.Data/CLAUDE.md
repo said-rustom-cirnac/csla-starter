@@ -1,28 +1,48 @@
 # CslaStarter.Data
 
-EF Core 10 with PostgreSQL (Npgsql). It holds:
+EF Core 10 on PostgreSQL 18 (Npgsql): the database model, its migration, and the implementations of the DAL and store contracts in `Domain`. The unit of work and audit capture are not built yet.
 
-- `AppDbContext`, which also stores the Data Protection keys;
-- entities and configurations;
-- migrations;
-- the audit interceptor and history reader;
-- the security event log;
-- and, from the business phase on, the DAL implementations.
+## What it holds today
 
-**May reference:** Core, Dal, EF Core, Npgsql.
+- `Platform/AppDbContext.cs`: the one context, with `Users`, `Translations` and `ErrorMessages`. It applies every `IEntityTypeConfiguration` in this assembly.
+- `Platform/DataServices.cs`: `AddAppData(connectionString)` registers the `IDbContextFactory<AppDbContext>` (Npgsql, snake_case names), then the platform stores by name as singletons (`ITextDal` → `TextDal`, `IUserDirectory` → `UserDirectory`, `TextSeeder`), then scans this assembly and registers every other class that implements an `I…Dal` interface as that interface, scoped (so a new DAL needs no registration line). The scan skips an interface that is already registered.
+- **Lifetimes:** a platform store depends only on the context factory, so it is a singleton, registered by name in `AddAppData` before the scan; the translator and hosted services hold one. Every other DAL (`UserDal`, and each feature's DAL) is scoped: one per data portal operation. `DataServicesTests` checks both.
+- `Platform/AppDbContextFactory.cs`: the design-time factory for `dotnet ef`. It reads the connection string from `CSLASTARTER_DESIGN_CONNECTION` and throws if it is not set.
+- `Platform/Users/`: the `app_user` entity (with its column lengths as constants, `AppUser.DisplayNameMaxLength` and the rest) and configuration; `UserDal` (`IUserDal`); `UserDirectory` (`IUserDirectory`), which creates a person's account at first sign-in. It trims the display name and cuts it to the column's length (never inside a surrogate pair), so a long Entra name never blocks sign-in, and it throws `ArgumentException` naming `tenantId` or `objectId` when a key is too long for its column.
+- `Platform/Texts/`: the `translation_type` and `error_message_type` entities and their configuration; `TextDal` (`ITextDal`); `TextSeeder`, which inserts the shipped rows from `Seed/translations.json` and `Seed/error-messages.json` that the database lacks and never changes a row that exists. Its `internal` overload `SeedAsync(translations, messages, ct)` seeds given rows instead of the files; the integration tests use it (the assembly grants `InternalsVisibleTo("CslaStarter.Integration.Tests")`).
+- `Migrations/`: one migration, `Initial` (see below).
+- `Seed/`: the shipped text. Rows are `{ "source", "en", "fr" }` and `{ "code", "en", "fr" }`. Both files are embedded in this assembly under the fixed names `translations.json` and `error-messages.json`; `Domain` embeds `error-messages.json` too, as its fallback.
+- `Features/` is still empty.
+
+## Patterns to copy
+
+- **An entity and its configuration:** `Platform/Users/AppUser.cs` and `Platform/Users/AppUserConfiguration.cs`. The entity is a plain `sealed` class with a `Guid.CreateVersion7()` id set in code, and holds each string column's length as a `public const` (`AppUser.DisplayNameMaxLength`) for the configuration and any code that writes the column. The configuration is `internal sealed`, names the table (`ToTable("app_user")`), sets `ValueGeneratedNever()` on the id, gives every string its maximum length from those constants, and maps a `uint Version` with `IsRowVersion()`, which Npgsql maps to PostgreSQL's `xmin` (no column is created). Add a `DbSet` to `AppDbContext`, then regenerate the migration.
+- **A DAL:** `Platform/Users/UserDal.cs`. It implements the `I…Dal` contract from `Domain`, reads with `AsNoTracking()`, projects straight into the DTO, carries `xmin` as the DTO's `Version`, and throws `NotFoundException("User", id)` for a missing row. For now its reads use their own context from the factory, and `StageUpdate` throws `NotImplementedException`: writes wait for the unit of work.
+- **A platform store** (writes on its own, outside any business transaction): `Platform/Users/UserDirectory.cs` and `Platform/Texts/TextDal.cs`. Each call creates its own short-lived context from `IDbContextFactory<AppDbContext>` and depends on nothing else. Register it by name as a singleton in `AddAppData`, before the scan. An insert that may race uses raw SQL `insert … on conflict (…) do nothing`, so the caller never sees a unique violation. `UserDirectory.EnsureAsync` then reads the row, since it returns the account whoever inserted it; `TextDal.AddTranslationAsync` returns nothing and does not read.
+
+## The migration
+
+Until the rebuild merges there is one migration, `Initial`. After a model change, delete it and add it again (adding a migration never connects to the database, so any valid connection string will do):
+
+```bash
+dotnet tool restore
+rm -r src/CslaStarter.Data/Migrations
+CSLASTARTER_DESIGN_CONNECTION="Host=localhost;Database=cslastarter" dotnet ef migrations add Initial -p src/CslaStarter.Data -s src/CslaStarter.Data
+```
+
+The integration tests apply it to a fresh database on every run, so a migration that is out of step with the model fails them.
 
 ## Rules
 
-- `AddCslaStarterData(connectionString)` registers everything. The host must register an `IDataAccessContext`.
-- **Naming:** snake_case. Keys are `Guid.CreateVersion7()`. Entity property names match business property names, so the history view can show friendly names.
-- **Concurrency:** roots implement `IAggregateRoot` (`uint Version` = `xmin`), and every aggregate save touches the root. Translate `DbUpdateConcurrencyException` into `Dal.ConcurrencyException`.
-- **Auditing:**
-  - Annotate entities with `[AuditEntity]`, `[AuditMask]`, `[AuditIgnore]` and `[AuditTypeCode]`, and children with `IHasAuditRoot`.
-  - Never write `audit_*` or `security_event` rows yourself.
-  - Every `[AuditEntity]` name needs a business type marked `[HistoryOf]` with the same name, or its history can't be read (enforced by tests).
-- **Migrations:** run as `app_owner`. Grants for `app_runtime` are applied by `RuntimeGrants` inside the migrations. Hand-written SQL goes in a class next to the migration.
-- **Record-level access** (from the business phase on): `[RecordScoped]` entities get the named query filter `"RecordAccess"`. Only `[BypassRecordAccess]` code may call `IgnoreQueryFilters(["RecordAccess"])`.
-- **Change notices** are published by `ChangePublishingInterceptor` after commit, one per aggregate root. Mark rows that grant access with `[AccessGrant(nameof(UserId), …)]` so the user gets an access-changed notice. Never publish by hand.
-- **Drafts:** `DraftStore` (encrypted, per user, 8 hours) uses its own short-lived contexts.
+- References `CslaStarter.Domain` only, and uses only its DAL contracts, DTOs and exceptions. The compiled assembly never references `Csla`.
+- Only `Platform/` code calls `SaveChanges`, `IgnoreQueryFilters` or raw SQL. A feature never uses another feature's entities or DAL.
+- Tests: `tests/CslaStarter.Integration.Tests` runs the DALs and stores against a real PostgreSQL (see its `CLAUDE.md`). `tests/CslaStarter.Architecture.Tests` checks the references and boundaries.
 
-Guides: [data access](../../docs/claude/data-access.md), [realtime](../../docs/claude/realtime.md).
+## Pitfalls
+
+- **CSLA is visible here.** `Csla` reaches this project through the `Domain` reference, so `using Csla;` compiles. Do not use it: `BoundaryTests.Data_DoesNotReferenceCsla` fails on any CSLA type in the compiled assembly.
+- **Raw SQL names the tables and columns** in snake_case (`app_user`, `tenant_id`). Renaming a property or a table means changing that SQL too; the integration tests catch a mismatch.
+- **Database defaults:** `added_date` is set by the database (`now()`), so EF leaves it out of inserts. `is_active` has no database default: EF would skip a `false` value on a `bool` with a default, so it is always set in code or in the insert.
+- **`dotnet ef` needs `CSLASTARTER_DESIGN_CONNECTION`**, even to add a migration. Without it the design-time factory stops with a message naming the variable.
+
+Structure and boundaries: [architecture](../../docs/handbook/architecture.md).

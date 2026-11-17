@@ -7,4 +7,4 @@
 *.ttf binary
 
 # The GC Design System is vendored by scripts/update-gcds.sh: keep the bytes the pinned packages ship.
-src/CslaStarter.Components/wwwroot/gcds/** -text
+src/CslaStarter.Web/wwwroot/gcds/** -text

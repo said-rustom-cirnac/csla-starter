@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetches the GC Design System (pinned) into src/CslaStarter.Components/wwwroot/gcds, so the app serves it itself (no
+# Fetches the GC Design System (pinned) into src/CslaStarter.Web/wwwroot/gcds, so the app serves it itself (no
 # CDN under Protected B): the web components, and the fonts that gcds.css would otherwise load from Google Fonts and
 # the design system's CDN.
 # npm checks each package against the registry's integrity hash; this script also checks it against
@@ -15,7 +15,7 @@ readonly FONTS="@gcds-core/fonts"
 readonly FONTS_VERSION="1.1.1"
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-dest="$root/src/CslaStarter.Components/wwwroot/gcds"
+dest="$root/src/CslaStarter.Web/wwwroot/gcds"
 pins="$root/scripts/gcds.integrity"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

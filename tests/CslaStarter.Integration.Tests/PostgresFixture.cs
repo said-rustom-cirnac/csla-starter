@@ -1,5 +1,6 @@
-using CslaStarter.Data;
+using CslaStarter.Data.Platform;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -8,59 +9,45 @@ using Testcontainers.PostgreSql;
 namespace CslaStarter.Integration.Tests;
 
 /// <summary>
-/// One PostgreSQL container per test run, with the app's roles and a migrated template database. Each test
-/// gets its own copy of the template (fast, isolated).
+/// One PostgreSQL container per test run, holding a template database migrated to the current model.
+/// <see cref="TestDatabase.CreateAsync"/> copies the template, so every test starts from an empty, migrated database.
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    public const string OwnerPassword = "owner-test-password";
-    public const string RuntimePassword = "runtime-test-password";
     private const string TemplateDatabase = "cslastarter_template";
 
-    // Every test database has its own connection pools (one per role), and idle pooled connections stay open for a few
-    // minutes, so a run holds far more than PostgreSQL's default 100 connections.
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18")
-        .WithCommand("-c", "max_connections=1000")
-        .Build();
-    private readonly SemaphoreSlim _createLock = new(1, 1);
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18").Build();
 
-    public string AdminConnectionString => _container.GetConnectionString();
+    // PostgreSQL refuses to copy a template while another session is connected to it, and each copy connects to it.
+    private readonly SemaphoreSlim _createLock = new(1, 1);
 
     public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
+        await ExecuteAdminAsync($"create database {TemplateDatabase}");
 
-        var script = await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "sql", "create-roles.sql"));
-        await _container.CopyAsync(script, "/tmp/create-roles.sql");
-        var result = await _container.ExecAsync(
-            ["psql", "-U", "postgres", "-v", $"owner_password={OwnerPassword}", "-v", $"runtime_password={RuntimePassword}", "-f", "/tmp/create-roles.sql"]);
-        if (result.ExitCode != 0)
+        await using (var services = new ServiceCollection().AddAppData(ConnectionString(TemplateDatabase)).BuildServiceProvider())
         {
-            throw new InvalidOperationException("create-roles.sql failed: " + result.Stderr);
-        }
-
-        await ExecuteAdminAsync($"CREATE DATABASE {TemplateDatabase} OWNER app_owner");
-        var options = new DbContextOptionsBuilder<AppDbContext>();
-        options.UseAppDatabase(ConnectionString(TemplateDatabase, "app_owner", OwnerPassword));
-        await using (var context = new AppDbContext(options.Options))
-        {
+            await using var context = await services.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContextAsync();
             await context.Database.MigrateAsync();
         }
 
-        // A template database can only be copied while nobody is connected to it.
+        // Close the pooled connections to the template, or the first copy fails.
         NpgsqlConnection.ClearAllPools();
     }
 
-    public string ConnectionString(string database, string user, string password) =>
-        new NpgsqlConnectionStringBuilder(AdminConnectionString) { Database = database, Username = user, Password = password }.ConnectionString;
+    /// <summary>The container's connection string, pointed at <paramref name="database"/>.</summary>
+    public string ConnectionString(string database) =>
+        new NpgsqlConnectionStringBuilder(_container.GetConnectionString()) { Database = database }.ConnectionString;
 
+    /// <summary>Creates a new database as a copy of the migrated template and returns its name.</summary>
     public async Task<string> CreateDatabaseAsync()
     {
         var name = "test_" + Guid.NewGuid().ToString("N")[..16];
         await _createLock.WaitAsync();
         try
         {
-            await ExecuteAdminAsync($"CREATE DATABASE {name} TEMPLATE {TemplateDatabase} OWNER app_owner");
+            await ExecuteAdminAsync($"create database {name} template {TemplateDatabase}");
         }
         finally
         {
@@ -71,7 +58,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     /// <summary>Drops a test database, closing whatever connections still use it.</summary>
-    public Task DropDatabaseAsync(string name) => ExecuteAdminAsync($"DROP DATABASE IF EXISTS {name} WITH (FORCE)");
+    public Task DropDatabaseAsync(string name) => ExecuteAdminAsync($"drop database if exists {name} with (force)");
 
     public async ValueTask DisposeAsync()
     {
@@ -81,7 +68,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     private async Task ExecuteAdminAsync(string sql)
     {
-        await using var connection = new NpgsqlConnection(AdminConnectionString);
+        await using var connection = new NpgsqlConnection(_container.GetConnectionString());
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();

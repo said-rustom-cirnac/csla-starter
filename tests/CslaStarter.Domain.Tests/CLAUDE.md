@@ -1,0 +1,12 @@
+# CslaStarter.Domain.Tests
+
+Unit tests for `CslaStarter.Domain`: business objects, rules, permissions and the data portal flow, against fake DALs. The folders mirror `src/CslaStarter.Domain/Platform/`: `Texts/`, `Rules/`, `Security/` and `Users/`. `BaseClassNamingTests` checks that every abstract base class in `Domain` carries the name of its CSLA base (see the pitfalls in the Domain `CLAUDE.md`).
+
+- References only `CslaStarter.Domain` and `Csla.Testing`; no database, no web host.
+- **`TestPortal`** (`TestPortal.cs`) is CSLA configured as the host configures it (`UseLegacyOperationMethods = false`), built with `Csla.Testing`'s `CslaTestHost`, over `FakeUserDal` and a `CountingUnitOfWork`, and signed in as Ada with the `AppClaimTypes` claims. It exposes `FetchAsync<T>(criteria)`, `Dal`, `Work`, `SignedOut()` (another portal, anonymous from the start) and `SignOut()` (this portal's user becomes anonymous, so an object it already fetched is saved as anonymous). Each test class creates its own portal in a field and disposes it, so tests share nothing. Copy `Users/UserEditTests.cs`.
+- **Fake DALs** sit next to the tests that use them (`Users/FakeUserDal.cs`): fixed rows in a fixed order, and a record of every staged write. A staged row's version is readable only after `CountingUnitOfWork` has committed, as with the real unit of work. An unknown id throws `NotFoundException`.
+- **Rules:** each rule has its own `<RuleName>Tests` class in `Rules/`. At the top of the class, a comment holds the rule's outcome table (input → outcome → message code; an authorization rule has no message, so its table gives the principal, the action and allowed or refused), and each table row is one test or one theory row. Attribute rules are tested through `IsValid` and `GetValidationResult` (copy `Rules/RequiredFieldAttributeTests.cs`). Authorization rules are tested with `Csla.Testing.Rules.AuthorizationRuleTester`, and which business types use them with `BusinessRules.HasPermission` on a `CslaTestHost` created `AsUser(...)` or `AsUnauthenticated()` (copy `Rules/IsSignedInTests.cs`).
+- Tests never call `Text.Use`: it is process-wide and tests run in parallel. They rely on the default `SourceTextTranslator`.
+- `Culture.Use("fr-CA")` switches the current culture and UI culture for a test and restores both on dispose.
+- Pass `TestContext.Current.CancellationToken` to any method that takes a token; the xUnit analyzer requires it.
+- Run: `dotnet test --project tests/CslaStarter.Domain.Tests` (one test: add `--filter-method "*Name"`).

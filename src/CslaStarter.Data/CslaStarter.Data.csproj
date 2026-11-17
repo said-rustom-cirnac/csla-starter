@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\CslaStarter.Core\CslaStarter.Core.csproj" />
-    <ProjectReference Include="..\CslaStarter.Dal\CslaStarter.Dal.csproj" />
+    <ProjectReference Include="..\CslaStarter.Domain\CslaStarter.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -10,6 +9,16 @@
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- TextSeeder reads the shipped text by these fixed names. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Seed\translations.json" LogicalName="translations.json" />
+    <EmbeddedResource Include="Seed\error-messages.json" LogicalName="error-messages.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CslaStarter.Integration.Tests" />
   </ItemGroup>
 
 </Project>

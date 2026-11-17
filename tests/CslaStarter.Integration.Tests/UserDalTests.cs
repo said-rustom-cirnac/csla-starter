@@ -1,124 +1,62 @@
-using CslaStarter.Core.Security;
-using CslaStarter.Dal;
-using CslaStarter.Dal.Users;
-using CslaStarter.Data.Dal;
-using Microsoft.EntityFrameworkCore;
+using CslaStarter.Domain.Platform;
+using CslaStarter.Domain.Platform.Users;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CslaStarter.Integration.Tests;
 
 public sealed class UserDalTests(PostgresFixture postgres) : IAsyncLifetime
 {
-    private readonly RecordingInvalidator _invalidator = new();
-    private readonly RecordingSecurityEventLog _securityEvents = new();
     private TestDatabase _db = null!;
+    private IUserDal _users = null!;
 
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
-
-    public async ValueTask InitializeAsync() => _db = await TestDatabase.CreateAsync(postgres);
+    public async ValueTask InitializeAsync()
+    {
+        _db = await TestDatabase.CreateAsync(postgres);
+        _users = _db.Services.GetRequiredService<IUserDal>();
+    }
 
     public ValueTask DisposeAsync() => _db.DisposeAsync();
 
-    [Fact]
-    public async Task UserDal_UpdateRoles_ReplacesAssignments_AndTouchesRoot()
-    {
-        var id = await _db.AddUserAsync("Bob", "oid-bob", true, 2);
-        var before = await FetchAsync(id);
-
-        var saved = await UpdateAsync(new UserUpdateDto(id, before.Version, "Bob", true, null, [1, 3]));
-
-        Assert.Equal([1, 3], saved.RoleCodes.Order());
-        Assert.NotEqual(before.Version, saved.Version);
-        Assert.Contains(("tenant-1", "oid-bob"), _invalidator.Calls);
-        await using var context = _db.CreateContext();
-        var roleEvents = await context.AuditEvents.Where(e => e.EntityType == "UserRole" && e.RootKey == id.ToString()).Select(e => e.Action).ToListAsync(Ct);
-        Assert.Contains("Delete", roleEvents);
-        Assert.Equal(3, roleEvents.Count(a => a == "Insert"));
-    }
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task UserDal_RoleChange_WritesSecurityEvent_ButOtherEditsDoNot()
-    {
-        var id = await _db.AddUserAsync("Bob", "oid-bob", true, 2);
-        var loaded = await FetchAsync(id);
-
-        var renamed = await UpdateAsync(new UserUpdateDto(id, loaded.Version, "Bob B.", true, null, [2]));
-        Assert.Empty(_securityEvents.Written);
-        await UpdateAsync(new UserUpdateDto(id, renamed.Version, "Bob B.", true, null, [1, 2]));
-
-        var written = Assert.Single(_securityEvents.Written);
-        Assert.Equal((SecurityEventKind.RoleChanged, FakeDataAccessContext.Tester.UserId, "tester"), (written.Kind, written.UserId, written.UserName));
-        Assert.Contains(id.ToString(), written.Detail, StringComparison.Ordinal);
-        Assert.Contains("2 -> 1,2", written.Detail, StringComparison.Ordinal);
-    }
+    public async Task Get_UnknownUser_ThrowsNotFound() =>
+        await Assert.ThrowsAsync<NotFoundException>(() => _users.GetAsync(Guid.CreateVersion7(), Ct));
 
     [Fact]
-    public async Task UserDal_StaleVersion_ThrowsConcurrency()
+    public async Task List_IsOrderedByDisplayName_WithEachRowsVersion()
     {
-        var id = await _db.AddUserAsync("Bob", 2);
-        var loaded = await FetchAsync(id);
-        await UpdateAsync(new UserUpdateDto(id, loaded.Version, "Bob B.", true, null, [2]));
+        // Neither insertion order (Cy, Ada, Bea) nor id order (Cy, Bea, Ada) is name order.
+        var cy = Guid.Parse("0193a5c0-0000-7000-8000-000000000001");
+        var bea = Guid.Parse("0193a5c0-0000-7000-8000-000000000002");
+        var ada = Guid.Parse("0193a5c0-0000-7000-8000-000000000003");
+        await _db.ExecuteAsync(
+            """
+            insert into app_user (id, tenant_id, object_id, display_name, is_active)
+            values (@cy, 't1', 'o1', 'Cy', true), (@ada, 't1', 'o2', 'Ada', true), (@bea, 't1', 'o3', 'Bea', true)
+            """,
+            cy, ada, bea);
 
-        await Assert.ThrowsAsync<ConcurrencyException>(() => UpdateAsync(new UserUpdateDto(id, loaded.Version, "Bob C.", true, null, [2])));
-    }
+        var users = await _users.ListAsync(Ct);
 
-    [Fact]
-    public async Task UserDal_RoleOnlyChangeByOtherAdmin_MakesStaleSaveFail()
-    {
-        var id = await _db.AddUserAsync("Bob", 2);
-        var loaded = await FetchAsync(id);
-        await UpdateAsync(new UserUpdateDto(id, loaded.Version, "Bob", true, null, [2, 3]));
-
-        await Assert.ThrowsAsync<ConcurrencyException>(() => UpdateAsync(new UserUpdateDto(id, loaded.Version, "Bob", false, null, [2])));
-    }
-
-    [Fact]
-    public async Task UserDal_List_FiltersByRoleAndPages()
-    {
-        await _db.AddUserAsync("Ann", 2);
-        await _db.AddUserAsync("Ben", 2, 3);
-        await _db.AddUserAsync("Cal", 1);
-        await using var context = _db.CreateContext();
-        var dal = new UserDal(context, _invalidator, _securityEvents, FakeDataAccessContext.Tester);
-
-        var clients = await dal.FetchListAsync(new UserListCriteria(RoleCode: 2, PageSize: 1), Ct);
-        var search = await dal.FetchListAsync(new UserListCriteria(Search: "be"), Ct);
-
-        Assert.Equal(2, clients.TotalCount);
-        Assert.Equal("Ann", Assert.Single(clients.Items).DisplayName);
-        Assert.Equal("Ben", Assert.Single(search.Items).DisplayName);
-    }
-
-    [Fact]
-    public async Task UserDal_Fetch_Missing_ThrowsNotFound() =>
-        await Assert.ThrowsAsync<NotFoundException>(() => FetchAsync(Guid.CreateVersion7()));
-
-    private async Task<UserDto> FetchAsync(Guid id)
-    {
-        await using var context = _db.CreateContext();
-        return await new UserDal(context, _invalidator, _securityEvents, FakeDataAccessContext.Tester).FetchAsync(id, Ct);
-    }
-
-    private async Task<UserDto> UpdateAsync(UserUpdateDto user)
-    {
-        await using var context = _db.CreateContext();
-        return await new UserDal(context, _invalidator, _securityEvents, FakeDataAccessContext.Tester).UpdateAsync(user, Ct);
-    }
-
-    private sealed class RecordingSecurityEventLog : ISecurityEventLog
-    {
-        public List<SecurityEvent> Written { get; } = [];
-
-        public Task WriteAsync(SecurityEvent securityEvent, CancellationToken cancellationToken)
+        Assert.Equal(new[] { ("Ada", ada), ("Bea", bea), ("Cy", cy) }, users.Select(u => (u.DisplayName, u.Id)));
+        foreach (var user in users)
         {
-            Written.Add(securityEvent);
-            return Task.CompletedTask;
+            Assert.Equal(await XminAsync(user.Id), user.Version);
         }
     }
 
-    private sealed class RecordingInvalidator : IUserRoleCacheInvalidator
+    [Fact]
+    public async Task Get_KnownUser_ReturnsItsNameAndVersion()
     {
-        public List<(string, string)> Calls { get; } = [];
+        var id = Guid.CreateVersion7();
+        await _db.ExecuteAsync("insert into app_user (id, tenant_id, object_id, display_name, is_active) values (@id, 't1', 'o1', 'Ada', true)", id);
 
-        public void Invalidate(string tenantId, string objectId) => Calls.Add((tenantId, objectId));
+        var user = await _users.GetAsync(id, Ct);
+
+        Assert.Equal(("Ada", await XminAsync(id)), (user.DisplayName, user.Version));
     }
+
+    private async Task<uint> XminAsync(Guid id) =>
+        (uint)await _db.ScalarAsync<long>("select xmin::text::bigint from app_user where id = @id", id);
 }

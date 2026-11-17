@@ -1,16 +1,8 @@
 # CslaStarter.Architecture.Tests
 
-Checks that keep the solution's shape:
+Checks that keep the solution's shape: the project graph, the boundaries between projects and between `Platform` and `Features`, the `.razor` conventions, the design-system assets, the workflows, the template, and the `CLAUDE.md` files and their links (skipped when `.claude/` is absent).
 
-- the project reference graph and forbidden packages;
-- `.razor` / `.razor.cs` pairs and no `@code` blocks;
-- en-CA and fr-CA culture support;
-- `CLAUDE.md` coverage and guide links, which are skipped when `.claude/` is absent.
-
-## Rules
-
-- `RepoPaths.Root` finds the repository by `CslaStarter.slnx`. Use `RepoPaths.Src`, `RepoPaths.Tests` and `RepoPaths.Relative(path)` in failure messages.
-- Adding a src project? Add it to `AllowedGraph` in `ProjectGraphTests.cs`. `EverySrcProject_IsCoveredByTheGraph` fails until you do.
-- A failing check here means the code broke a rule. Fix the code, not the test.
-
-Guide: [testing](../../docs/claude/testing.md).
+- References the three `src` projects so it can read their assemblies; nothing references it.
+- `RepoPaths.Root` finds the repository by `CslaStarter.slnx`. Use `RepoPaths.Relative(path)` in failure messages.
+- A failing check means the code broke a rule. Fix the code, not the test.
+- Run: `dotnet test --project tests/CslaStarter.Architecture.Tests`.

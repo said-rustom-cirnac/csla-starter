@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace CslaStarter.Architecture.Tests;
 
 /// <summary>
-/// The GC Design System is self-hosted at the version the spec pins. scripts/update-gcds.sh writes it and its output is
-/// committed: the app, the template and the E2E tests all use the committed copy.
+/// The GC Design System is self-hosted at a pinned version. scripts/update-gcds.sh writes it into the host's wwwroot
+/// and its output is committed: the app, the template and the E2E tests all use the committed copy.
 /// </summary>
 public partial class GcdsAssetsTests
 {
@@ -13,7 +13,7 @@ public partial class GcdsAssetsTests
 
     private static string Script => Path.Combine(RepoPaths.Root, "scripts", "update-gcds.sh");
 
-    private static string Assets => Path.Combine(RepoPaths.Src, "CslaStarter.Components", "wwwroot", "gcds");
+    private static string Assets => Path.Combine(RepoPaths.Src, "CslaStarter.Web", "wwwroot", "gcds");
 
     [Fact]
     public void UpdateScript_PinsTheSpecPackages_AndVerifiesIntegrity()
@@ -28,12 +28,14 @@ public partial class GcdsAssetsTests
         Assert.Contains("integrity", script, StringComparison.Ordinal);
     }
 
+    // The assets are the host's own static content (/gcds/...), and git keeps their bytes as the packages ship them.
     [Fact]
-    public void App_LinksTheSelfHostedFonts()
+    public void UpdateScript_AndGitAttributes_TargetTheHostsWwwroot()
     {
-        var app = File.ReadAllText(Path.Combine(RepoPaths.Src, "CslaStarter.Web", "Components", "App.razor"));
-
-        Assert.Contains("_content/CslaStarter.Components/gcds/fonts.css", app, StringComparison.Ordinal);
+        Assert.Contains("dest=\"$root/src/CslaStarter.Web/wwwroot/gcds\"", File.ReadAllText(Script), StringComparison.Ordinal);
+        Assert.Contains(
+            "src/CslaStarter.Web/wwwroot/gcds/** -text",
+            File.ReadAllLines(Path.Combine(RepoPaths.Root, ".gitattributes")).Select(line => line.Trim()));
     }
 
     [Fact]

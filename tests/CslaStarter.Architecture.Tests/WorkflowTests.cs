@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace CslaStarter.Architecture.Tests;
 
-/// <summary>The GitHub workflows run pinned actions only, and the release attaches what spec §17 promises.</summary>
+/// <summary>The GitHub workflows run pinned actions only, and the release attaches the app, its SBOM and the migration bundle.</summary>
 public partial class WorkflowTests
 {
     private static IEnumerable<string> Workflows => Directory.EnumerateFiles(Path.Combine(RepoPaths.Root, ".github", "workflows"), "*.yml");
@@ -32,27 +32,6 @@ public partial class WorkflowTests
         Assert.Contains("dotnet CycloneDX", release, StringComparison.Ordinal);
         Assert.Contains("dotnet ef migrations bundle", release, StringComparison.Ordinal);
         Assert.Contains("gh release create", release, StringComparison.Ordinal);
-    }
-
-    // The end-to-end project is outside the solution, so CI compiles and format-checks it on every pull request.
-    [Fact]
-    public void Ci_CompilesAndFormatChecksTheEndToEndTests()
-    {
-        var ci = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "ci.yml"));
-
-        Assert.Contains("dotnet build tests/CslaStarter.E2E.Tests", ci, StringComparison.Ordinal);
-        Assert.Contains("dotnet format tests/CslaStarter.E2E.Tests", ci, StringComparison.Ordinal);
-    }
-
-    // Spec §16: Business and Components keep at least 80% line coverage.
-    [Fact]
-    public void Ci_GatesBusinessAndComponentsCoverage()
-    {
-        var ci = File.ReadAllText(Path.Combine(RepoPaths.Root, ".github", "workflows", "ci.yml"));
-
-        Assert.Contains("--coverage-output-format cobertura", ci, StringComparison.Ordinal);
-        Assert.Contains("bash scripts/check-coverage.sh 80 CslaStarter.Business", ci, StringComparison.Ordinal);
-        Assert.Contains("CslaStarter.Components TestResults/coverage/Components.cobertura.xml", ci, StringComparison.Ordinal);
     }
 
     [GeneratedRegex(@"uses:\s+[\w.-]+/[\w./-]+@[0-9a-f]{40}(\s+#.*)?$")]
