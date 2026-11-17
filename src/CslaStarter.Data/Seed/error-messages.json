@@ -1,0 +1,4 @@
+[
+  { "code": 1, "en": "{0} is required.", "fr": "Le champ {0} est obligatoire." },
+  { "code": 2, "en": "{0} must be {1} characters or fewer.", "fr": "Le champ {0} ne doit pas dépasser {1} caractères." }
+]

@@ -6,5 +6,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CslaStarter.Architecture.Tests/CslaStarter.Architecture.Tests.csproj" />
+    <Project Path="tests/CslaStarter.Domain.Tests/CslaStarter.Domain.Tests.csproj" />
   </Folder>
 </Solution>

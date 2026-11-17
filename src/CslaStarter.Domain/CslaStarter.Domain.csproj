@@ -5,4 +5,9 @@
     <PackageReference Include="Csla.Generator.AutoImplementProperties.CSharp" />
   </ItemGroup>
 
+  <!-- The seed file is owned by the Data project; Domain embeds it as the error-message fallback. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\CslaStarter.Data\Seed\error-messages.json" LogicalName="error-messages.json" Link="Platform\Texts\error-messages.json" />
+  </ItemGroup>
+
 </Project>
