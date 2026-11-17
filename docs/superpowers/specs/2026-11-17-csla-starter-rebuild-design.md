@@ -192,7 +192,7 @@ Verified in the 10.2 source and relied on:
 ```csharp
 [CslaImplementProperties]
 [HistoryOf("Project")]
-public sealed partial class ProjectEdit : AppRootBase<ProjectEdit>
+public sealed partial class ProjectEdit : AppRootBusinessBase<ProjectEdit>
 {
     // 1. Properties: what the object holds, with its label and shape rules
     public partial Guid Id { get; private set; }
@@ -260,7 +260,9 @@ public sealed partial class ProjectEdit : AppRootBase<ProjectEdit>
 
 ### 6.6 Base classes (`Domain/Platform`)
 
-Kept small: `AppRootBase<T>` (identity, `Version`), `AppChildBase<T>`, `AppListBase<TList,TItem>`, `AppReadOnlyBase<T>`, `AppReadOnlyListBase<TList,TItem>` (paging), `AppCommandBase<T>`, and `CslaType<T>` / `CslaTypeList<TList,T>`.
+Kept small: `AppRootBusinessBase<T>` (identity, `Version`), `AppChildBusinessBase<T>`, `AppListBase<TList,TItem>`, `AppReadOnlyBase<T>`, `AppReadOnlyListBase<TList,TItem>` (paging), `AppCommandBase<T>`, and `CslaType<T>` / `CslaTypeList<TList,T>`.
+
+- **The names are not free.** CSLA 10.2's property generator recognises a class by its direct base class's *name*: it must contain `BusinessBase`, `ReadOnlyBase` or `CommandBase` (verified in the generator's source, `SerializationPartialBuilder.cs`, and by a failed build with `AppRootBase<T>`). Any base class for a type with generated properties must keep one of those words in its name.
 
 - **`*Type` lookups:** every type has `Code`, `EnDesc`, `FrDesc`, `IsActive` and `AddedDate`, and a `Description` that follows the language. Types shown in dropdowns also have `SortOrder`. Each type has its own table. The DAL caches the rows; CSLA objects are never shared between users.
   - **Code-owned types** (for example `UserRoleType`, `ProjectStatusType`, `ErrorMessageType`): codes are `public const int`, and a test fails unless constants and rows match exactly.

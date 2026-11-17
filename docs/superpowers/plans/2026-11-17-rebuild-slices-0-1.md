@@ -258,7 +258,7 @@ public void Markup_HasNoInlineStyleAttribute() => Assert.DoesNotContain(
 ### Task 6: Base classes and the first business objects
 
 **Files:**
-- Create in `src/CslaStarter.Domain/Platform/`: `AppRootBase.cs`, `AppReadOnlyBase.cs`, `AppReadOnlyListBase.cs`, `IUnitOfWork.cs`, `IStagedRow.cs`, `ICurrentUser.cs`, `DalExceptions.cs`, `Security/AppClaimTypes.cs`, `Security/CslaCurrentUser.cs`, `Security/IsSignedIn.cs`
+- Create in `src/CslaStarter.Domain/Platform/`: `AppRootBusinessBase.cs`, `AppReadOnlyBase.cs`, `AppReadOnlyListBase.cs`, `IUnitOfWork.cs`, `IStagedRow.cs`, `ICurrentUser.cs`, `DalExceptions.cs`, `Security/AppClaimTypes.cs`, `Security/CslaCurrentUser.cs`, `Rules/IsSignedIn.cs`
 - Create in `src/CslaStarter.Domain/Platform/Users/`: `UserEdit.cs`, `UserList.cs`, `UserInfo.cs`, `IUserDal.cs`, `UserDto.cs`
 - Test: `tests/CslaStarter.Domain.Tests/Users/UserEditTests.cs`, `UserListTests.cs`, `FakeUserDal.cs`; helper `TestPortal.cs`
 
@@ -269,7 +269,7 @@ public void Markup_HasNoInlineStyleAttribute() => Assert.DoesNotContain(
   - `interface IStagedRow { uint Version { get; } }` (valid after the commit)
   - `interface ICurrentUser { bool IsSignedIn { get; } Guid? UserId { get; } string DisplayName { get; } }`; `CslaCurrentUser(ApplicationContext)` implements it from the claims `AppClaimTypes.UserId` and `AppClaimTypes.DisplayName`.
   - `sealed class NotFoundException(string type, object key) : Exception`; `sealed class ConcurrencyException(string type, object key) : Exception`
-  - `abstract class AppRootBase<T> : BusinessBase<T>` with `public uint Version { get; }` and `protected void LoadVersion(uint version)`
+  - `abstract class AppRootBusinessBase<T> : BusinessBase<T>` with `public uint Version { get; }` and `protected void LoadVersion(uint version)`
   - `sealed record UserDto(Guid Id, string DisplayName, uint Version)`
   - `interface IUserDal { Task<IReadOnlyList<UserDto>> ListAsync(CancellationToken ct); Task<UserDto> GetAsync(Guid id, CancellationToken ct); IStagedRow StageUpdate(UserDto user); }` `GetAsync` throws `NotFoundException`.
   - `UserEdit` (`[CslaImplementProperties]`, `[HistoryOf]` comes in slice 5): `Id` (private set); `DisplayName` with `[Label("Display name"), RequiredField, MaxLengthOf(200)]`; `[Fetch] Fetch(Guid id, [Inject] IUserDal dal)`; `[Update] Update([Inject] IUserDal dal, [Inject] IUnitOfWork work)`. No create, insert or delete: accounts come from sign-in.
