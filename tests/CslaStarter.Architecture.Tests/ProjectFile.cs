@@ -35,8 +35,14 @@ public sealed class ProjectFile
             .Where(name => File.Exists(Path.Combine(RepoPaths.Src, name, name + ".csproj")))
             .ToList();
 
-    private static IEnumerable<string> Includes(XDocument document, string itemName) =>
+    /// <summary>The project names listed in CslaStarter.slnx, without folder or extension.</summary>
+    public static IReadOnlyList<string> SolutionProjects() =>
+        Includes(XDocument.Load(Path.Combine(RepoPaths.Root, "CslaStarter.slnx")), "Project", "Path")
+            .Select(path => Path.GetFileNameWithoutExtension(path.Replace('\\', '/')))
+            .ToList();
+
+    private static IEnumerable<string> Includes(XDocument document, string itemName, string attribute = "Include") =>
         document.Descendants(itemName)
-            .Select(item => (string?)item.Attribute("Include"))
+            .Select(item => (string?)item.Attribute(attribute))
             .OfType<string>();
 }
